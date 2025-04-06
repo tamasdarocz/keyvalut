@@ -7,7 +7,7 @@ class ThirdTab extends StatelessWidget{
     return Center(
 appBar: AppBar (
 centerTitle: true,
-title: Text('Passwords'),
+title: Text('Api keys'),
 backgroundColor: Colors.amber)
       child: Text('3'),
     );
