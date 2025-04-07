@@ -32,6 +32,7 @@ final List<Widget> _Pages =[
     bottomNavigationBar: BottomNavigationBar(
       currentIndex: _CurrentPageIndex,
       onTap: _NavigateBottomBar,
+      selectedItemColor: Colors.amber,
       type: BottomNavigationBarType.fixed,
       items: [
         BottomNavigationBarItem(icon: Icon(Icons.key), label: 'Passwords'),
