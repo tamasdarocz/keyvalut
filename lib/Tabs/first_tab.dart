@@ -17,6 +17,10 @@ class _FirstTabState extends State<FirstTab> {
         title: Text('Passwords'),
         backgroundColor: Colors.amber,
       ),
+      floatingActionButton: FloatingActionButton(
+          onPressed: () {},
+          backgroundColor: Colors.amber,
+          child: Icon(Icons.add)),
       body: CreateElementForm(),
     );
   }
