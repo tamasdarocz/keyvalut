@@ -4,7 +4,7 @@ import 'package:keyvalut/Tabs/second_tab.dart';
 import 'package:keyvalut/Tabs/third_tab.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -14,7 +14,7 @@ class _HomePageState extends State<HomePage> {
 
   int _CurrentPageIndex = 0;
 
-  void _NavigateBottomBar(int index) {
+  Future<void> _NavigateBottomBar(int index) async {
     setState(() {
       _CurrentPageIndex = index;
     });
