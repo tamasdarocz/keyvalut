@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:keyvalut/Widgets/password_text_field.dart';
 
 class FirstTab extends StatefulWidget {
   const FirstTab({super.key});
@@ -8,7 +9,6 @@ class FirstTab extends StatefulWidget {
 }
 
 class _FirstTabState extends State<FirstTab> {
-  bool _showPassword = false;
 
   @override
   Widget build(BuildContext context) {
@@ -80,27 +80,7 @@ class _FirstTabState extends State<FirstTab> {
 
           Divider(height: 10, color: Colors.white),
 
-          TextField(
-            style: TextStyle(fontSize: 20),
-            obscureText: !_showPassword,
-            decoration: InputDecoration(
-              prefixIcon: Icon(Icons.key),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  Icons.remove_red_eye,
-                  color: _showPassword ? Colors.amber : Colors.grey,
-                ),
-                onPressed: () {
-                  setState(() => _showPassword = !_showPassword);
-                },
-              ),
-              label: Text('Password'),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(48),
-                borderSide: BorderSide(color: Colors.amber, width: 4),
-              ),
-            ),
-          ),
+          PasswordTextField()
         ],
       ),
     );
