@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:keyvalut/Tabs/first_tab.dart';
-import 'package:keyvalut/Tabs/second_tab.dart';
-import 'package:keyvalut/Tabs/third_tab.dart';
+import 'package:keyvalut/views/Tabs/second_tab.dart';
+import 'package:keyvalut/views/Tabs/third_tab.dart';
+
+import 'first_tab.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

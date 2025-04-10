@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-
-class PlatformInputField extends StatelessWidget {
-  const PlatformInputField({super.key});
-
+class TitleInputField extends StatelessWidget {
+  final TextEditingController controller;
+  const TitleInputField({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +10,7 @@ class PlatformInputField extends StatelessWidget {
       style: TextStyle(fontSize: 20),
       decoration: InputDecoration(
         prefixIcon: Icon(Icons.devices),
-        label: Text('Platform:'),
+        label: Text('Title:'),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(48),
           borderSide: BorderSide(color: Colors.amber, width: 4),
@@ -20,4 +19,3 @@ class PlatformInputField extends StatelessWidget {
     );
   }
 }
-

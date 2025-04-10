@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class PasswordManager extends StatefulWidget {
-  const PasswordManager({super.key});
+  final TextEditingController controller;
+  const PasswordManager({super.key, required this.controller});
 
   @override
   State<PasswordManager> createState() => _PasswordManagerState();
@@ -18,18 +19,11 @@ class _PasswordManagerState extends State<PasswordManager> {
   bool _showPassword = false;
 
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController platformController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController usernameController = TextEditingController();
-  final TextEditingController websiteController = TextEditingController();
+
 
   @override
   void dispose() {
     passwordController.dispose();
-    platformController.dispose();
-    emailController.dispose();
-    usernameController.dispose();
-    websiteController.dispose();
     super.dispose();
   }
 
@@ -214,17 +208,6 @@ class _PasswordManagerState extends State<PasswordManager> {
                 ),
                 child: const Text('Generate Password'),
               ),
-              ElevatedButton(
-                onPressed: () {
-                  generatePassword();
-                  // Save logic will go here
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.yellow,
-                  foregroundColor: Colors.black,
-                ),
-                child: const Text('Save'),
-              ),
             ],
           ),
         ],
@@ -232,3 +215,4 @@ class _PasswordManagerState extends State<PasswordManager> {
     );
   }
 }
+
