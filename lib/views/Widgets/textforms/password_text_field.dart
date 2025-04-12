@@ -18,12 +18,11 @@ class _PasswordManagerState extends State<PasswordManager> {
   int passwordLength = 8;
   bool _showPassword = false;
 
-  final TextEditingController passwordController = TextEditingController();
-
+  // Removed: final TextEditingController passwordController = TextEditingController();
 
   @override
   void dispose() {
-    passwordController.dispose();
+    // Removed: passwordController.dispose(); // No local controller to dispose
     super.dispose();
   }
 
@@ -39,8 +38,7 @@ class _PasswordManagerState extends State<PasswordManager> {
     if (includeNumbers) chars += numbers;
     if (includeSpecial) chars += special;
 
-    if (chars.isEmpty)
-      return '';
+    if (chars.isEmpty) return '';
 
     String password = '';
     Random random = Random();
@@ -60,7 +58,7 @@ class _PasswordManagerState extends State<PasswordManager> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextField(
-            controller: passwordController,
+            controller: widget.controller, // Use the passed controller
             style: const TextStyle(fontSize: 20),
             obscureText: !_showPassword,
             decoration: InputDecoration(
@@ -84,20 +82,16 @@ class _PasswordManagerState extends State<PasswordManager> {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.copy, color: Colors.amber,),
+                    icon: const Icon(Icons.copy, color: Colors.amber),
                     iconSize: 20,
                     onPressed: () {
-                      if (passwordController.text.isNotEmpty) {
+                      if (widget.controller.text.isNotEmpty) { // Use widget.controller
                         Clipboard.setData(
-                          ClipboardData(text: passwordController.text),
+                          ClipboardData(text: widget.controller.text),
                         );
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Center(
-                              child: Text('Copied!'),
-                            )
-
-
+                            content: Center(child: Text('Copied!')),
                           ),
                         );
                       }
@@ -107,7 +101,7 @@ class _PasswordManagerState extends State<PasswordManager> {
               ),
             ),
           ),
-          const SizedBox(height: 16), // Add some spacing
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -198,7 +192,7 @@ class _PasswordManagerState extends State<PasswordManager> {
                   String generatedPassword = generatePassword();
                   if (generatedPassword.isNotEmpty) {
                     setState(() {
-                      passwordController.text = generatedPassword;
+                      widget.controller.text = generatedPassword; // Update the passed controller
                     });
                   }
                 },
@@ -215,4 +209,3 @@ class _PasswordManagerState extends State<PasswordManager> {
     );
   }
 }
-

@@ -7,6 +7,7 @@ class WebsiteInputField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
+      controller: controller,
       style: TextStyle(fontSize: 20),
       keyboardType: TextInputType.url,
       decoration: InputDecoration(

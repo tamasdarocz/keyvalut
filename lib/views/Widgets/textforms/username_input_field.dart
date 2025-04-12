@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 
-class UsernameInputField extends StatefulWidget {
+class UsernameInputField extends StatelessWidget {
   final TextEditingController controller;
   const UsernameInputField({super.key, required this.controller});
 
   @override
-  State<UsernameInputField> createState() => _UsernameInputFieldState();
-}
-
-class _UsernameInputFieldState extends State<UsernameInputField> {
-  @override
   Widget build(BuildContext context) {
     return TextField(
+      controller: controller,
       style: TextStyle(fontSize: 20),
       decoration: InputDecoration(
         prefixIcon: Icon(Icons.person),

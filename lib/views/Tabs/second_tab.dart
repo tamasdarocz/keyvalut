@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../data/credentials.dart';
-
 class SecondTab extends StatelessWidget{
 
   @override

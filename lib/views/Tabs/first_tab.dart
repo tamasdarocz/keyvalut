@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:keyvalut/data/credentials.dart';
-
-import '../Widgets/create_element_view.dart';
+import '../../data/database_helper.dart';
+import '../Widgets/create_element_form.dart';
+import '../Widgets/credentials_widget.dart';
 
 class FirstTab extends StatefulWidget {
   const FirstTab({super.key});
@@ -20,14 +20,18 @@ class _FirstTabState extends State<FirstTab> {
         backgroundColor: Colors.amber,
       ),
       floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => CreateElementForm()),
-            );
-          },
-          backgroundColor: Colors.amber,
-          child: Icon(Icons.add)),
-      body: CredentialsWidget(credentials: dummyCredentials)
-
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CreateElementForm(dbHelper: DatabaseHelper.instance),
+            ),
+          );
+        },
+        backgroundColor: Colors.amber,
+        child: Icon(Icons.add),
+      ),
+      body: CredentialsWidget(),
     );
   }
 }

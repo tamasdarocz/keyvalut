@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 
-class EmailInputField extends StatefulWidget {
+class EmailInputField extends StatelessWidget {
   final TextEditingController controller;
   const EmailInputField({super.key, required this.controller});
 
   @override
-  State<EmailInputField> createState() => _EmailInputFieldState();
-}
-
-class _EmailInputFieldState extends State<EmailInputField> {
-  @override
   Widget build(BuildContext context) {
     return TextField(
+      controller: controller,
       style: TextStyle(fontSize: 20),
       keyboardType: TextInputType.emailAddress,
       decoration: InputDecoration(
