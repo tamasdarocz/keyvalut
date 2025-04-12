@@ -32,15 +32,23 @@ class _CredentialsWidgetState extends State<CredentialsWidget> {
       future: _credentialsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator()); // Show loading spinner
+          return const Center(
+            child: CircularProgressIndicator(),
+          ); // Show loading spinner
         }
         if (snapshot.hasError) {
-          print('FutureBuilder error: ${snapshot.error}'); // Log error for debugging
-          return Center(child: Text('Error: ${snapshot.error}')); // Show specific error
+          print(
+            'FutureBuilder error: ${snapshot.error}',
+          ); // Log error for debugging
+          return Center(
+            child: Text('Error: ${snapshot.error}'),
+          ); // Show specific error
         }
         final credentials = snapshot.data ?? [];
         if (credentials.isEmpty) {
-          return const Center(child: Text('No credentials found')); // Handle empty state
+          return const Center(
+            child: Text('No credentials found'),
+          ); // Handle empty state
         }
         return ListView.builder(
           itemCount: credentials.length,

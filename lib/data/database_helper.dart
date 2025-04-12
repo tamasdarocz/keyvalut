@@ -80,6 +80,7 @@ class DatabaseHelper {
     final List<Map<String, dynamic>> maps = await db.query('Credential');
     return List.generate(maps.length, (i) => Credential.fromMap(maps[i]));
 
+
   }
 
   // Read single credential by id
