@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:keyvalut/views/Tabs/homepage.dart';
+import 'package:provider/provider.dart';
+
+import 'data/credentialProvider.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(
+      MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CredentialProvider()),
+      ],
+      child: const MyApp(),
+      ),
+  );
 }
 
 class MyApp extends StatelessWidget {

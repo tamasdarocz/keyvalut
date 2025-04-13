@@ -2,16 +2,16 @@
 class Credential {
   final int? id;
   final String title;
-  final String website;
-  final String email;
+  final String? website;
+  final String? email;
   final String username;
   final String password;
 
   Credential({
     this.id,
     required this.title,
-    required this.website,
-    required this.email,
+    this.website,
+    this.email,
     required this.username,
     required this.password,
   });

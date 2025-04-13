@@ -23,14 +23,16 @@ class _CredentialItemState extends State<CredentialItem> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 4.0),
-              child: Text('Website: ${widget.credential.website}'),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 4.0),
-              child: Text('Email: ${widget.credential.email}'),
-            ),
+            if ((widget.credential.website ?? '').isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Text('Website: ${widget.credential.website}'),
+              ),
+            if ((widget.credential.email ?? '').isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Text('Email: ${widget.credential.email}'),
+              ),
             Padding(
               padding: const EdgeInsets.only(top: 4.0),
               child: Text('Username: ${widget.credential.username}'),

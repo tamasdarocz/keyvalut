@@ -5,7 +5,9 @@ import 'package:keyvalut/views/Widgets/textforms/password_text_field.dart';
 import 'package:keyvalut/views/Widgets/textforms/title_input_field.dart';
 import 'package:keyvalut/views/Widgets/textforms/username_input_field.dart';
 import 'package:keyvalut/views/Widgets/textforms/website_input_field.dart';
+import 'package:provider/provider.dart';
 
+import '../../data/credentialProvider.dart';
 import '../../data/credential_model.dart';
 import '../../data/database_helper.dart';
 
@@ -30,9 +32,7 @@ class _CreateElementFormState extends State<CreateElementForm> {
     super.initState();
     if (widget.credential != null) {
       titleController.text = widget.credential!.title;
-      emailController.text = widget.credential!.email;
       usernameController.text = widget.credential!.username;
-      websiteController.text = widget.credential!.website;
       passwordController.text = widget.credential!.password;
     }
   }
@@ -45,6 +45,12 @@ class _CreateElementFormState extends State<CreateElementForm> {
     websiteController.dispose();
     passwordController.dispose();
     super.dispose();
+  }
+
+  bool get _isValid {
+    return titleController.text.isNotEmpty &&
+        usernameController.text.isNotEmpty &&
+        passwordController.text.isNotEmpty;
   }
 
   @override
@@ -71,32 +77,45 @@ class _CreateElementFormState extends State<CreateElementForm> {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () async {
-              if (titleController.text.isEmpty ||
-                  usernameController.text.isEmpty ||
-                  passwordController.text.isEmpty) {
+              if (!_isValid) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Please fill in all required fields')),
+                  const SnackBar(
+                    content: Text('Please fill in all required fields'),
+                    backgroundColor: Colors.red,
+                  ),
                 );
                 return;
               }
+
               final credential = Credential(
-                id: widget.credential?.id, // Include ID for updates
+                id: widget.credential?.id,
                 title: titleController.text,
                 username: usernameController.text,
                 password: passwordController.text,
-                website: websiteController.text,
-                email: emailController.text,
+                website: websiteController.text.isNotEmpty ? websiteController.text : null,
+                email: emailController.text.isNotEmpty ? emailController.text : null,
               );
-              if (widget.credential != null) {
-                await widget.dbHelper.updateCredential(credential);
-                // Update existing
-              } else {
-                await widget.dbHelper.insertCredential(credential); // Create new
+
+              final provider = Provider.of<CredentialProvider>(context, listen: false);
+
+              try {
+                if (widget.credential != null) {
+                  await provider.updateCredential(credential);
+                } else {
+                  await provider.addCredential(credential);
+                }
+                Navigator.pop(context);
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: ${e.toString()}'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
               }
-              Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.yellow,
+              backgroundColor: Colors.amber,
               foregroundColor: Colors.black,
             ),
             child: Text(widget.credential != null ? 'Update' : 'Save'),
