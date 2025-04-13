@@ -141,17 +141,22 @@ class _CredentialDetailState extends State<CredentialDetail> {
                   decoration: InputDecoration(
                     labelText: 'Website',
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(48)),
+                      borderRadius: BorderRadius.circular(48),
+                    ),
                     suffixIcon: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
+                          icon: const Icon(Icons.open_in_browser, color: Colors.amber),
+                          onPressed: _launchWebsite,
+                        ),
+                        IconButton(
                           icon: const Icon(Icons.copy, color: Colors.amber),
                           iconSize: 20,
                           onPressed: () {
-                            if (widget.credential.username.isNotEmpty ?? false) { // Use widget.controller
+                            if (widget.credential.website?.isNotEmpty ?? false) { // Use widget.controller
                               Clipboard.setData(
-                                ClipboardData(text: widget.credential.username),
+                                ClipboardData(text: _websiteController.text),
                               );
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -160,16 +165,22 @@ class _CredentialDetailState extends State<CredentialDetail> {
                               );
                             }
                           },
-                        ),
-                        IconButton(
-                      icon: const Icon(Icons.open_in_browser, color: Colors.amber,),
-                      onPressed: _launchWebsite,
-                    ),
-
-      ],
-                    )),
-                  readOnly: true,
-                  onTap: _launchWebsite,
+                        )
+                      ],
+                    )
+                  ),
+                  // Removed readOnly property
+                  keyboardType: TextInputType.url,
+                  validator: (value) {
+                    if (value?.isNotEmpty ?? false) {
+                      final url = value!.startsWith('http') ? value : 'https://$value';
+                      final uri = Uri.tryParse(url);
+                      if (uri == null || !uri.isAbsolute) {
+                        return 'Enter a valid URL';
+                      }
+                    }
+                    return null;
+                  },
                 ),
               const SizedBox(height: 20),
               TextFormField(
