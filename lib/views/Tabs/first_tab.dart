@@ -13,42 +13,23 @@ class FirstTab extends StatefulWidget {
 }
 
 class _FirstTabState extends State<FirstTab> {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Row(
-          children: [
-            Text('Passwords'),
-            IconButton(
-              icon: Icon(
-                Provider.of<ThemeProvider>(context).isDarkMode
-                    ? Icons.light_mode
-                    : Icons.dark_mode,
-              ),
-              onPressed: () => Provider.of<ThemeProvider>(context, listen: false).toggleTheme(),
-            )
-          ],
-        ),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder:
-                  (context) =>
-                      CreateElementForm(dbHelper: DatabaseHelper.instance),
+              builder: (context) => CreateElementForm(dbHelper: DatabaseHelper.instance),
             ),
           );
         },
         backgroundColor: Theme.of(context).colorScheme.primary,
-
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
-      body: CredentialsWidget(),
+      body: const CredentialsWidget(),
     );
   }
 }

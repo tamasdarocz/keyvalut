@@ -5,13 +5,8 @@ class SecondTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text('Authenticator'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-      ),
-      body: Text(''),
+    return const Scaffold(
+      body: Center(child: Text('Authenticator Content')),
     );
   }
 }

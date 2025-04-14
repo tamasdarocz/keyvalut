@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:keyvalut/views/Widgets/textforms/custom_divider.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../services/url_service.dart';
 import '../views/Widgets/textforms/password_text_field.dart';
 import 'credentialProvider.dart';
 import 'credential_model.dart';
@@ -50,45 +50,7 @@ class _CredentialDetailState extends State<CredentialDetail> {
     super.dispose();
   }
 
-  Future<void> _launchWebsite() async {
-    // Get raw input and clean it
-    String url = widget.credential.website ?? '';
 
-    // Handle empty input
-    if (url.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Website URL is empty')));
-      return;
-    }
-
-    // Add protocol if missing
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://$url';
-    }
-
-    try {
-      // Parse and validate URL
-      final uri = Uri.parse(url);
-
-      if (!uri.hasAbsolutePath || uri.host.isEmpty) {
-        throw FormatException('Invalid URL');
-      }
-
-      // Launch URL with error handling
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Cannot launch: ${uri.toString()}')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Invalid URL: ${e.toString()}')));
-    }
-  }
 
   bool _isEditing = false;
 
@@ -207,48 +169,17 @@ class _CredentialDetailState extends State<CredentialDetail> {
                             ),
                           ),
                           keyboardType: TextInputType.url,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.deny(
-                              RegExp(r'\s'),
-                            ), // No spaces allowed
-                          ],
-                          validator: (value) {
-                            if (value != null && value.isNotEmpty) {
-                              final cleaned = value
-                                  .replaceAll(
-                                    RegExp(r'^https?://'),
-                                    '',
-                                  ) // Remove protocol
-                                  .replaceAll(
-                                    RegExp(r'\s+'),
-                                    '',
-                                  ) // Remove whitespace
-                                  .replaceAll(
-                                    RegExp(r'/+$'),
-                                    '',
-                                  ); // Remove trailing slashes
-
-                              if (!RegExp(
-                                r'^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(/\S*)?$',
-                              ).hasMatch(cleaned)) {
-                                return 'Enter a valid domain (e.g. example.com)';
-                              }
-                            }
-                            return null;
-                          },
                         ),
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(
-                        Icons.open_in_browser,
-                        color: Colors.amber,
-                      ),
+                      icon: const Icon(Icons.open_in_browser, color: Colors.yellow),
                       onPressed: () {
-                        _launchWebsite();
-                        print('Raw website value: ${widget.credential.website}');
-
-                      },),
+                        UrlService.launchWebsite(
+                          context: context,
+                          url: widget.credential.website);
+                      },
+                    ),
                     IconButton(
                       icon: const Icon(Icons.copy, color: Colors.amber),
                       iconSize: 20,

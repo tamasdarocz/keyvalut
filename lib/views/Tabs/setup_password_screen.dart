@@ -20,7 +20,6 @@ class _SetupMasterPasswordScreenState extends State<SetupMasterPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Set Master Password')),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),

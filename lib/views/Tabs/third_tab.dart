@@ -5,13 +5,8 @@ class ThirdTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text('Api keys'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-      ),
-      body: Text('3'),
+    return const Scaffold(
+      body: Center(child: Text('API Keys Content')),
     );
   }
 }

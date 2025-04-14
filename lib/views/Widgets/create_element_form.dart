@@ -93,14 +93,7 @@ class _CreateElementFormState extends State<CreateElementForm> {
                 title: titleController.text,
                 username: usernameController.text,
                 password: passwordController.text,
-                website: websiteController.text.isNotEmpty
-                    ? websiteController.text
-                    .trim()
-                    .toLowerCase()
-                    .replaceAll(RegExp(r'^https?://'), '') // Remove protocol
-                    .replaceAll(RegExp(r'\s+'), '') // Remove whitespace
-                    .replaceAll(RegExp(r'/+$'), '') // Remove trailing slashes
-                    : null,
+                website: websiteController.text,
                 email: emailController.text.isNotEmpty ? emailController.text : null,
               );
 
