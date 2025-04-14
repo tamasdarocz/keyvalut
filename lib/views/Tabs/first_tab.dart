@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../data/database_helper.dart';
-import '../../theme/theme_provider.dart';
 import '../Widgets/create_element_form.dart';
 import '../Widgets/credentials_widget.dart';
 
