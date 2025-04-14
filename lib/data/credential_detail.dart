@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:keyvalut/views/Widgets/textforms/custom_divider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../views/Widgets/textforms/password_text_field.dart';
 import 'credentialProvider.dart';
 import 'credential_model.dart';
 import 'database_helper.dart';
@@ -20,6 +22,7 @@ class _CredentialDetailState extends State<CredentialDetail> {
   late final TextEditingController _websiteController;
   late final TextEditingController _emailController;
   late final TextEditingController _usernameController;
+  late final TextEditingController _passwordController;
   final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
 
@@ -32,6 +35,9 @@ class _CredentialDetailState extends State<CredentialDetail> {
     _usernameController = TextEditingController(
       text: widget.credential.username,
     );
+    _passwordController = TextEditingController(
+      text: widget.credential.password,
+    );
   }
 
   @override
@@ -40,34 +46,70 @@ class _CredentialDetailState extends State<CredentialDetail> {
     _websiteController.dispose();
     _emailController.dispose();
     _usernameController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _launchWebsite() async {
-    String url = _websiteController.text;
+    // Get raw input and clean it
+    String url = widget.credential.website ?? '';
+
+    // Handle empty input
+    if (url.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Website URL is empty')));
+      return;
+    }
+
+    // Add protocol if missing
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       url = 'https://$url';
     }
 
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
+    try {
+      // Parse and validate URL
+      final uri = Uri.parse(url);
+
+      if (!uri.hasAbsolutePath || uri.host.isEmpty) {
+        throw FormatException('Invalid URL');
+      }
+
+      // Launch URL with error handling
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Cannot launch: ${uri.toString()}')),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Could not launch website')));
+      ).showSnackBar(SnackBar(content: Text('Invalid URL: ${e.toString()}')));
     }
+  }
+
+  bool _isEditing = false;
+
+  Widget _buildEditableField(Widget child) {
+    return _isEditing
+        ? child
+        : AbsorbPointer(
+          child: child,
+        ); // Make fields uneditable when not in edit mode
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.amber,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+
         title: Text(widget.credential.title),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete, size: 44, color: Colors.black,),
+            icon: const Icon(Icons.delete, size: 40, color: Colors.black),
             onPressed: () async {
               final confirmed = await showDialog<bool>(
                 context: context,
@@ -100,220 +142,320 @@ class _CredentialDetailState extends State<CredentialDetail> {
       body: Form(
         key: _formKey,
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(8),
           child: ListView(
             children: [
-              TextFormField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.copy, color: Colors.amber),
-                    iconSize: 20,
-                    onPressed: () {
-                      if (widget.credential.username.isNotEmpty ?? false) { // Use widget.controller
-                        Clipboard.setData(
-                          ClipboardData(text: widget.credential.username),
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Center(child: Text('Copied!')),
+              // Title Field
+              Column(
+                children: [
+                  Row(
+                    children: [
+                      const CustomDivider(),
+                      Expanded(
+                        child: _buildEditableField(
+                          TextFormField(
+                            controller: _titleController,
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(Icons.devices),
+                              hintText: 'Required',
+                              labelText: 'Title',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(48),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter a title';
+                              }
+                              return null;
+                            },
                           ),
-                        );
-                      }
-                    },
-                  ),
-                  labelText: 'Title',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(48),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a title';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              if (widget.credential.website?.isNotEmpty ?? false)
-                TextFormField(
-                  controller: _websiteController,
-                  decoration: InputDecoration(
-                    labelText: 'Website',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(48),
-                    ),
-                    suffixIcon: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.open_in_browser, color: Colors.amber),
-                          onPressed: _launchWebsite,
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.copy, color: Colors.amber),
-                          iconSize: 20,
-                          onPressed: () {
-                            if (widget.credential.website?.isNotEmpty ?? false) { // Use widget.controller
-                              Clipboard.setData(
-                                ClipboardData(text: _websiteController.text),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Center(child: Text('Copied!')),
-                                ),
-                              );
-                            }
-                          },
-                        )
-                      ],
-                    )
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.copy, color: Colors.amber),
+                        iconSize: 20,
+                        onPressed: () {
+                          Clipboard.setData(
+                            ClipboardData(text: widget.credential.username),
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Center(child: Text('Copied!'))),
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                  // Removed readOnly property
-                  keyboardType: TextInputType.url,
-                  validator: (value) {
-                    if (value?.isNotEmpty ?? false) {
-                      final url = value!.startsWith('http') ? value : 'https://$value';
-                      final uri = Uri.tryParse(url);
-                      if (uri == null || !uri.isAbsolute) {
-                        return 'Enter a valid URL';
-                      }
-                    }
-                    return null;
-                  },
+                  const CustomDivider(),
+                ],
+              ),
+
+              // Website Field
+              if (_isEditing ||
+                  (widget.credential.website?.isNotEmpty ?? false)) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildEditableField(
+                        TextFormField(
+                          controller: _websiteController,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(Icons.http),
+                            labelText: 'Website',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(48),
+                            ),
+                          ),
+                          keyboardType: TextInputType.url,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.deny(
+                              RegExp(r'\s'),
+                            ), // No spaces allowed
+                          ],
+                          validator: (value) {
+                            if (value != null && value.isNotEmpty) {
+                              final cleaned = value
+                                  .replaceAll(
+                                    RegExp(r'^https?://'),
+                                    '',
+                                  ) // Remove protocol
+                                  .replaceAll(
+                                    RegExp(r'\s+'),
+                                    '',
+                                  ) // Remove whitespace
+                                  .replaceAll(
+                                    RegExp(r'/+$'),
+                                    '',
+                                  ); // Remove trailing slashes
+
+                              if (!RegExp(
+                                r'^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(/\S*)?$',
+                              ).hasMatch(cleaned)) {
+                                return 'Enter a valid domain (e.g. example.com)';
+                              }
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.open_in_browser,
+                        color: Colors.amber,
+                      ),
+                      onPressed: () {
+                        _launchWebsite();
+                        print('Raw website value: ${widget.credential.website}');
+
+                      },),
+                    IconButton(
+                      icon: const Icon(Icons.copy, color: Colors.amber),
+                      iconSize: 20,
+                      onPressed: () {
+                        if (widget.credential.website?.isNotEmpty ?? false) {
+                          // Use widget.controller
+                          Clipboard.setData(
+                            ClipboardData(text: _websiteController.text),
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Center(child: Text('Copied!'))),
+                          );
+                        }
+                      },
+                    ),
+                  ],
                 ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.copy, color: Colors.amber),
-                    iconSize: 20,
-                    onPressed: () {
-                      if (widget.credential.email?.isNotEmpty ?? false) { // Use widget.controller
+                const CustomDivider(),
+              ],
+
+              // Email Field
+              if (_isEditing ||
+                  (widget.credential.email?.isNotEmpty ?? false)) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildEditableField(
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: InputDecoration(
+                            prefixIcon: Icon(Icons.email),
+                            labelText: 'Email',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(48),
+                            ),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value?.isEmpty ?? true) return null;
+                            if (!RegExp(
+                              r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                            ).hasMatch(value!)) {
+                              return 'Enter a valid email address';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy, color: Colors.amber),
+                      iconSize: 20,
+                      onPressed: () {
+                        // Use widget.controller
                         Clipboard.setData(
                           ClipboardData(text: _emailController.text),
                         );
                         ScaffoldMessenger.of(context).showSnackBar(
-                           SnackBar(
-                            content: Center(child: Text('Copied!')),
-                          ),
+                          SnackBar(content: Center(child: Text('Copied!'))),
                         );
-                      }
-                    },
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(48),
-                  ),
+                      },
+                    ),
+                  ],
                 ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value?.isEmpty ?? true) return null;
-                  if (!RegExp(
-                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                  ).hasMatch(value!)) {
-                    return 'Enter a valid email address';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.copy, color: Colors.amber),
-                    iconSize: 20,
-                    onPressed: () {
-                      if (widget.credential.username.isNotEmpty ?? false) { // Use widget.controller
-                        Clipboard.setData(
-                          ClipboardData(text: widget.credential.username),
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Center(child: Text('Copied!')),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                  labelText: 'Username',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(48),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
+                const CustomDivider(),
+              ],
+
+              // Username Field
+              Column(
                 children: [
-                  Expanded(
-                    child: TextFormField(
-                      readOnly: true,
-                      obscureText: _obscurePassword,
-                      controller: TextEditingController(
-                        text: widget.credential.password,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(48),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildEditableField(
+                          TextFormField(
+                            controller: _usernameController,
+                            decoration: InputDecoration(
+                              labelText: 'Username',
+                              hintText: 'Required',
+                              prefixIcon: Icon(Icons.person),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(48),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      IconButton(
+                        icon: const Icon(Icons.copy, color: Colors.amber),
+                        iconSize: 20,
+                        onPressed: () {
+                          Clipboard.setData(
+                            ClipboardData(text: widget.credential.username),
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Center(child: Text('Copied!'))),
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: Icon(
-                      color: Colors.amber,
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                    ),
-                    onPressed:
-                        () => setState(
-                          () => _obscurePassword = !_obscurePassword,
-                        ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.copy, color: Colors.amber,),
-                    onPressed: () {
-                      Clipboard.setData(
-                        ClipboardData(text: widget.credential.password),
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Password copied')),
-                      );
-                    },
-                  ),
+                  const CustomDivider(),
                 ],
               ),
+
+              // Password Field
+              Column(
+                children: [
+                  if (_isEditing) ...[
+                    PasswordManager(controller: _passwordController),
+                    const SizedBox(height: 16),
+                  ] else ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            readOnly: true,
+                            obscureText: _obscurePassword,
+                            controller: _passwordController,
+                            decoration: InputDecoration(
+                              prefixIcon: const Icon(Icons.key),
+                              hintText: 'Required',
+                              labelText: 'Password',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(48),
+                              ),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            color: Colors.amber,
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed:
+                              () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.copy, color: Colors.amber),
+                          onPressed: () {
+                            Clipboard.setData(
+                              ClipboardData(text: widget.credential.password),
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Password copied')),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                  const CustomDivider(),
+                ],
+              ),
+              if (_isEditing) ...[
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      final updatedCredential = Credential(
+                        id: widget.credential.id,
+                        title: _titleController.text,
+                        website:
+                            _websiteController.text.isNotEmpty
+                                ? _websiteController.text
+                                : null,
+                        email: _emailController.text,
+                        username: _usernameController.text,
+                        password: _passwordController.text,
+                      );
+
+                      final provider = Provider.of<CredentialProvider>(
+                        context,
+                        listen: false,
+                      );
+                      await provider.updateCredential(updatedCredential);
+                      setState(() => _isEditing = false); // Exit edit mode
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+
+                    foregroundColor: Colors.black,
+                    minimumSize: const Size(double.infinity, 50),
+                  ),
+                  child: const Text('Update'),
+                ),
+              ],
             ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.amber,
-        onPressed: () async {
-          if (_formKey.currentState!.validate()) {
-            final updatedCredential = Credential(
-              id: widget.credential.id,
-              title: _titleController.text,
-              website: _websiteController.text,
-              email: _emailController.text,
-              username: _usernameController.text,
-              password: widget.credential.password,
-            );
+      floatingActionButton:
+          _isEditing
+              ? null
+              : FloatingActionButton(
+                backgroundColor: Theme.of(context).colorScheme.primary,
 
-            final provider = Provider.of<CredentialProvider>(
-              context,
-              listen: false,
-            );
-            await provider.updateCredential(updatedCredential);
-            if (mounted) Navigator.pop(context);
-          }
-        },
-        child: const Icon(Icons.save),
-      ),
+                onPressed: () {
+                  setState(() => _isEditing = true);
+                },
+                child: const Icon(Icons.edit),
+              ),
     );
   }
 }

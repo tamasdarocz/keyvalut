@@ -18,11 +18,8 @@ class _PasswordManagerState extends State<PasswordManager> {
   int passwordLength = 8;
   bool _showPassword = false;
 
-  // Removed: final TextEditingController passwordController = TextEditingController();
-
   @override
   void dispose() {
-    // Removed: passwordController.dispose(); // No local controller to dispose
     super.dispose();
   }
 
@@ -63,7 +60,8 @@ class _PasswordManagerState extends State<PasswordManager> {
             obscureText: !_showPassword,
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.key),
-              label: const Text('Password'),
+              hintText: 'Required',
+              label: const Text('Password (Required)'),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(48),
                 borderSide: const BorderSide(color: Colors.amber, width: 4),
@@ -85,7 +83,8 @@ class _PasswordManagerState extends State<PasswordManager> {
                     icon: const Icon(Icons.copy, color: Colors.amber),
                     iconSize: 20,
                     onPressed: () {
-                      if (widget.controller.text.isNotEmpty) { // Use widget.controller
+                      if (widget.controller.text.isNotEmpty) {
+                        // Use widget.controller
                         Clipboard.setData(
                           ClipboardData(text: widget.controller.text),
                         );
@@ -192,7 +191,8 @@ class _PasswordManagerState extends State<PasswordManager> {
                   String generatedPassword = generatePassword();
                   if (generatedPassword.isNotEmpty) {
                     setState(() {
-                      widget.controller.text = generatedPassword; // Update the passed controller
+                      widget.controller.text =
+                          generatedPassword; // Update the passed controller
                     });
                   }
                 },

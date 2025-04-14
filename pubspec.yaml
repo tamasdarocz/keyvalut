@@ -29,7 +29,10 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   sqflite: ^2.3.0
-  url_launcher: ^6.1.11
+  collection: ^1.17.2
+  url_launcher: ^6.3.1
+  shared_preferences: ^2.2.2
+  cryptography: ^2.6.2
   provider: ^6.1.4
   path: ^1.8.3
   hive: ^2.2.3

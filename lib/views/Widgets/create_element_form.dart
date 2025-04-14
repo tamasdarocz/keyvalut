@@ -59,7 +59,7 @@ class _CreateElementFormState extends State<CreateElementForm> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(widget.credential != null ? 'Edit Credential' : 'Create Credential'),
-        backgroundColor: Colors.amber,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: ListView(
         padding: EdgeInsets.all(8),
@@ -67,11 +67,11 @@ class _CreateElementFormState extends State<CreateElementForm> {
           CustomDivider(),
           TitleInputField(controller: titleController),
           CustomDivider(),
+          WebsiteInputField(controller: websiteController),
+          CustomDivider(),
           EmailInputField(controller: emailController),
           CustomDivider(),
           UsernameInputField(controller: usernameController),
-          CustomDivider(),
-          WebsiteInputField(controller: websiteController),
           CustomDivider(),
           PasswordManager(controller: passwordController),
           const SizedBox(height: 16),
@@ -87,12 +87,20 @@ class _CreateElementFormState extends State<CreateElementForm> {
                 return;
               }
 
+
               final credential = Credential(
                 id: widget.credential?.id,
                 title: titleController.text,
                 username: usernameController.text,
                 password: passwordController.text,
-                website: websiteController.text.isNotEmpty ? websiteController.text : null,
+                website: websiteController.text.isNotEmpty
+                    ? websiteController.text
+                    .trim()
+                    .toLowerCase()
+                    .replaceAll(RegExp(r'^https?://'), '') // Remove protocol
+                    .replaceAll(RegExp(r'\s+'), '') // Remove whitespace
+                    .replaceAll(RegExp(r'/+$'), '') // Remove trailing slashes
+                    : null,
                 email: emailController.text.isNotEmpty ? emailController.text : null,
               );
 
@@ -115,8 +123,8 @@ class _CreateElementFormState extends State<CreateElementForm> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.amber,
-              foregroundColor: Colors.black,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.primary
             ),
             child: Text(widget.credential != null ? 'Update' : 'Save'),
           )

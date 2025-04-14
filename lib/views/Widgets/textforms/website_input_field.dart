@@ -6,17 +6,32 @@ class WebsiteInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return TextFormField(
       controller: controller,
-      style: TextStyle(fontSize: 20),
+      style: const TextStyle(fontSize: 20),
       keyboardType: TextInputType.url,
+      validator: (value) {
+        if (value != null && value.isNotEmpty) {
+          final cleaned = value
+              .trim()
+              .toLowerCase()
+              .replaceAll(RegExp(r'^https?://'), '')
+              .replaceAll(RegExp(r'^www\.'), '');
+
+          if (RegExp(r'^([a-z0-9-]+\.)+[a-z]{2,}(/.*)?$').hasMatch(cleaned)) {
+            return 'Enter domain like: google.com';
+          }
+        }
+        return null;
+      },
       decoration: InputDecoration(
-        prefixIcon: Icon(Icons.alternate_email),
+        prefixIcon: const Icon(Icons.http),
+        hintText: 'google.com',
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(48),
-          borderSide: BorderSide(color: Colors.amber, width: 4),
+          borderSide: const BorderSide(color: Colors.amber, width: 4),
         ),
-        label: Text('Website'),
+        label: const Text('Website'),
       ),
     );
   }

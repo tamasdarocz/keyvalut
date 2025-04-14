@@ -11,7 +11,8 @@ class TitleInputField extends StatelessWidget {
       style: TextStyle(fontSize: 20),
       decoration: InputDecoration(
         prefixIcon: Icon(Icons.devices),
-        label: Text('Title:'),
+        label: Text('Title: (Required)'),
+        hintText: 'Required',
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(48),
           borderSide: BorderSide(color: Colors.amber, width: 4),
