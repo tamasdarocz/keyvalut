@@ -50,16 +50,14 @@ class _CredentialDetailState extends State<CredentialDetail> {
     super.dispose();
   }
 
-
-
   bool _isEditing = false;
 
   Widget _buildEditableField(Widget child) {
     return _isEditing
         ? child
         : AbsorbPointer(
-          child: child,
-        ); // Make fields uneditable when not in edit mode
+      child: child,
+    ); // Make fields uneditable when not in edit mode
   }
 
   @override
@@ -67,7 +65,6 @@ class _CredentialDetailState extends State<CredentialDetail> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.primary,
-
         title: Text(widget.credential.title),
         actions: [
           IconButton(
@@ -75,21 +72,20 @@ class _CredentialDetailState extends State<CredentialDetail> {
             onPressed: () async {
               final confirmed = await showDialog<bool>(
                 context: context,
-                builder:
-                    (context) => AlertDialog(
-                      title: const Text('Delete Credential'),
-                      content: const Text('Are you sure you want to delete?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Delete'),
-                        ),
-                      ],
+                builder: (context) => AlertDialog(
+                  title: const Text('Delete Credential'),
+                  content: const Text('Are you sure you want to delete?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel'),
                     ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Delete'),
+                    ),
+                  ],
+                ),
               );
               if (confirmed == true && widget.credential.id != null) {
                 await DatabaseHelper.instance.deleteCredential(
@@ -176,8 +172,8 @@ class _CredentialDetailState extends State<CredentialDetail> {
                       icon: const Icon(Icons.open_in_browser, color: Colors.yellow),
                       onPressed: () {
                         UrlService.launchWebsite(
-                          context: context,
-                          url: widget.credential.website);
+                            context: context,
+                            url: widget.credential.website);
                       },
                     ),
                     IconButton(
@@ -185,7 +181,6 @@ class _CredentialDetailState extends State<CredentialDetail> {
                       iconSize: 20,
                       onPressed: () {
                         if (widget.credential.website?.isNotEmpty ?? false) {
-                          // Use widget.controller
                           Clipboard.setData(
                             ClipboardData(text: _websiteController.text),
                           );
@@ -233,7 +228,6 @@ class _CredentialDetailState extends State<CredentialDetail> {
                       icon: const Icon(Icons.copy, color: Colors.amber),
                       iconSize: 20,
                       onPressed: () {
-                        // Use widget.controller
                         Clipboard.setData(
                           ClipboardData(text: _emailController.text),
                         );
@@ -316,10 +310,8 @@ class _CredentialDetailState extends State<CredentialDetail> {
                                 ? Icons.visibility_off
                                 : Icons.visibility,
                           ),
-                          onPressed:
-                              () => setState(
-                                () => _obscurePassword = !_obscurePassword,
-                              ),
+                          onPressed: () =>
+                              setState(() => _obscurePassword = !_obscurePassword),
                         ),
                         IconButton(
                           icon: const Icon(Icons.copy, color: Colors.amber),
@@ -346,10 +338,9 @@ class _CredentialDetailState extends State<CredentialDetail> {
                       final updatedCredential = Credential(
                         id: widget.credential.id,
                         title: _titleController.text,
-                        website:
-                            _websiteController.text.isNotEmpty
-                                ? _websiteController.text
-                                : null,
+                        website: _websiteController.text.isNotEmpty
+                            ? _websiteController.text
+                            : null,
                         email: _emailController.text,
                         username: _usernameController.text,
                         password: _passwordController.text,
@@ -365,7 +356,6 @@ class _CredentialDetailState extends State<CredentialDetail> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
-
                     foregroundColor: Colors.black,
                     minimumSize: const Size(double.infinity, 50),
                   ),
@@ -376,17 +366,15 @@ class _CredentialDetailState extends State<CredentialDetail> {
           ),
         ),
       ),
-      floatingActionButton:
-          _isEditing
-              ? null
-              : FloatingActionButton(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-
-                onPressed: () {
-                  setState(() => _isEditing = true);
-                },
-                child: const Icon(Icons.edit),
-              ),
+      floatingActionButton: _isEditing
+          ? null
+          : FloatingActionButton(
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        onPressed: () {
+          setState(() => _isEditing = true);
+        },
+        child: const Icon(Icons.edit),
+      ),
     );
   }
 }

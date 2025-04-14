@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../Clients/auth_service.dart';
+import '../../services/auth_service.dart';
 import 'homepage.dart';
 
 class SetupMasterPasswordScreen extends StatefulWidget {
@@ -78,6 +78,11 @@ class _SetupMasterPasswordScreenState extends State<SetupMasterPasswordScreen> {
 
     setState(() => _isLoading = true);
     await _authService.setMasterPassword(_passwordController.text);
+
+    if (await _authService.isBiometricAvailable()) {
+      await _authService.setBiometricEnabled(true);
+    }
+
     setState(() => _isLoading = false);
 
     Navigator.pushReplacement(

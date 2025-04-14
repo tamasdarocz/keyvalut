@@ -1,35 +1,87 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'light_theme.dart';
+import 'dark_theme.dart';
+import 'night_owl_theme.dart';
+import 'space_theme.dart';
+import 'deep_ocean_theme.dart';
+import 'solarized_dark_theme.dart';
+import 'skyblue_theme.dart';
+import 'solarized_light_theme.dart';
+
+enum AppTheme {
+  light,
+  dark,
+  nightOwl,
+  space,
+  deepOcean,
+  solarizedDark,
+  skyBlue,
+  solarizedLight,
+}
 
 class ThemeProvider with ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.light;
+  AppTheme _currentTheme = AppTheme.light;
   bool _isInitialized = false;
-  static const String _prefsKey = 'isDarkMode';
+  static const String _prefsKey = 'selectedTheme';
 
   ThemeProvider() {
     _initializeTheme();
   }
 
-  ThemeMode get themeMode => _themeMode;
-  bool get isDarkMode => _themeMode == ThemeMode.dark;
+  AppTheme get currentTheme => _currentTheme;
+  ThemeMode get themeMode {
+    switch (_currentTheme) {
+      case AppTheme.light:
+      case AppTheme.skyBlue:
+      case AppTheme.solarizedLight:
+        return ThemeMode.light;
+      case AppTheme.dark:
+      case AppTheme.nightOwl:
+      case AppTheme.space:
+      case AppTheme.deepOcean:
+      case AppTheme.solarizedDark:
+        return ThemeMode.dark;
+    }
+  }
   bool get isInitialized => _isInitialized;
 
   Future<void> _initializeTheme() async {
     final prefs = await SharedPreferences.getInstance();
-    _themeMode = (prefs.getBool(_prefsKey) ?? false)
-        ? ThemeMode.dark
-        : ThemeMode.light;
+    final themeString = prefs.getString(_prefsKey) ?? 'light';
+    _currentTheme = AppTheme.values.firstWhere(
+          (theme) => theme.toString().split('.').last == themeString,
+      orElse: () => AppTheme.light,
+    );
     _isInitialized = true;
     notifyListeners();
   }
 
-  Future<void> toggleTheme() async {
-    _themeMode = _themeMode == ThemeMode.light
-        ? ThemeMode.dark
-        : ThemeMode.light;
+  Future<void> setTheme(AppTheme theme) async {
+    _currentTheme = theme;
     notifyListeners();
-
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_prefsKey, _themeMode == ThemeMode.dark);
+    await prefs.setString(_prefsKey, theme.toString().split('.').last);
+  }
+
+  ThemeData get themeData {
+    switch (_currentTheme) {
+      case AppTheme.light:
+        return buildLightTheme();
+      case AppTheme.dark:
+        return buildDarkTheme();
+      case AppTheme.nightOwl:
+        return buildNightOwlTheme();
+      case AppTheme.space:
+        return buildSpaceTheme();
+      case AppTheme.deepOcean:
+        return buildDeepOceanTheme();
+      case AppTheme.solarizedDark:
+        return buildSolarizedDarkTheme();
+      case AppTheme.skyBlue:
+        return buildSkyBlueTheme();
+      case AppTheme.solarizedLight:
+        return buildSolarizedLightTheme();
+    }
   }
 }

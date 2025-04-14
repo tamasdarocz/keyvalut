@@ -87,7 +87,6 @@ class _CreateElementFormState extends State<CreateElementForm> {
                 return;
               }
 
-
               final credential = Credential(
                 id: widget.credential?.id,
                 title: titleController.text,
@@ -117,9 +116,10 @@ class _CreateElementFormState extends State<CreateElementForm> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Theme.of(context).colorScheme.primary
+              foregroundColor: Colors.black, // Changed to black for contrast
+              minimumSize: const Size(double.infinity, 50), // Match the style of credential_detail.dart
             ),
-            child: Text(widget.credential != null ? 'Update' : 'Save'),
+            child: Text(widget.credential != null ? 'Update' : 'Create'), // Changed "Save" to "Create"
           )
         ],
       ),

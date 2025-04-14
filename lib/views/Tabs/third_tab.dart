@@ -5,8 +5,6 @@ class ThirdTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('API Keys Content')),
-    );
+    return const Center(child: Text('API Keys Tab'));
   }
 }
