@@ -1,6 +1,5 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'credential_model.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -10,79 +9,48 @@ class DatabaseHelper {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('credentials.db');
+    _database = await _initDB('keyvalut.db');
     return _database!;
   }
 
-  Future<Database> _initDB(String fileName) async {
+  Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
-    return openDatabase(
-      join(dbPath, fileName),
+    final path = join(dbPath, filePath);
+
+    return await openDatabase(
+      path,
       version: 1,
-      onCreate: _createDB,
+      onCreate: (db, version) async {
+        await db.execute('''
+          CREATE TABLE authenticators (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            service_name TEXT NOT NULL,
+            totp_secret TEXT NOT NULL
+          )
+        ''');
+        // Add other tables (e.g., for passwords, API keys) if needed
+      },
     );
   }
 
-  Future<void> _createDB(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE credentials (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        email TEXT,
-        username TEXT NOT NULL,
-        website TEXT,
-        password TEXT NOT NULL
-      )
-    ''');
+  Future<List<Map<String, dynamic>>> getAuthenticators() async {
+    final db = await database;
+    return await db.query('authenticators');
   }
 
-  // INSERT
-  Future<int> insertCredential(Credential credential) async {
+  Future<void> insertAuthenticator(Map<String, dynamic> entry) async {
     final db = await database;
-    return db.insert(
-      'credentials',
-      credential.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('authenticators', entry);
   }
 
-  // READ ALL
-  Future<List<Credential>> getCredentials() async {
+  Future<void> clearAll() async {
     final db = await database;
-    final maps = await db.query('credentials');
-    return maps.map((map) => Credential.fromMap(map)).toList();
+    await db.delete('authenticators');
+    // Clear other tables if needed
   }
 
-  // READ SINGLE
-  Future<Credential?> getCredentialById(int id) async {
+  Future<void> close() async {
     final db = await database;
-    final maps = await db.query(
-      'credentials',
-      where: 'id = ?',
-      whereArgs: [id],
-      limit: 1,
-    );
-    return maps.isNotEmpty ? Credential.fromMap(maps.first) : null;
-  }
-
-  // UPDATE
-  Future<int> updateCredential(Credential credential) async {
-    final db = await database;
-    return db.update(
-      'credentials',
-      credential.toMap(),
-      where: 'id = ?',
-      whereArgs: [credential.id],
-    );
-  }
-
-  // DELETE
-  Future<int> deleteCredential(int id) async {
-    final db = await database;
-    return db.delete(
-      'credentials',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.close();
   }
 }
