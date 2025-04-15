@@ -1,5 +1,5 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../services/password_generator.dart';
 
 class PasswordTextField extends StatefulWidget {
   final TextEditingController controller;
@@ -20,35 +20,12 @@ class PasswordTextField extends StatefulWidget {
 class _PasswordTextFieldState extends State<PasswordTextField> {
   bool _isObscured = true;
   bool _showPasswordOptions = false;
-  bool _includeUppercase = false;
-  bool _includeLowercase = true;
-  bool _includeNumbers = false;
-  bool _includeSymbols = false;
-  int _passwordLength = 12;
+  late PasswordGenerator _passwordGenerator;
 
-  void _generatePassword() {
-    const String lowercase = 'abcdefghijklmnopqrstuvwxyz';
-    const String uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const String numbers = '0123456789';
-    const String symbols = '!@#\$%^&*()_+-=[]{}|;:,.<>?';
-
-    String chars = '';
-    if (_includeLowercase) chars += lowercase;
-    if (_includeUppercase) chars += uppercase;
-    if (_includeNumbers) chars += numbers;
-    if (_includeSymbols) chars += symbols;
-
-    if (chars.isEmpty) {
-      chars = lowercase; // Default to lowercase if no options are selected
-    }
-
-    final Random random = Random();
-    String password = '';
-    for (int i = 0; i < _passwordLength; i++) {
-      password += chars[random.nextInt(chars.length)];
-    }
-
-    widget.controller.text = password;
+  @override
+  void initState() {
+    super.initState();
+    _passwordGenerator = PasswordGenerator();
   }
 
   @override
@@ -91,56 +68,63 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
         if (_showPasswordOptions) ...[
           const SizedBox(height: 8),
           const Text('Password Generator Options'),
-          CheckboxListTile(
-            title: const Text('Include Uppercase Letters'),
-            value: _includeUppercase,
-            onChanged: (value) {
-              setState(() {
-                _includeUppercase = value!;
-              });
-            },
-          ),
-          CheckboxListTile(
-            title: const Text('Include Lowercase Letters'),
-            value: _includeLowercase,
-            onChanged: (value) {
-              setState(() {
-                _includeLowercase = value!;
-              });
-            },
-          ),
-          CheckboxListTile(
-            title: const Text('Include Numbers'),
-            value: _includeNumbers,
-            onChanged: (value) {
-              setState(() {
-                _includeNumbers = value!;
-              });
-            },
-          ),
-          CheckboxListTile(
-            title: const Text('Include Symbols'),
-            value: _includeSymbols,
-            onChanged: (value) {
-              setState(() {
-                _includeSymbols = value!;
-              });
-            },
+          Wrap(
+            spacing: 8.0,
+            children: [
+              ChoiceChip(
+                label: const Text('Uppercase'),
+                selected: _passwordGenerator.includeUppercase,
+                onSelected: (selected) {
+                  setState(() {
+                    _passwordGenerator.includeUppercase = selected;
+                  });
+                },
+              ),
+              ChoiceChip(
+                label: const Text('Lowercase'),
+                selected: _passwordGenerator.includeLowercase,
+                onSelected: (selected) {
+                  setState(() {
+                    _passwordGenerator.includeLowercase = selected;
+                  });
+                },
+              ),
+              ChoiceChip(
+                label: const Text('Numbers'),
+                selected: _passwordGenerator.includeNumbers,
+                onSelected: (selected) {
+                  setState(() {
+                    _passwordGenerator.includeNumbers = selected;
+                  });
+                },
+              ),
+              ChoiceChip(
+                label: const Text('Symbols'),
+                selected: _passwordGenerator.includeSymbols,
+                onSelected: (selected) {
+                  setState(() {
+                    _passwordGenerator.includeSymbols = selected;
+                  });
+                },
+              ),
+            ],
           ),
           Slider(
-            value: _passwordLength.toDouble(),
+            value: _passwordGenerator.passwordLength.toDouble(),
             min: 8,
             max: 32,
             divisions: 24,
-            label: _passwordLength.toString(),
+            label: _passwordGenerator.passwordLength.toString(),
             onChanged: (value) {
               setState(() {
-                _passwordLength = value.toInt();
+                _passwordGenerator.passwordLength = value.toInt();
               });
             },
           ),
           ElevatedButton(
-            onPressed: _generatePassword,
+            onPressed: () {
+              widget.controller.text = _passwordGenerator.generatePassword();
+            },
             child: const Text('Generate Password'),
           ),
         ],
