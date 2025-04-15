@@ -37,7 +37,6 @@ dependencies:
   url_launcher: ^6.3.1
   shared_preferences: ^2.5.3
   cryptography: ^2.6.2
-  dart_otp: ^1.1.2
   qr_flutter: ^4.1.0
   flutter_secure_storage: ^9.2.4
   collection: ^1.17.2
