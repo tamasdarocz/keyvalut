@@ -1,211 +1,150 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
-class PasswordManager extends StatefulWidget {
+class PasswordTextField extends StatefulWidget {
   final TextEditingController controller;
-  const PasswordManager({super.key, required this.controller});
+  final String labelText;
+  final String? Function(String?)? validator;
+
+  const PasswordTextField({
+    super.key,
+    required this.controller,
+    required this.labelText,
+    this.validator,
+  });
 
   @override
-  State<PasswordManager> createState() => _PasswordManagerState();
+  State<PasswordTextField> createState() => _PasswordTextFieldState();
 }
 
-class _PasswordManagerState extends State<PasswordManager> {
-  bool includeUppercase = true;
-  bool includeLowercase = true;
-  bool includeNumbers = true;
-  bool includeSpecial = true;
-  int passwordLength = 8;
-  bool _showPassword = false;
+class _PasswordTextFieldState extends State<PasswordTextField> {
+  bool _isObscured = true;
+  bool _showPasswordOptions = false;
+  bool _includeUppercase = false;
+  bool _includeLowercase = true;
+  bool _includeNumbers = false;
+  bool _includeSymbols = false;
+  int _passwordLength = 12;
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  String generatePassword() {
-    String uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    String lowercase = 'abcdefghijklmnopqrstuvwxyz';
-    String numbers = '0123456789';
-    String special = '!@#\$%^&*()_+-=[]{}|;:,.<>?';
+  void _generatePassword() {
+    const String lowercase = 'abcdefghijklmnopqrstuvwxyz';
+    const String uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const String numbers = '0123456789';
+    const String symbols = '!@#\$%^&*()_+-=[]{}|;:,.<>?';
 
     String chars = '';
-    if (includeUppercase) chars += uppercase;
-    if (includeLowercase) chars += lowercase;
-    if (includeNumbers) chars += numbers;
-    if (includeSpecial) chars += special;
+    if (_includeLowercase) chars += lowercase;
+    if (_includeUppercase) chars += uppercase;
+    if (_includeNumbers) chars += numbers;
+    if (_includeSymbols) chars += symbols;
 
-    if (chars.isEmpty) return '';
-
-    String password = '';
-    Random random = Random();
-    for (int i = 0; i < passwordLength; i++) {
-      int randomIndex = random.nextInt(chars.length);
-      password += chars[randomIndex];
+    if (chars.isEmpty) {
+      chars = lowercase; // Default to lowercase if no options are selected
     }
 
-    return password;
+    final Random random = Random();
+    String password = '';
+    for (int i = 0; i < _passwordLength; i++) {
+      password += chars[random.nextInt(chars.length)];
+    }
+
+    widget.controller.text = password;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(4.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: widget.controller, // Use the passed controller
-            style: const TextStyle(fontSize: 20),
-            obscureText: !_showPassword,
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.key),
-              hintText: 'Required',
-              label: const Text('Password (Required)'),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(48),
-                borderSide: BorderSide(color:Theme.of(context).colorScheme.primary, width: 4),
-              ),
-              suffixIcon: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.remove_red_eye,
-                      color: _showPassword ? Theme.of(context).colorScheme.primary : Colors.grey,
-                    ),
-                    iconSize: 20,
-                    onPressed: () {
-                      setState(() => _showPassword = !_showPassword);
-                    },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: widget.controller,
+          obscureText: _isObscured,
+          decoration: InputDecoration(
+            labelText: widget.labelText,
+            border: const OutlineInputBorder(),
+            suffixIcon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    _isObscured ? Icons.visibility : Icons.visibility_off,
                   ),
-                  IconButton(
-                    icon: Icon(Icons.copy, color: Theme.of(context).colorScheme.primary),
-                    iconSize: 20,
-                    onPressed: () {
-                      if (widget.controller.text.isNotEmpty) {
-                        // Use widget.controller
-                        Clipboard.setData(
-                          ClipboardData(text: widget.controller.text),
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Center(child: Text('Copied!')),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ],
-              ),
+                  onPressed: () {
+                    setState(() {
+                      _isObscured = !_isObscured;
+                    });
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () {
+                    setState(() {
+                      _showPasswordOptions = !_showPasswordOptions;
+                    });
+                  },
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(
-                    value: includeUppercase,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        includeUppercase = value ?? false;
-                      });
-                    },
-                  ),
-                  const Text('Uppercase'),
-                ],
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(
-                    value: includeLowercase,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        includeLowercase = value ?? false;
-                      });
-                    },
-                  ),
-                  const Text('Lowercase'),
-                ],
-              ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(
-                    value: includeNumbers,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        includeNumbers = value ?? false;
-                      });
-                    },
-                  ),
-                  const Text('Numbers'),
-                ],
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(
-                    value: includeSpecial,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        includeSpecial = value ?? false;
-                      });
-                    },
-                  ),
-                  const Text('Specials'),
-                ],
-              ),
-            ],
-          ),
-          Slider(
-            value: passwordLength.toDouble(),
-            thumbColor: Theme.of(context).colorScheme.primary,
-            activeColor: Theme.of(context).colorScheme.primary,
-            min: 4,
-            max: 32,
-            divisions: 28,
-            label: passwordLength.toString(),
-            onChanged: (double value) {
+          validator: widget.validator,
+        ),
+        if (_showPasswordOptions) ...[
+          const SizedBox(height: 8),
+          const Text('Password Generator Options'),
+          CheckboxListTile(
+            title: const Text('Include Uppercase Letters'),
+            value: _includeUppercase,
+            onChanged: (value) {
               setState(() {
-                passwordLength = value.toInt();
+                _includeUppercase = value!;
               });
             },
           ),
-          Text('Password Length: $passwordLength'),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  String generatedPassword = generatePassword();
-                  if (generatedPassword.isNotEmpty) {
-                    setState(() {
-                      widget.controller.text =
-                          generatedPassword; // Update the passed controller
-                    });
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.black,
-                ),
-                child: const Text('Generate Password'),
-              ),
-            ],
+          CheckboxListTile(
+            title: const Text('Include Lowercase Letters'),
+            value: _includeLowercase,
+            onChanged: (value) {
+              setState(() {
+                _includeLowercase = value!;
+              });
+            },
+          ),
+          CheckboxListTile(
+            title: const Text('Include Numbers'),
+            value: _includeNumbers,
+            onChanged: (value) {
+              setState(() {
+                _includeNumbers = value!;
+              });
+            },
+          ),
+          CheckboxListTile(
+            title: const Text('Include Symbols'),
+            value: _includeSymbols,
+            onChanged: (value) {
+              setState(() {
+                _includeSymbols = value!;
+              });
+            },
+          ),
+          Slider(
+            value: _passwordLength.toDouble(),
+            min: 8,
+            max: 32,
+            divisions: 24,
+            label: _passwordLength.toString(),
+            onChanged: (value) {
+              setState(() {
+                _passwordLength = value.toInt();
+              });
+            },
+          ),
+          ElevatedButton(
+            onPressed: _generatePassword,
+            child: const Text('Generate Password'),
           ),
         ],
-      ),
+      ],
     );
   }
 }
