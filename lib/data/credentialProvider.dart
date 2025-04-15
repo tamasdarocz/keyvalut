@@ -1,38 +1,36 @@
-import 'package:flutter/foundation.dart';
-import 'package:keyvalut/data/credential_model.dart';
-import 'package:keyvalut/data/database_helper.dart';
+import 'package:flutter/material.dart';
+import '../data/database_helper.dart';
 
 class CredentialProvider with ChangeNotifier {
-  List<Credential> _credentials = [];
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  List<Map<String, dynamic>> _authenticatorEntries = [];
 
-  List<Credential> get credentials => _credentials;
+  List<Map<String, dynamic>> get authenticatorEntries => _authenticatorEntries;
 
   CredentialProvider() {
-    loadCredentials();
+    _loadAuthenticatorEntries();
   }
 
-  Future<void> loadCredentials() async {
-    _credentials = await DatabaseHelper.instance.getCredentials(); // Changed from getAllCredentials to getCredentials
+  Future<void> _loadAuthenticatorEntries() async {
+    final entries = await _dbHelper.getAuthenticators();
+    _authenticatorEntries = entries;
     notifyListeners();
   }
 
-  Future<void> addCredential(Credential credential) async {
-    await DatabaseHelper.instance.insertCredential(credential);
-    await loadCredentials();
+  Future<void> addAuthenticatorEntry({
+    required String serviceName,
+    required String totpSecret,
+  }) async {
+    await _dbHelper.insertAuthenticator({
+      'service_name': serviceName,
+      'totp_secret': totpSecret,
+    });
+    await _loadAuthenticatorEntries();
   }
 
-  Future<void> updateCredential(Credential credential) async {
-    await DatabaseHelper.instance.updateCredential(credential);
-    await loadCredentials();
-  }
-
-  Future<void> deleteCredential(int id) async {
-    await DatabaseHelper.instance.deleteCredential(id);
-    await loadCredentials();
-  }
-
-  void clearCredentials() {
-    _credentials = [];
+  Future<void> clearCredentials() async {
+    await _dbHelper.clearAll();
+    _authenticatorEntries = [];
     notifyListeners();
   }
 }
