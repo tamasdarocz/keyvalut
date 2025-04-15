@@ -1,34 +1,38 @@
 import 'package:flutter/foundation.dart';
-import 'credential_model.dart';
-import 'database_helper.dart';
+import 'package:keyvalut/data/credential_model.dart';
+import 'package:keyvalut/data/database_helper.dart';
 
 class CredentialProvider with ChangeNotifier {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   List<Credential> _credentials = [];
 
   List<Credential> get credentials => _credentials;
 
-  // Load credentials and notify listeners
+  CredentialProvider() {
+    loadCredentials();
+  }
+
   Future<void> loadCredentials() async {
-    _credentials = await _dbHelper.getCredentials();
-    notifyListeners(); // Update UI after loading
+    _credentials = await DatabaseHelper.instance.getCredentials(); // Changed from getAllCredentials to getCredentials
+    notifyListeners();
   }
 
-  // Add credential and refresh list
   Future<void> addCredential(Credential credential) async {
-    await _dbHelper.insertCredential(credential);
-    await loadCredentials(); // Reload data and notify
+    await DatabaseHelper.instance.insertCredential(credential);
+    await loadCredentials();
   }
 
-  // Update credential and refresh list
   Future<void> updateCredential(Credential credential) async {
-    await _dbHelper.updateCredential(credential);
-    await loadCredentials(); // Reload data and notify
+    await DatabaseHelper.instance.updateCredential(credential);
+    await loadCredentials();
   }
 
-  // Delete credential and refresh list
   Future<void> deleteCredential(int id) async {
-    await _dbHelper.deleteCredential(id);
-    await loadCredentials(); // Reload data and notify
+    await DatabaseHelper.instance.deleteCredential(id);
+    await loadCredentials();
+  }
+
+  void clearCredentials() {
+    _credentials = [];
+    notifyListeners();
   }
 }
