@@ -64,7 +64,7 @@ class _PasswordManagerState extends State<PasswordManager> {
               label: const Text('Password (Required)'),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(48),
-                borderSide: const BorderSide(color: Colors.amber, width: 4),
+                borderSide: BorderSide(color:Theme.of(context).colorScheme.primary, width: 4),
               ),
               suffixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -72,7 +72,7 @@ class _PasswordManagerState extends State<PasswordManager> {
                   IconButton(
                     icon: Icon(
                       Icons.remove_red_eye,
-                      color: _showPassword ? Colors.amber : Colors.grey,
+                      color: _showPassword ? Theme.of(context).colorScheme.primary : Colors.grey,
                     ),
                     iconSize: 20,
                     onPressed: () {
@@ -80,7 +80,7 @@ class _PasswordManagerState extends State<PasswordManager> {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.copy, color: Colors.amber),
+                    icon: Icon(Icons.copy, color: Theme.of(context).colorScheme.primary),
                     iconSize: 20,
                     onPressed: () {
                       if (widget.controller.text.isNotEmpty) {
@@ -169,8 +169,8 @@ class _PasswordManagerState extends State<PasswordManager> {
           ),
           Slider(
             value: passwordLength.toDouble(),
-            thumbColor: Colors.amber,
-            activeColor: Colors.amber,
+            thumbColor: Theme.of(context).colorScheme.primary,
+            activeColor: Theme.of(context).colorScheme.primary,
             min: 4,
             max: 32,
             divisions: 28,
@@ -197,7 +197,7 @@ class _PasswordManagerState extends State<PasswordManager> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.yellow,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Colors.black,
                 ),
                 child: const Text('Generate Password'),

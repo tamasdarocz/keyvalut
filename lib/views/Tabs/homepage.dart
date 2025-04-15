@@ -153,7 +153,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentPageIndex,
         onTap: _navigateBottomBar,
-        selectedItemColor: Colors.amber,
+        selectedItemColor: Theme.of(context).colorScheme.secondary,
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.key), label: 'Passwords'),
@@ -290,6 +290,32 @@ class _SettingsMenuState extends State<SettingsMenu> {
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
             ),
+            Consumer<ThemeProvider>(
+              builder: (context, themeProvider, child) {
+                return ListTile(
+                  title: const Text('Select Theme'),
+                  trailing: DropdownButton<AppTheme>(
+                    value: themeProvider.currentTheme,
+                    onChanged: (AppTheme? newTheme) {
+                      if (newTheme != null) {
+                        themeProvider.setTheme(newTheme);
+                      }
+                    },
+                    items: AppTheme.values.map((AppTheme theme) {
+                      return DropdownMenuItem<AppTheme>(
+                        value: theme,
+                        child: Text(
+                          theme.toString().split('.').last.replaceAllMapped(
+                            RegExp(r'([A-Z])'),
+                                (m) => ' ${m[1]}',
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                );
+              },
+            ),
             Card(
               elevation: 2,
               child: Column(
@@ -322,48 +348,29 @@ class _SettingsMenuState extends State<SettingsMenu> {
                 ],
               ),
             ),
-            SwitchListTile(
-              title: const Text('Require biometrics on resume'),
-              subtitle: const Text('Prompt for biometrics instead of logging out after timeout'),
-              value: _requireBiometricsOnResume,
-              onChanged: _biometricAvailable ? _toggleRequireBiometricsOnResume : null,
-              activeColor: Theme.of(context).colorScheme.primary,
-              inactiveTrackColor: Colors.grey,
-            ),
-            Consumer<ThemeProvider>(
-              builder: (context, themeProvider, child) {
-                return ListTile(
-                  title: const Text('Select Theme'),
-                  trailing: DropdownButton<AppTheme>(
-                    value: themeProvider.currentTheme,
-                    onChanged: (AppTheme? newTheme) {
-                      if (newTheme != null) {
-                        themeProvider.setTheme(newTheme);
-                      }
-                    },
-                    items: AppTheme.values.map((AppTheme theme) {
-                      return DropdownMenuItem<AppTheme>(
-                        value: theme,
-                        child: Text(
-                          theme.toString().split('.').last.replaceAllMapped(
-                            RegExp(r'([A-Z])'),
-                                (m) => ' ${m[1]}',
-                          ),
-                        ),
-                      );
-                    }).toList(),
+            Card(
+              elevation: 2,
+              child: Column(
+                children: [
+                  SwitchListTile(
+                    title: const Text('Require biometrics on resume'),
+                    subtitle: const Text('Prompt for biometrics instead of logging out after timeout'),
+                    value: _requireBiometricsOnResume,
+                    onChanged: _biometricAvailable ? _toggleRequireBiometricsOnResume : null,
+                    activeColor: Theme.of(context).colorScheme.primary,
+                    inactiveTrackColor: Colors.grey,
                   ),
-                );
-              },
+                  SwitchListTile(
+                    title: const Text('Enable Biometric Authentication'),
+                    value: _biometricEnabled,
+                    onChanged: _biometricAvailable ? _toggleBiometric : null,
+                    activeColor: Theme.of(context).colorScheme.primary,
+                    inactiveTrackColor: Colors.grey,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
-            SwitchListTile(
-              title: const Text('Enable Biometric Authentication'),
-              value: _biometricEnabled,
-              onChanged: _biometricAvailable ? _toggleBiometric : null,
-              activeColor: Theme.of(context).colorScheme.primary,
-              inactiveTrackColor: Colors.grey,
-            ),
-            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(

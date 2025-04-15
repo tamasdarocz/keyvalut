@@ -7,8 +7,7 @@ ThemeData buildDeepOceanTheme() {
     colorScheme: const ColorScheme.dark(
       primary: Color(0xFF468faf),   // Teal for app bars, FAB
       secondary: Color(0xFF778da9), // Grayish-blue accent
-      surface: Color(0xFF1b263b),   // Slightly lighter panels
-      background: Color(0xFF0d1b2a),
+      surface: Color(0xFF1b263b),
     ),
     cardColor: const Color(0xFF1b263b), // Cards match surface
     textTheme: const TextTheme(

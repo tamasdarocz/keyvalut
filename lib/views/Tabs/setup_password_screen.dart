@@ -62,6 +62,8 @@ class _SetupMasterPasswordScreenState extends State<SetupMasterPasswordScreen> {
     );
   }
 
+  // Login Password length
+
   String? _validatePassword(String? value) {
     if (value?.isEmpty ?? true) return 'Required';
     if (value!.length < 4) return 'Minimum 4 characters';

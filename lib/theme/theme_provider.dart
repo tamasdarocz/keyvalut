@@ -8,6 +8,9 @@ import 'deep_ocean_theme.dart';
 import 'solarized_dark_theme.dart';
 import 'skyblue_theme.dart';
 import 'solarized_light_theme.dart';
+import 'red_theme.dart';
+import 'green_theme.dart';
+import 'green_dark_theme.dart';
 
 enum AppTheme {
   light,
@@ -18,6 +21,9 @@ enum AppTheme {
   solarizedDark,
   skyBlue,
   solarizedLight,
+  red,
+  green,
+  greenDark,
 }
 
 class ThemeProvider with ChangeNotifier {
@@ -41,6 +47,12 @@ class ThemeProvider with ChangeNotifier {
       case AppTheme.space:
       case AppTheme.deepOcean:
       case AppTheme.solarizedDark:
+        return ThemeMode.dark;
+      case AppTheme.red:
+        return ThemeMode.light;
+      case AppTheme.green:
+        return ThemeMode.light;
+      case AppTheme.greenDark:
         return ThemeMode.dark;
     }
   }
@@ -82,6 +94,12 @@ class ThemeProvider with ChangeNotifier {
         return buildSkyBlueTheme();
       case AppTheme.solarizedLight:
         return buildSolarizedLightTheme();
+      case AppTheme.red:
+        return buildRedTheme();
+      case AppTheme.green:
+        return buildGreenTheme();
+      case AppTheme.greenDark:
+        return buildGreenDarkTheme();
     }
   }
 }

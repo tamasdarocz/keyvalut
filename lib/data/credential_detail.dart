@@ -131,7 +131,7 @@ class _CredentialDetailState extends State<CredentialDetail> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.copy, color: Colors.amber),
+                        icon: Icon(Icons.copy, color: Theme.of(context).colorScheme.primary,),
                         iconSize: 20,
                         onPressed: () {
                           Clipboard.setData(
@@ -169,7 +169,7 @@ class _CredentialDetailState extends State<CredentialDetail> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.open_in_browser, color: Colors.yellow),
+                      icon: Icon(Icons.open_in_browser, color: Theme.of(context).colorScheme.primary),
                       onPressed: () {
                         UrlService.launchWebsite(
                             context: context,
@@ -177,7 +177,7 @@ class _CredentialDetailState extends State<CredentialDetail> {
                       },
                     ),
                     IconButton(
-                      icon: const Icon(Icons.copy, color: Colors.amber),
+                      icon: Icon(Icons.copy, color: Theme.of(context).colorScheme.primary),
                       iconSize: 20,
                       onPressed: () {
                         if (widget.credential.website?.isNotEmpty ?? false) {
@@ -225,7 +225,7 @@ class _CredentialDetailState extends State<CredentialDetail> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.copy, color: Colors.amber),
+                      icon: Icon(Icons.copy, color: Theme.of(context).colorScheme.primary),
                       iconSize: 20,
                       onPressed: () {
                         Clipboard.setData(
@@ -262,7 +262,7 @@ class _CredentialDetailState extends State<CredentialDetail> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.copy, color: Colors.amber),
+                        icon: Icon(Icons.copy, color: Theme.of(context).colorScheme.primary,),
                         iconSize: 20,
                         onPressed: () {
                           Clipboard.setData(
@@ -305,7 +305,7 @@ class _CredentialDetailState extends State<CredentialDetail> {
                         ),
                         IconButton(
                           icon: Icon(
-                            color: Colors.amber,
+                            color: Theme.of(context).colorScheme.primary,
                             _obscurePassword
                                 ? Icons.visibility_off
                                 : Icons.visibility,
@@ -314,7 +314,7 @@ class _CredentialDetailState extends State<CredentialDetail> {
                               setState(() => _obscurePassword = !_obscurePassword),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.copy, color: Colors.amber),
+                          icon: Icon(Icons.copy, color: Theme.of(context).colorScheme.primary,),
                           onPressed: () {
                             Clipboard.setData(
                               ClipboardData(text: widget.credential.password),

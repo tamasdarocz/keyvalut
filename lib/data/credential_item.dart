@@ -71,7 +71,7 @@ class _CredentialItemState extends State<CredentialItem> {
                     ),
                     IconButton(
                       icon: Icon(
-                        color: Colors.amber,
+                        color:Theme.of(context).colorScheme.secondary,
                         _obscurePassword
                             ? Icons.visibility_off
                             : Icons.visibility,
@@ -82,8 +82,8 @@ class _CredentialItemState extends State<CredentialItem> {
                       },
                     ),
                     IconButton(
-                      icon: const Icon(
-                          Icons.copy, size: 20, color: Colors.amber),
+                      icon: Icon(
+                          Icons.copy, size: 20, color:Theme.of(context).colorScheme.secondary),
                       onPressed: () {
                         Clipboard.setData(
                           ClipboardData(text: widget.credential.password),
