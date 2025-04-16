@@ -1,7 +1,8 @@
+
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:keyvalut/services/password_generator.dart'; // Import the PasswordGenerator class
+import 'package:keyvalut/services/password_generator.dart'; // Ensure this path matches your project
 
 class PasswordManager extends StatefulWidget {
   final TextEditingController controller;
@@ -18,12 +19,11 @@ class _PasswordManagerState extends State<PasswordManager> {
   bool includeSpecial = true;
   int passwordLength = 8;
   bool _showPassword = false;
-  late PasswordGenerator generator; // Add PasswordGenerator instance
+  late PasswordGenerator generator;
 
   @override
   void initState() {
     super.initState();
-    // Initialize the PasswordGenerator with the default values
     generator = PasswordGenerator(
       includeUppercase: includeUppercase,
       includeLowercase: includeLowercase,
@@ -91,76 +91,76 @@ class _PasswordManagerState extends State<PasswordManager> {
             ),
           ),
           const SizedBox(height: 16),
+          // First row: Uppercase and Lowercase ChoiceChips
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(
-                    value: includeUppercase,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        includeUppercase = value ?? false;
-                        generator.includeUppercase = includeUppercase; // Update generator
-                      });
-                    },
-                  ),
-                  const Text('Uppercase'),
-                ],
+              ChoiceChip(
+                label: const Text('Uppercase'),
+                selected: includeUppercase,
+                onSelected: (bool selected) {
+                  setState(() {
+                    includeUppercase = selected;
+                    generator.includeUppercase = includeUppercase;
+                  });
+                },
+                selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                labelStyle: TextStyle(
+                  color: includeUppercase ? Theme.of(context).colorScheme.primary : Colors.grey,
+                ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(
-                    value: includeLowercase,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        includeLowercase = value ?? false;
-                        generator.includeLowercase = includeLowercase; // Update generator
-                      });
-                    },
-                  ),
-                  const Text('Lowercase'),
-                ],
+              ChoiceChip(
+                label: const Text('Lowercase'),
+                selected: includeLowercase,
+                onSelected: (bool selected) {
+                  setState(() {
+                    includeLowercase = selected;
+                    generator.includeLowercase = includeLowercase;
+                  });
+                },
+                selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                labelStyle: TextStyle(
+                  color: includeLowercase ? Theme.of(context).colorScheme.primary : Colors.grey,
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 8), // Add some spacing between rows
+          // Second row: Numbers and Specials ChoiceChips
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(
-                    value: includeNumbers,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        includeNumbers = value ?? false;
-                        generator.includeNumbers = includeNumbers; // Update generator
-                      });
-                    },
-                  ),
-                  const Text('Numbers'),
-                ],
+              ChoiceChip(
+                label: const Text('Numbers'),
+                selected: includeNumbers,
+                onSelected: (bool selected) {
+                  setState(() {
+                    includeNumbers = selected;
+                    generator.includeNumbers = includeNumbers;
+                  });
+                },
+                selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                labelStyle: TextStyle(
+                  color: includeNumbers ? Theme.of(context).colorScheme.primary : Colors.grey,
+                ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(
-                    value: includeSpecial,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        includeSpecial = value ?? false;
-                        generator.includeSymbols = includeSpecial; // Update generator
-                      });
-                    },
-                  ),
-                  const Text('Specials'),
-                ],
+              ChoiceChip(
+                label: const Text('Specials'),
+                selected: includeSpecial,
+                onSelected: (bool selected) {
+                  setState(() {
+                    includeSpecial = selected;
+                    generator.includeSymbols = includeSpecial;
+                  });
+                },
+                selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                labelStyle: TextStyle(
+                  color: includeSpecial ? Theme.of(context).colorScheme.primary : Colors.grey,
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 8),
           Slider(
             value: passwordLength.toDouble(),
             thumbColor: Theme.of(context).colorScheme.primary,
@@ -172,7 +172,7 @@ class _PasswordManagerState extends State<PasswordManager> {
             onChanged: (double value) {
               setState(() {
                 passwordLength = value.toInt();
-                generator.passwordLength = passwordLength; // Update generator
+                generator.passwordLength = passwordLength;
               });
             },
           ),
@@ -183,7 +183,6 @@ class _PasswordManagerState extends State<PasswordManager> {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  // Update the generator's properties before generating the password
                   generator.includeUppercase = includeUppercase;
                   generator.includeLowercase = includeLowercase;
                   generator.includeNumbers = includeNumbers;
