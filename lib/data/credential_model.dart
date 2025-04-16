@@ -56,4 +56,23 @@ class Credential {
     username: json['username'] ?? '',
     password: json['password'] ?? '',
   );
+
+}
+
+class credit_cards {
+  final int? id;
+  final String? bank_name;
+  final String ch_name;
+  final String card_number;
+  final String expiry_date;
+  final int ccv;
+
+  credit_cards ({
+    this.id,
+    this.bank_name,
+    required this.ch_name,
+    required this.card_number,
+    required this.expiry_date,
+    required this.ccv,
+})
 }
