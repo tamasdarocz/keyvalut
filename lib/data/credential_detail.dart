@@ -369,6 +369,7 @@ class _CredentialDetailState extends State<CredentialDetail> {
       floatingActionButton: _isEditing
           ? null
           : FloatingActionButton(
+            heroTag: 'editbutton',
         backgroundColor: Theme.of(context).colorScheme.primary,
         onPressed: () {
           setState(() => _isEditing = true);

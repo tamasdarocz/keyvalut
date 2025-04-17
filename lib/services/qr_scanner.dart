@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:mobile_scanner/mobile_scanner.dart'; // Add this import
 
 class QRScannerScreen extends StatefulWidget {
   final Function(String, String) onQRScanned;
@@ -57,7 +58,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
 
     if (!_isPermissionGranted) {
       return Scaffold(
-        appBar: AppBar(title: Text('Scan QR Code')),
+        appBar: AppBar(title: const Text('Scan QR Code')),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -67,8 +68,9 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       body: Stack(
         children: [
           MobileScanner(
+            // Updated to match mobile_scanner v6.0.7 API
             controller: cameraController,
-            onDetect: (capture) {
+            onDetect: (BarcodeCapture capture) {
               final List<Barcode> barcodes = capture.barcodes;
               for (final barcode in barcodes) {
                 if (barcode.rawValue != null) {

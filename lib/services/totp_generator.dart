@@ -1,7 +1,6 @@
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:typed_data';
-import '../data/database_helper.dart';
 
 class TOTPGenerator {
   static String generateTOTP(String base32Secret, {int period = 30, int digits = 6}) {

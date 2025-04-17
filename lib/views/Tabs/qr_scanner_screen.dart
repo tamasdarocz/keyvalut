@@ -59,7 +59,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     if (!_isPermissionGranted) {
       return Scaffold(
         appBar: AppBar(title: Text('Scan QR Code')),
-        body: const Center(child: CircularProgressIndicator()),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 

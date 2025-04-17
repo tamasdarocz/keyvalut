@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_windowmanager/flutter_windowmanager.dart';
+import 'package:flutter/services.dart';
+import 'dart:io' show Platform;
 
 class LockScreen extends StatefulWidget {
   final VoidCallback onUnlock;
@@ -13,6 +14,7 @@ class LockScreen extends StatefulWidget {
 class _LockScreenState extends State<LockScreen> {
   final _passwordController = TextEditingController();
   final _correctPassword = '1234'; // Replace with your actual password logic
+  static const _secureScreenChannel = MethodChannel('com.keyvalut.app/secure_screen');
 
   @override
   void initState() {
@@ -28,11 +30,34 @@ class _LockScreenState extends State<LockScreen> {
   }
 
   Future<void> _setSecureFlag() async {
-    await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
+    if (Platform.isAndroid) {
+      try {
+        // This requires implementing the method channel on the Android side
+        await _secureScreenChannel.invokeMethod('setSecureFlag', true);
+      } catch (e) {
+        // Fallback to using system UI restrictions if method channel fails
+        await SystemChrome.setEnabledSystemUIMode(
+          SystemUiMode.manual,
+          overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom],
+        );
+      }
+    }
+
+    // For iOS, we don't need to do anything special for screenshot prevention
+    // as iOS doesn't allow screenshots in secure contexts by default
   }
 
   Future<void> _clearSecureFlag() async {
-    await FlutterWindowManager.clearFlags(FlutterWindowManager.FLAG_SECURE);
+    if (Platform.isAndroid) {
+      try {
+        await _secureScreenChannel.invokeMethod('setSecureFlag', false);
+      } catch (e) {
+        // Restore normal system UI mode
+        await SystemChrome.setEnabledSystemUIMode(
+          SystemUiMode.edgeToEdge,
+        );
+      }
+    }
   }
 
   @override
@@ -57,18 +82,11 @@ class _LockScreenState extends State<LockScreen> {
                   border: OutlineInputBorder(),
                 ),
                 obscureText: true,
+                onSubmitted: (_) => _attemptUnlock(),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () {
-                  if (_passwordController.text == _correctPassword) {
-                    widget.onUnlock();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Incorrect password')),
-                    );
-                  }
-                },
+                onPressed: _attemptUnlock,
                 child: const Text('Unlock'),
               ),
             ],
@@ -76,5 +94,15 @@ class _LockScreenState extends State<LockScreen> {
         ),
       ),
     );
+  }
+
+  void _attemptUnlock() {
+    if (_passwordController.text == _correctPassword) {
+      widget.onUnlock();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Incorrect password')),
+      );
+    }
   }
 }

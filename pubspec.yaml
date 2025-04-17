@@ -34,6 +34,7 @@ dependencies:
   provider: ^6.1.4
   url_launcher: ^6.3.1
   shared_preferences: ^2.3.3
+  otp: ^3.0.2
   cryptography: ^2.6.2
   qr_flutter: ^4.1.0
   flutter_secure_storage: ^9.2.4
@@ -42,6 +43,8 @@ dependencies:
   file_picker: ^10.1.2
   share_plus: ^10.0.0
   device_info_plus: ^10.1.1
+  barcode: ^2.2.9
+  mobile_scanner: ^3.5.5
 
 
   # UI
