@@ -18,22 +18,47 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, fileName),
-      version: 1,
+      version: 2, // Incremented version
       onCreate: _createDB,
+      onUpgrade: _onUpgrade,
     );
   }
 
   Future<void> _createDB(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE credentials (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        email TEXT,
-        username TEXT NOT NULL,
-        website TEXT,
-        password TEXT NOT NULL
-      )
+    CREATE TABLE credentials (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      website TEXT,
+      email TEXT,
+      username TEXT NOT NULL,
+      password TEXT NOT NULL,
+      totpSecret TEXT,
+      is_archived INTEGER DEFAULT 0,
+      is_deleted INTEGER DEFAULT 0,
+      deleted_at TEXT,
+      archived_at TEXT
+    )
     ''');
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add missing columns
+      await db.execute('ALTER TABLE credentials ADD COLUMN totpSecret TEXT');
+      await db.execute('ALTER TABLE credentials ADD COLUMN is_archived INTEGER DEFAULT 0');
+      await db.execute('ALTER TABLE credentials ADD COLUMN is_deleted INTEGER DEFAULT 0');
+      await db.execute('ALTER TABLE credentials ADD COLUMN deleted_at TEXT');
+      await db.execute('ALTER TABLE credentials ADD COLUMN archived_at TEXT');
+    }
+  }
+
+  // For testing/debugging purposes
+  Future<void> deleteDatabase() async {
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, 'credentials.db');
+    await databaseFactory.deleteDatabase(path);
+    _database = null;
   }
 
   // INSERT

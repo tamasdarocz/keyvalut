@@ -45,6 +45,7 @@ dependencies:
   device_info_plus: ^10.1.1
   barcode: ^2.2.9
   mobile_scanner: ^3.5.5
+  flutter_slidable: ^3.0.0
 
 
   # UI
