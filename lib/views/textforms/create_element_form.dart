@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:keyvalut/views/Widgets/textforms/custom_divider.dart';
-import 'package:keyvalut/views/Widgets/textforms/email_input_field.dart';
-import 'package:keyvalut/views/Widgets/textforms/password_text_field.dart';
-import 'package:keyvalut/views/Widgets/textforms/title_input_field.dart';
-import 'package:keyvalut/views/Widgets/textforms/totp_secret_input_field.dart'; // Add this import
-import 'package:keyvalut/views/Widgets/textforms/username_input_field.dart';
-import 'package:keyvalut/views/Widgets/textforms/website_input_field.dart';
+import 'package:keyvalut/views/Widgets/custom_divider.dart';
+import 'package:keyvalut/views/textforms/email_input_field.dart';
+import 'package:keyvalut/views/textforms/password_text_field.dart';
+import 'package:keyvalut/views/textforms/title_input_field.dart';
+import 'package:keyvalut/views/textforms/totp_secret_input_field.dart'; // Add this import
+import 'package:keyvalut/views/textforms/username_input_field.dart';
+import 'package:keyvalut/views/textforms/website_input_field.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/credential_provider.dart';

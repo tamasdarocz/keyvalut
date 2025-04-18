@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
-import 'homepage.dart';
+import '../Tabs/homepage.dart';
 
 class SetupMasterPasswordScreen extends StatefulWidget {
   const SetupMasterPasswordScreen({super.key});

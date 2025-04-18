@@ -70,8 +70,8 @@ class _TotpDisplayState extends State<TotpDisplay> {
       alignment: Alignment.center,
       children: [
         SizedBox(
-          width: 70,
-          height: 70,
+          width: 80,
+          height: 80,
           child: CircularProgressIndicator(
             value: _remainingSeconds / _period,
             backgroundColor: theme.colorScheme.onSurface.withOpacity(0.2),
@@ -80,6 +80,7 @@ class _TotpDisplayState extends State<TotpDisplay> {
           ),
         ),
         TextButton(
+
           onPressed: () {
             Clipboard.setData(ClipboardData(text: _currentCode));
             ScaffoldMessenger.of(context).showSnackBar(

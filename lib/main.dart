@@ -3,7 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:keyvalut/services/auth_service.dart';
 import 'package:keyvalut/theme/theme_provider.dart';
 import 'package:keyvalut/views/Tabs/login_screen.dart';
-import 'package:keyvalut/views/Tabs/setup_password_screen.dart';
+import 'package:keyvalut/views/screens/setup_password_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'data/credential_provider.dart';

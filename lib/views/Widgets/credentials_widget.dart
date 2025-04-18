@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:keyvalut/views/Widgets/textforms/totp_display.dart';
+import 'package:keyvalut/views/Widgets/totp_display.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../data/credential_provider.dart';
-import '../../views/Widgets/create_element_form.dart';
+import '../textforms/create_element_form.dart';
 import '../../data/database_helper.dart';
 import '../../services/url_service.dart';
 
@@ -102,11 +102,11 @@ class CredentialsWidget extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 color: theme.cardColor,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.0),
+                 borderRadius: BorderRadius.circular(12.0),
                 ),
                 child: ExpansionTile(
                   minTileHeight: 90,
-                  backgroundColor: theme.cardColor,
+                  backgroundColor: theme.primaryColor,
                   leading: Icon(Icons.person, color: theme.colorScheme.onSurface),
                   title: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

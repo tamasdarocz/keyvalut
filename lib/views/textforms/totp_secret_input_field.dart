@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 
-import '../../../services/qr_scanner.dart';
+import '../../services/qr_scanner.dart';
 
 class TotpSecretInputField extends StatefulWidget {
   final TextEditingController controller;

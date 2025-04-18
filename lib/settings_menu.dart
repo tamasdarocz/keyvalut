@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:keyvalut/theme/theme_provider.dart';
-import 'package:keyvalut/views/Tabs/archived_credentials_screen.dart';
-import 'package:keyvalut/views/Tabs/change_password_screen.dart';
-import 'package:keyvalut/views/Tabs/deleted_credentials_screen.dart';
+import 'package:keyvalut/views/screens/archived_credentials_screen.dart';
+import 'package:keyvalut/views/screens/change_password_screen.dart';
+import 'package:keyvalut/views/screens/deleted_credentials_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/services/auth_service.dart';
