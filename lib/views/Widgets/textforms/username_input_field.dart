@@ -14,7 +14,7 @@ class UsernameInputField extends StatelessWidget {
         hintText: 'Required',
         label: Text('Username (Required)'),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(48),
+          borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 4),
         ),
       ),

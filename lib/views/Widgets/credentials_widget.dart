@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:keyvalut/views/Widgets/textforms/totp_display.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import '../../data/credentialProvider.dart';
-import '../../data/credential_model.dart';
-import '../../data/credential_detail.dart';
+import '../../data/credential_provider.dart';
+import '../../views/Widgets/create_element_form.dart';
 import '../../data/database_helper.dart';
-import 'create_element_form.dart';
+import '../../services/url_service.dart';
 
 class CredentialsWidget extends StatelessWidget {
   const CredentialsWidget({super.key});
@@ -14,8 +14,8 @@ class CredentialsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final credentialProvider = Provider.of<CredentialProvider>(context);
+    final theme = Theme.of(context);
 
-    // Load credentials on initial build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       credentialProvider.loadCredentials();
     });
@@ -23,144 +23,126 @@ class CredentialsWidget extends StatelessWidget {
     return Consumer<CredentialProvider>(
       builder: (context, provider, child) {
         if (provider.credentials.isEmpty) {
-          return const Center(child: Text('No credentials found'));
+          return Center(child: Text('No credentials found', style: TextStyle(color: theme.colorScheme.onSurface)));
         }
 
         return ListView.builder(
           itemCount: provider.credentials.length,
           itemBuilder: (context, index) {
             final credential = provider.credentials[index];
+            final hasTotpSecret = credential.totpSecret != null && credential.totpSecret!.isNotEmpty;
 
-            return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Slidable(
-                // Key is required for Slidable
-                key: ValueKey(credential.id),
-
-                // Left slide actions (Archive and Delete)
-                startActionPane: ActionPane(
-                  motion: const ScrollMotion(),
-                  children: [
-                    SlidableAction(
-                      onPressed: (context) async {
-                        // Archive functionality
-                        final updatedCredential = Credential(
-                          id: credential.id,
-                          title: credential.title,
-                          website: credential.website,
-                          email: credential.email,
-                          username: credential.username,
-                          password: credential.password,
-                          totpSecret: credential.totpSecret,
-                          isArchived: true,
-                          isDeleted: credential.isDeleted,
-                          deletedAt: credential.deletedAt,
-                          archivedAt: DateTime.now(),
-                        );
-                        await provider.updateCredential(updatedCredential);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('${credential.title} archived')),
-                        );
-                      },
-                      backgroundColor: Colors.amber,
-                      foregroundColor: Colors.white,
-                      icon: Icons.archive,
-                      label: 'Archive',
-                    ),
-              SlidableAction(
-                onPressed: (context) async {
-                  // Delete confirmation
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Move to Trash'),
-                      content: const Text('Are you sure you want to move this credential to trash?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Move to Trash'),
-                        ),
-                      ],
-                    ),
-                  );
-
-                  if (confirmed == true) {
-                    // Use moveToTrash instead of deleteCredential
-                    await provider.moveToTrash(credential);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${credential.title} moved to trash')),
-                    );
-                  }
-                },
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                icon: Icons.delete,
-                label: 'Delete',
-              ),
-
-                  ],
-                ),
-
-                // Right slide action (Edit)
-                endActionPane: ActionPane(
-                  motion: const ScrollMotion(),
-                  children: [
-                    SlidableAction(
-                      onPressed: (context) {
-                        // Navigate directly to CreateElementForm instead of CredentialDetail
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CreateElementForm(
-                              dbHelper: DatabaseHelper.instance,
-                              credential: credential,
+            return Slidable(
+              key: ValueKey(credential.id),
+              startActionPane: ActionPane(
+                motion: const ScrollMotion(),
+                children: [
+                  SlidableAction(
+                    onPressed: (context) {
+                      provider.moveToArchive(credential.id!);
+                    },
+                    backgroundColor: theme.colorScheme.secondary,
+                    foregroundColor: theme.colorScheme.onSecondary,
+                    icon: Icons.archive,
+                    label: 'Archive',
+                  ),
+                  SlidableAction(
+                    onPressed: (context) async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Delete Credential'),
+                          content: const Text('Are you sure you want to delete?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
                             ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirmed == true && credential.id != null) {
+                        await provider.moveToTrash(credential.id!);
+                      }
+                    },
+                    backgroundColor: theme.colorScheme.error,
+                    foregroundColor: theme.colorScheme.onError,
+                    icon: Icons.delete,
+                    label: 'Delete',
+                  ),
+                ],
+              ),
+              endActionPane: ActionPane(
+                motion: const ScrollMotion(),
+                children: [
+                  SlidableAction(
+                    onPressed: (context) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CreateElementForm(
+                            dbHelper: DatabaseHelper.instance,
+                            credential: credential,
                           ),
-                        );
-                      },
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      icon: Icons.edit,
-                      label: 'Edit',
-                    ),
-                  ],
-                ),
-
-                // Main content
-                child: ExpansionTile(
-                  leading: const Icon(Icons.key),
-                  title: Text(credential.title),
-                  subtitle: Text("Username: ${credential.username}"),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.copy),
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: credential.password));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Center(child: Text('Password copied!'))),
+                        ),
                       );
                     },
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    icon: Icons.edit,
+                    label: 'Edit',
+                  ),
+                ],
+              ),
+              child: Card(
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                color: theme.cardColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                child: ExpansionTile(
+                  minTileHeight: 90,
+                  backgroundColor: theme.cardColor,
+                  leading: Icon(Icons.person, color: theme.colorScheme.onSurface),
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          credential.title,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      if (hasTotpSecret) TotpDisplay(totpSecret: credential.totpSecret),
+                    ],
                   ),
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (credential.website != null && credential.website!.isNotEmpty)
-                            _buildDetailRow(context, 'Website', credential.website!),
-
-                          if (credential.email != null && credential.email!.isNotEmpty)
-                            _buildDetailRow(context, 'Email', credential.email!),
-
-                          _buildDetailRow(context, 'Username', credential.username),
-
-                          // Password with visibility toggle
-                          _PasswordRow(password: credential.password),
-                        ],
+                    ColoredBox(
+                      color: theme.cardColor,
+                      child: Container(
+                        padding: const EdgeInsets.all(8.0),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (credential.website != null && credential.website!.isNotEmpty)
+                                _buildDetailRow(context, 'Website', credential.website!),
+                              if (credential.email != null && credential.email!.isNotEmpty)
+                                _buildDetailRow(context, 'Email', credential.email!),
+                              _buildDetailRow(context, 'Username', credential.username),
+                              _PasswordRow(password: credential.password),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -174,6 +156,7 @@ class CredentialsWidget extends StatelessWidget {
   }
 
   Widget _buildDetailRow(BuildContext context, String label, String value) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
@@ -182,12 +165,27 @@ class CredentialsWidget extends StatelessWidget {
             width: 80,
             child: Text(
               '$label:',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
             ),
           ),
-          Expanded(child: Text(value)),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(color: theme.colorScheme.onSurface),
+            ),
+          ),
+          if (label == 'Website')
+            IconButton(
+              icon: Icon(Icons.launch, size: 20, color: theme.colorScheme.onSurface),
+              onPressed: () {
+                UrlService.launchWebsite(context: context, url: value);
+              },
+            ),
           IconButton(
-            icon: const Icon(Icons.copy, size: 20),
+            icon: Icon(Icons.copy, size: 20, color: theme.colorScheme.onSurface),
             onPressed: () {
               Clipboard.setData(ClipboardData(text: value));
               ScaffoldMessenger.of(context).showSnackBar(
@@ -215,24 +213,32 @@ class _PasswordRowState extends State<_PasswordRow> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
         children: [
-          const SizedBox(
+          SizedBox(
             width: 80,
             child: Text(
               'Password:',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
             ),
           ),
           Expanded(
-            child: Text(_showPassword ? widget.password : '••••'),
+            child: Text(
+              _showPassword ? widget.password : '********',
+              style: TextStyle(color: theme.colorScheme.onSurface),
+            ),
           ),
           IconButton(
             icon: Icon(
               _showPassword ? Icons.visibility_off : Icons.visibility,
               size: 20,
+              color: theme.colorScheme.onSurface,
             ),
             onPressed: () {
               setState(() {
@@ -241,7 +247,7 @@ class _PasswordRowState extends State<_PasswordRow> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.copy, size: 20),
+            icon: Icon(Icons.copy, size: 20, color: theme.colorScheme.onSurface),
             onPressed: () {
               Clipboard.setData(ClipboardData(text: widget.password));
               ScaffoldMessenger.of(context).showSnackBar(

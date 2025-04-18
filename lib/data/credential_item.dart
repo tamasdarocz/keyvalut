@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:keyvalut/views/Widgets/create_element_form.dart';
 import 'package:provider/provider.dart';
-import 'package:keyvalut/data/credentialProvider.dart';
+import 'package:keyvalut/data/credential_provider.dart';
 import 'package:keyvalut/data/credential_model.dart';
 import 'package:keyvalut/services/url_service.dart';
-import 'package:keyvalut/data/credential_detail.dart';
+
+import 'database_helper.dart';
 
 class CredentialItem extends StatefulWidget {
   const CredentialItem({super.key, required Credential credential});
@@ -198,7 +200,9 @@ class _CredentialItemState extends State<CredentialItem> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CredentialDetail(credential: credential),
+                      builder: (context) => CreateElementForm(
+                        dbHelper: DatabaseHelper.instance,
+                        credential: credential,),
                     ),
                   );
                 },

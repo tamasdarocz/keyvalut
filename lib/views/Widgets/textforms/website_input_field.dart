@@ -15,7 +15,7 @@ class WebsiteInputField extends StatelessWidget {
           prefixIcon: const Icon(Icons.http),
           hintText: 'google.com',
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(48),
+            borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide(color:Theme.of(context).colorScheme.primary, width: 4),
           ),
           label: const Text('Website'),

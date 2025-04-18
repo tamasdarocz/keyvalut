@@ -3,11 +3,12 @@ import 'package:keyvalut/views/Widgets/textforms/custom_divider.dart';
 import 'package:keyvalut/views/Widgets/textforms/email_input_field.dart';
 import 'package:keyvalut/views/Widgets/textforms/password_text_field.dart';
 import 'package:keyvalut/views/Widgets/textforms/title_input_field.dart';
+import 'package:keyvalut/views/Widgets/textforms/totp_secret_input_field.dart'; // Add this import
 import 'package:keyvalut/views/Widgets/textforms/username_input_field.dart';
 import 'package:keyvalut/views/Widgets/textforms/website_input_field.dart';
 import 'package:provider/provider.dart';
 
-import '../../data/credentialProvider.dart';
+import '../../data/credential_provider.dart';
 import '../../data/credential_model.dart';
 import '../../data/database_helper.dart';
 
@@ -26,6 +27,7 @@ class _CreateElementFormState extends State<CreateElementForm> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController websiteController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController totpSecretController = TextEditingController(); // Add this controller
 
   @override
   void initState() {
@@ -34,6 +36,16 @@ class _CreateElementFormState extends State<CreateElementForm> {
       titleController.text = widget.credential!.title;
       usernameController.text = widget.credential!.username;
       passwordController.text = widget.credential!.password;
+      // Initialize other fields if they exist
+      if (widget.credential!.email != null) {
+        emailController.text = widget.credential!.email!;
+      }
+      if (widget.credential!.website != null) {
+        websiteController.text = widget.credential!.website!;
+      }
+      if (widget.credential!.totpSecret != null) {
+        totpSecretController.text = widget.credential!.totpSecret!;
+      }
     }
   }
 
@@ -44,6 +56,7 @@ class _CreateElementFormState extends State<CreateElementForm> {
     usernameController.dispose();
     websiteController.dispose();
     passwordController.dispose();
+    totpSecretController.dispose(); // Dispose the new controller
     super.dispose();
   }
 
@@ -74,6 +87,9 @@ class _CreateElementFormState extends State<CreateElementForm> {
           UsernameInputField(controller: usernameController),
           CustomDivider(),
           PasswordManager(controller: passwordController),
+          CustomDivider(),
+          // Add the TOTP Secret field
+          TotpSecretInputField(controller: totpSecretController),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () async {
@@ -92,8 +108,9 @@ class _CreateElementFormState extends State<CreateElementForm> {
                 title: titleController.text,
                 username: usernameController.text,
                 password: passwordController.text,
-                website: websiteController.text,
+                website: websiteController.text.isNotEmpty ? websiteController.text : null,
                 email: emailController.text.isNotEmpty ? emailController.text : null,
+                totpSecret: totpSecretController.text.isNotEmpty ? totpSecretController.text : null, // Add TOTP secret
               );
 
               final provider = Provider.of<CredentialProvider>(context, listen: false);
@@ -116,10 +133,10 @@ class _CreateElementFormState extends State<CreateElementForm> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Colors.black, // Changed to black for contrast
-              minimumSize: const Size(double.infinity, 50), // Match the style of credential_detail.dart
+              foregroundColor: Colors.black,
+              minimumSize: const Size(double.infinity, 50),
             ),
-            child: Text(widget.credential != null ? 'Update' : 'Create'), // Changed "Save" to "Create"
+            child: Text(widget.credential != null ? 'Update' : 'Create'),
           )
         ],
       ),

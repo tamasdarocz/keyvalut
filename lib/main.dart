@@ -6,7 +6,7 @@ import 'package:keyvalut/views/Tabs/login_screen.dart';
 import 'package:keyvalut/views/Tabs/setup_password_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'data/credentialProvider.dart';
+import 'data/credential_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:provider/provider.dart';
-import '../../data/credentialProvider.dart';
+import '../../data/credential_provider.dart';
 import '../../data/credential_model.dart';
 
 class ArchivedCredentialsScreen extends StatelessWidget {
@@ -75,7 +75,7 @@ class ArchivedCredentialsScreen extends StatelessWidget {
                     children: [
                       SlidableAction(
                         onPressed: (context) async {
-                          await provider.restoreCredential(credential);
+                          await provider.restoreCredential(credential.id!);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('${credential.title} restored')),
                           );

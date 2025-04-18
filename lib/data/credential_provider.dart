@@ -5,8 +5,13 @@ import 'package:keyvalut/data/database_helper.dart';
 class CredentialProvider with ChangeNotifier {
   List<Credential> _credentials = [];
 
+  // Get all credentials
   List<Credential> get credentials => _credentials.where((c) => !c.isArchived && !c.isDeleted).toList();
+
+  // Get archived credentials
   List<Credential> get archivedCredentials => _credentials.where((c) => c.isArchived && !c.isDeleted).toList();
+
+  // Get deleted credentials
   List<Credential> get deletedCredentials => _credentials.where((c) => c.isDeleted).toList();
 
   CredentialProvider() {
@@ -14,7 +19,7 @@ class CredentialProvider with ChangeNotifier {
   }
 
   Future<void> loadCredentials() async {
-    _credentials = await DatabaseHelper.instance.getCredentials();
+    _credentials = await DatabaseHelper.instance.getCredentials(); // Changed from getAllCredentials to getCredentials
     notifyListeners();
   }
 
@@ -33,8 +38,27 @@ class CredentialProvider with ChangeNotifier {
     await loadCredentials();
   }
 
-  // Soft delete (move to trash)
-  Future<void> moveToTrash(Credential credential) async {
+  // Add the moveToArchive method
+  Future<void> moveToArchive(int id) async {
+    final credential = _credentials.firstWhere((c) => c.id == id);
+    final updatedCredential = Credential(
+      id: credential.id,
+      title: credential.title,
+      website: credential.website,
+      email: credential.email,
+      username: credential.username,
+      password: credential.password,
+      totpSecret: credential.totpSecret,
+      isArchived: true,
+      isDeleted: credential.isDeleted,
+      deletedAt: credential.deletedAt,
+      archivedAt: DateTime.now(),
+    );
+    await updateCredential(updatedCredential);
+  }
+
+  Future<void> moveToTrash(int id) async {
+    final credential = _credentials.firstWhere((c) => c.id == id);
     final updatedCredential = Credential(
       id: credential.id,
       title: credential.title,
@@ -52,7 +76,8 @@ class CredentialProvider with ChangeNotifier {
   }
 
   // Restore from trash or archive
-  Future<void> restoreCredential(Credential credential) async {
+  Future<void> restoreCredential(int id) async {
+    final credential = _credentials.firstWhere((c) => c.id == id);
     final updatedCredential = Credential(
       id: credential.id,
       title: credential.title,

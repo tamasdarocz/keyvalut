@@ -1,4 +1,3 @@
-
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -54,8 +53,9 @@ class _PasswordManagerState extends State<PasswordManager> {
               hintText: 'Required',
               label: const Text('Password (Required)'),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(48),
-                borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 4),
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary, width: 4),
               ),
               suffixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -63,7 +63,9 @@ class _PasswordManagerState extends State<PasswordManager> {
                   IconButton(
                     icon: Icon(
                       Icons.remove_red_eye,
-                      color: _showPassword ? Theme.of(context).colorScheme.primary : Colors.grey,
+                      color: _showPassword
+                          ? Theme.of(context).colorScheme.primary
+                          : Colors.grey,
                     ),
                     iconSize: 20,
                     onPressed: () {
@@ -71,7 +73,8 @@ class _PasswordManagerState extends State<PasswordManager> {
                     },
                   ),
                   IconButton(
-                    icon: Icon(Icons.copy, color: Theme.of(context).colorScheme.primary),
+                    icon: Icon(Icons.copy,
+                        color: Theme.of(context).colorScheme.primary),
                     iconSize: 20,
                     onPressed: () {
                       if (widget.controller.text.isNotEmpty) {
@@ -96,7 +99,7 @@ class _PasswordManagerState extends State<PasswordManager> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               ChoiceChip(
-                label: const Text('Uppercase'),
+                label: const Text('A-Z'),
                 selected: includeUppercase,
                 onSelected: (bool selected) {
                   setState(() {
@@ -104,13 +107,16 @@ class _PasswordManagerState extends State<PasswordManager> {
                     generator.includeUppercase = includeUppercase;
                   });
                 },
-                selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                selectedColor:
+                    Theme.of(context).colorScheme.primary.withOpacity(0.2),
                 labelStyle: TextStyle(
-                  color: includeUppercase ? Theme.of(context).colorScheme.primary : Colors.grey,
+                  color: includeUppercase
+                      ? Theme.of(context).colorScheme.primary
+                      : Colors.grey,
                 ),
               ),
               ChoiceChip(
-                label: const Text('Lowercase'),
+                label: const Text('a-z'),
                 selected: includeLowercase,
                 onSelected: (bool selected) {
                   setState(() {
@@ -118,20 +124,16 @@ class _PasswordManagerState extends State<PasswordManager> {
                     generator.includeLowercase = includeLowercase;
                   });
                 },
-                selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                selectedColor:
+                    Theme.of(context).colorScheme.primary.withOpacity(0.2),
                 labelStyle: TextStyle(
-                  color: includeLowercase ? Theme.of(context).colorScheme.primary : Colors.grey,
+                  color: includeLowercase
+                      ? Theme.of(context).colorScheme.primary
+                      : Colors.grey,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 8), // Add some spacing between rows
-          // Second row: Numbers and Specials ChoiceChips
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
               ChoiceChip(
-                label: const Text('Numbers'),
+                label: const Text('0-9'),
                 selected: includeNumbers,
                 onSelected: (bool selected) {
                   setState(() {
@@ -139,13 +141,16 @@ class _PasswordManagerState extends State<PasswordManager> {
                     generator.includeNumbers = includeNumbers;
                   });
                 },
-                selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                selectedColor:
+                    Theme.of(context).colorScheme.primary.withOpacity(0.2),
                 labelStyle: TextStyle(
-                  color: includeNumbers ? Theme.of(context).colorScheme.primary : Colors.grey,
+                  color: includeNumbers
+                      ? Theme.of(context).colorScheme.primary
+                      : Colors.grey,
                 ),
               ),
               ChoiceChip(
-                label: const Text('Specials'),
+                label: const Text('@#\$'),
                 selected: includeSpecial,
                 onSelected: (bool selected) {
                   setState(() {
@@ -153,13 +158,17 @@ class _PasswordManagerState extends State<PasswordManager> {
                     generator.includeSymbols = includeSpecial;
                   });
                 },
-                selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                selectedColor:
+                    Theme.of(context).colorScheme.primary.withOpacity(0.2),
                 labelStyle: TextStyle(
-                  color: includeSpecial ? Theme.of(context).colorScheme.primary : Colors.grey,
+                  color: includeSpecial
+                      ? Theme.of(context).colorScheme.primary
+                      : Colors.grey,
                 ),
               ),
             ],
           ),
+
           const SizedBox(height: 8),
           Slider(
             value: passwordLength.toDouble(),
