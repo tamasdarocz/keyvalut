@@ -92,11 +92,12 @@ class ImportService {
 
       final file = File(result.files.single.path!);
       final fileContent = await file.readAsString();
-      debugPrint('File content: $fileContent');
+      debugPrint('File content length: ${fileContent.length}');
 
       String jsonString;
 
       try {
+        // Try to decode as base64 (encrypted file)
         final encryptedBytes = base64Decode(fileContent);
         debugPrint('Encrypted bytes length: ${encryptedBytes.length}');
 
@@ -125,7 +126,6 @@ class ImportService {
         debugPrint('Nonce length: ${nonce.length}, Nonce: ${base64Encode(nonce)}');
         debugPrint('MAC length: ${macBytes.length}, MAC: ${base64Encode(macBytes)}');
         debugPrint('Ciphertext length: ${cipherText.length}');
-        debugPrint('Ciphertext (base64): ${base64Encode(cipherText)}');
 
         // Derive the encryption key from the password and salt
         final secretKey = await _deriveKeyFromPassword(password, salt);
@@ -143,7 +143,7 @@ class ImportService {
         );
 
         jsonString = utf8.decode(decryptedBytes);
-        debugPrint('Decrypted JSON: $jsonString');
+        debugPrint('Decrypted JSON length: ${jsonString.length}');
       } catch (e) {
         if (e is FormatException && e.message.contains('Invalid base64')) {
           debugPrint('File is not encrypted. Treating as plain JSON.');
@@ -158,15 +158,35 @@ class ImportService {
       }
 
       final jsonData = jsonDecode(jsonString);
+      List<dynamic> credentialsJson;
 
-      if (jsonData is! List) {
-        throw Exception('Invalid file format: Expected a JSON list');
+      // Handle both new and old formats
+      if (jsonData is Map<String, dynamic> && jsonData.containsKey('credentials')) {
+        // New versioned format
+        credentialsJson = jsonData['credentials'] as List<dynamic>;
+        debugPrint('Detected new versioned format (v${jsonData['version'] ?? 'unknown'})');
+      } else if (jsonData is List) {
+        // Old format (direct list of credentials)
+        credentialsJson = jsonData;
+        debugPrint('Detected old format (list of credentials)');
+      } else {
+        throw Exception('Invalid file format: Expected a JSON list or object with credentials');
       }
 
-      final credentials = jsonData.map((json) {
+      final credentials = credentialsJson.map((json) {
         if (json is! Map<String, dynamic>) {
           throw Exception('Invalid credential format in file');
         }
+
+        // Special handling for boolean/int conversions to ensure compatibility
+        if (json.containsKey('is_archived') && json['is_archived'] is int) {
+          json['is_archived'] = json['is_archived'] == 1;
+        }
+
+        if (json.containsKey('is_deleted') && json['is_deleted'] is int) {
+          json['is_deleted'] = json['is_deleted'] == 1;
+        }
+
         return Credential.fromJson(json);
       }).toList();
 

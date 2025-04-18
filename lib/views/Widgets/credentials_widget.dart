@@ -67,36 +67,41 @@ class CredentialsWidget extends StatelessWidget {
                       icon: Icons.archive,
                       label: 'Archive',
                     ),
-                    SlidableAction(
-                      onPressed: (context) async {
-                        // Delete confirmation
-                        final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Delete Credential'),
-                            content: const Text('Are you sure you want to delete?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: const Text('Delete'),
-                              ),
-                            ],
-                          ),
-                        );
-
-                        if (confirmed == true && credential.id != null) {
-                          await provider.deleteCredential(credential.id!);
-                        }
-                      },
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      icon: Icons.delete,
-                      label: 'Delete',
+              SlidableAction(
+                onPressed: (context) async {
+                  // Delete confirmation
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Move to Trash'),
+                      content: const Text('Are you sure you want to move this credential to trash?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Move to Trash'),
+                        ),
+                      ],
                     ),
+                  );
+
+                  if (confirmed == true) {
+                    // Use moveToTrash instead of deleteCredential
+                    await provider.moveToTrash(credential);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${credential.title} moved to trash')),
+                    );
+                  }
+                },
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                icon: Icons.delete,
+                label: 'Delete',
+              ),
+
                   ],
                 ),
 

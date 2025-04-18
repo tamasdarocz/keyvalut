@@ -13,6 +13,8 @@ import 'second_tab.dart';
 import 'third_tab.dart';
 import '../Widgets/create_element_form.dart';
 import 'login_screen.dart';
+import 'deleted_credentials_screen.dart';
+import 'archived_credentials_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -399,6 +401,40 @@ class _SettingsMenuState extends State<SettingsMenu> {
                       );
                     },
                   ),
+                  Card(
+                    elevation: 2,
+                    child: Column(
+                      children: [
+                        ListTile(
+                          title: const Text('Credential Management'),
+                          subtitle: const Text('Manage your archived and deleted items'),
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.archive),
+                          title: const Text('Archived Credentials'),
+                          onTap: () {
+                            Navigator.pop(context); // Close drawer
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const ArchivedCredentialsScreen())
+                            );
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.delete_outline),
+                          title: const Text('Deleted Credentials'),
+                          onTap: () {
+                            Navigator.pop(context); // Close drawer
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const DeletedCredentialsScreen())
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   Card(
                     elevation: 2,
                     child: Column(

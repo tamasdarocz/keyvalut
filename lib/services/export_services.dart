@@ -78,9 +78,14 @@ class ExportService {
 
       password = passwordController.text;
 
-      // Convert credentials to JSON string
-      final jsonList = credentials.map((c) => c.toJson()).toList();
-      final jsonString = jsonEncode(jsonList);
+      // Add version information and metadata
+      final jsonData = {
+        'version': '2.0',
+        'exportDate': DateTime.now().toIso8601String(),
+        'credentials': credentials.map((c) => c.toJson()).toList(),
+      };
+
+      final jsonString = jsonEncode(jsonData);
       final jsonBytes = utf8.encode(jsonString);
       debugPrint('JSON data to encrypt: $jsonString');
       debugPrint('JSON bytes length: ${jsonBytes.length}');
