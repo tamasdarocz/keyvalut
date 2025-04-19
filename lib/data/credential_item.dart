@@ -23,7 +23,8 @@ class _CredentialItemState extends State<CredentialItem> {
     super.initState();
     // Load credentials on initial build
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final credentialProvider = Provider.of<CredentialProvider>(context, listen: false);
+      final credentialProvider =
+          Provider.of<CredentialProvider>(context, listen: false);
       credentialProvider.loadCredentials();
     });
   }
@@ -45,14 +46,14 @@ class _CredentialItemState extends State<CredentialItem> {
 
         // Initialize expanded state for each credential if needed
         if (_expandedItems.length != provider.credentials.length) {
-          _expandedItems = List.generate(provider.credentials.length, (_) => false);
+          _expandedItems =
+              List.generate(provider.credentials.length, (_) => false);
         }
 
         return SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.symmetric(vertical: 8),
             child: ExpansionPanelList(
-              elevation: 1,
               expandedHeaderPadding: EdgeInsets.zero,
               expansionCallback: (int index, bool isExpanded) {
                 setState(() {
@@ -64,9 +65,10 @@ class _CredentialItemState extends State<CredentialItem> {
                 final credential = entry.value;
 
                 // Get subtitle (email prefix or username)
-                final subtitle = credential.email != null && credential.email!.isNotEmpty
-                    ? credential.email!.split('@').first
-                    : credential.username;
+                final subtitle =
+                    credential.email != null && credential.email!.isNotEmpty
+                        ? credential.email!.split('@').first
+                        : credential.username;
 
                 return ExpansionPanel(
                   headerBuilder: (context, isExpanded) {
@@ -79,7 +81,8 @@ class _CredentialItemState extends State<CredentialItem> {
                         children: [
                           IconButton(
                             icon: const Icon(Icons.copy, size: 20),
-                            onPressed: () => _copyToClipboard(credential.password, 'Password'),
+                            onPressed: () => _copyToClipboard(
+                                credential.password, 'Password'),
                             tooltip: 'Copy password',
                           ),
                         ],
@@ -103,7 +106,7 @@ class _CredentialItemState extends State<CredentialItem> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Website
           if (credential.website != null && credential.website!.isNotEmpty)
@@ -111,7 +114,7 @@ class _CredentialItemState extends State<CredentialItem> {
               context: context,
               label: 'Website',
               value: credential.website!,
-              icon: Icons.language,
+              icon: Icons.launch,
               onTap: () => UrlService.launchWebsite(
                 context: context,
                 url: credential.website,
@@ -137,7 +140,7 @@ class _CredentialItemState extends State<CredentialItem> {
 
           // Password
           Padding(
-            padding: const EdgeInsets.only(bottom: 12.0),
+            padding: const EdgeInsets.only(bottom: 6, top: 6),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -182,7 +185,8 @@ class _CredentialItemState extends State<CredentialItem> {
                     size: 20,
                     color: Theme.of(context).colorScheme.secondary,
                   ),
-                  onPressed: () => _copyToClipboard(credential.password, 'Password'),
+                  onPressed: () =>
+                      _copyToClipboard(credential.password, 'Password'),
                   tooltip: 'Copy password',
                 ),
               ],
@@ -202,7 +206,8 @@ class _CredentialItemState extends State<CredentialItem> {
                     MaterialPageRoute(
                       builder: (context) => CreateElementForm(
                         dbHelper: DatabaseHelper.instance,
-                        credential: credential,),
+                        credential: credential,
+                      ),
                     ),
                   );
                 },
@@ -210,7 +215,8 @@ class _CredentialItemState extends State<CredentialItem> {
               const SizedBox(width: 8),
               TextButton.icon(
                 icon: const Icon(Icons.delete, color: Colors.red),
-                label: const Text('Delete', style: TextStyle(color: Colors.red)),
+                label:
+                    const Text('Delete', style: TextStyle(color: Colors.red)),
                 onPressed: () async {
                   final confirmed = await showDialog<bool>(
                     context: context,
@@ -231,10 +237,8 @@ class _CredentialItemState extends State<CredentialItem> {
                   );
 
                   if (confirmed == true && credential.id != null) {
-                    final provider = Provider.of<CredentialProvider>(
-                        context,
-                        listen: false
-                    );
+                    final provider =
+                        Provider.of<CredentialProvider>(context, listen: false);
                     await provider.deleteCredential(credential.id!);
                   }
                 },
@@ -254,7 +258,7 @@ class _CredentialItemState extends State<CredentialItem> {
     VoidCallback? onTap,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
+      padding: const EdgeInsets.only(bottom: 6, top: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -273,7 +277,9 @@ class _CredentialItemState extends State<CredentialItem> {
               child: Text(
                 value,
                 style: onTap != null
-                    ? TextStyle(color: Colors.blue, decoration: TextDecoration.underline)
+                    ? TextStyle(
+                        color: Colors.blue,
+                        decoration: TextDecoration.underline)
                     : null,
               ),
             ),
