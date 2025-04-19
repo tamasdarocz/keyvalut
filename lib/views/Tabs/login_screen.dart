@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../../services/auth_service.dart';
 import 'homepage.dart';
 
@@ -40,9 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!await _authService.isBiometricAvailable()) {
         if (mounted) {
           setState(() => _isLoading = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Biometrics not supported on this device')),
-          );
+          Fluttertoast.showToast(msg: 'Biometrics not supported on this device', gravity: ToastGravity.CENTER);
         }
         return;
       }
@@ -50,9 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!await _authService.isBiometricEnabled()) {
         if (mounted) {
           setState(() => _isLoading = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Biometrics not enabled')),
-          );
+          Fluttertoast.showToast(msg: 'Biometric disabled.', gravity: ToastGravity.CENTER);
         }
         return;
       }
@@ -66,20 +63,18 @@ class _LoginScreenState extends State<LoginScreen> {
             MaterialPageRoute(builder: (_) => const HomePage()),
           );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Biometric authentication failed')),
-          );
+          Fluttertoast.showToast(msg: 'Biometric authentication failed', gravity: ToastGravity.CENTER);
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Biometric authentication failed')),
-        );
+        Fluttertoast.showToast(msg: 'Biometric authentication failed', gravity: ToastGravity.CENTER);
+
       }
     }
   }
+
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
@@ -100,17 +95,13 @@ class _LoginScreenState extends State<LoginScreen> {
             MaterialPageRoute(builder: (_) => const HomePage()),
           );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid master password')),
-          );
+          Fluttertoast.showToast(msg: 'Invalid master password', gravity: ToastGravity.CENTER);
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error verifying password')),
-        );
+        Fluttertoast.showToast(msg: 'Error verifying password', gravity: ToastGravity.CENTER);
       }
     }
   }

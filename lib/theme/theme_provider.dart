@@ -11,6 +11,7 @@ import 'solarized_light_theme.dart';
 import 'red_theme.dart';
 import 'green_theme.dart';
 import 'green_dark_theme.dart';
+import 'cyberpunk.dart';
 
 enum AppTheme {
   light,
@@ -24,6 +25,7 @@ enum AppTheme {
   red,
   green,
   greenDark,
+  Cyberpunk,
 }
 
 class ThemeProvider with ChangeNotifier {
@@ -53,6 +55,8 @@ class ThemeProvider with ChangeNotifier {
       case AppTheme.green:
         return ThemeMode.light;
       case AppTheme.greenDark:
+        return ThemeMode.dark;
+      case AppTheme.Cyberpunk:
         return ThemeMode.dark;
     }
   }
@@ -100,6 +104,8 @@ class ThemeProvider with ChangeNotifier {
         return buildGreenTheme();
       case AppTheme.greenDark:
         return buildGreenDarkTheme();
+      case AppTheme.Cyberpunk:
+        return buildCyberpunkTheme();
     }
   }
 }
