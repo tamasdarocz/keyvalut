@@ -4,9 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/data/credential_provider.dart';
 import '../../data/database_helper.dart';
 import '../../settings_menu.dart';
-import 'first_tab.dart';
-import 'second_tab.dart';
-import 'third_tab.dart';
+import 'credentials_tab.dart';
+import 'payments_tab.dart';
+import 'notes_tab.dart';
 import '../textforms/create_element_form.dart';
 import 'login_screen.dart';
 
@@ -21,10 +21,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   int _currentPageIndex = 0;
   final List<Widget> _pages = const [
     FirstTab(),
-    SecondTab(),
+    PaymentsTab(),
     ThirdTab(),
   ];
-  final List<String> _tabTitles = ['Passwords', 'Authenticator', 'API Keys'];
+  final List<String> _tabTitles = ['Passwords', 'Payments', 'API Keys'];
   int _timeoutDuration = 1;
   bool _lockImmediately = false;
   bool _requireBiometricsOnResume = false;
@@ -114,8 +114,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.key), label: 'Passwords'),
-          BottomNavigationBarItem(icon: Icon(Icons.shield), label: 'Authenticator'),
-          BottomNavigationBarItem(icon: Icon(Icons.code), label: 'API Keys'),
+          BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Payments'),
+          BottomNavigationBarItem(icon: Icon(Icons.note), label: 'Notes'),
         ],
       ),
     );

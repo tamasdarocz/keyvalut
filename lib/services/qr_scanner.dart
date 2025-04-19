@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mobile_scanner/mobile_scanner.dart'; // Add this import
 
@@ -68,7 +69,6 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       body: Stack(
         children: [
           MobileScanner(
-            // Updated to match mobile_scanner v6.0.7 API
             controller: cameraController,
             onDetect: (BarcodeCapture capture) {
               final List<Barcode> barcodes = capture.barcodes;
@@ -107,9 +107,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       widget.onQRScanned(label, secret);
       Navigator.pop(context);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Invalid QR Code: $e')),
-      );
+      Fluttertoast.showToast(msg: e.toString());
     }
   }
 }

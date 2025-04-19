@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:keyvalut/theme/theme_provider.dart';
 import 'package:keyvalut/views/screens/archived_credentials_screen.dart';
 import 'package:keyvalut/views/screens/change_password_screen.dart';
@@ -324,31 +325,30 @@ class _SettingsMenuState extends State<SettingsMenu> {
                     child: Column(
                       children: [
                         const ListTile(
-                          title: Text('Credential Management'),
-                          subtitle: Text('View and manage your credentials'),
+                          title: Text('Item Management'),
                         ),
                         ListTile(
                           leading: const Icon(Icons.archive),
-                          title: const Text('View Archived Credentials'),
+                          title: const Text('View Archived Items'),
                           onTap: () {
                             Navigator.pop(context); // Close the drawer
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const ArchivedCredentialsScreen(),
+                                builder: (context) => const ArchivedItemsView(),
                               ),
                             );
                           },
                         ),
                         ListTile(
                           leading: const Icon(Icons.delete_outline),
-                          title: const Text('View Deleted Credentials'),
+                          title: const Text('View Deleted Items'),
                           onTap: () {
                             Navigator.pop(context); // Close the drawer
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const DeletedCredentialsScreen(),
+                                builder: (context) => const DeletedItemsView(),
                               ),
                             );
                           },
@@ -372,26 +372,21 @@ class _SettingsMenuState extends State<SettingsMenu> {
                                 final count = credentials.length;
                                 final confirm = await _showImportConfirmationDialog(count);
                                 if (confirm != true) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Import canceled')),
-                                  );
+                                  Fluttertoast.showToast(msg: 'Import canceled');
                                   return;
                                 }
                                 final provider = Provider.of<CredentialProvider>(context, listen: false);
                                 for (var credential in credentials) {
                                   await provider.addCredential(credential);
                                 }
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Credentials imported successfully')),
-                                );
+                                Fluttertoast.showToast(msg: 'Credentials imported successfully');
+
                               } catch (e) {
                                 String errorMessage = e.toString();
                                 if (errorMessage.startsWith('Exception: ')) {
                                   errorMessage = errorMessage.substring('Exception: '.length);
                                 }
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(errorMessage)),
-                                );
+                               Fluttertoast.showToast(msg: errorMessage);
                               }
                             },
                             child: const Text('Import'),

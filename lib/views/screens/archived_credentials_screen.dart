@@ -1,105 +1,127 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../../data/credential_provider.dart';
 import '../../data/credential_model.dart';
 
-class ArchivedCredentialsScreen extends StatelessWidget {
-  const ArchivedCredentialsScreen({super.key});
+class ArchivedItemsView extends StatelessWidget {
+  const ArchivedItemsView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<CredentialProvider>(context);
+    final theme = Theme.of(context);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      provider.loadArchivedItems();
+    });
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Archived Credentials'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: const Text('Archived Items'),
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
       ),
       body: Consumer<CredentialProvider>(
         builder: (context, provider, child) {
-          final archivedCredentials = provider.archivedCredentials;
-
-          if (archivedCredentials.isEmpty) {
-            return const Center(child: Text('No archived credentials'));
+          if (provider.archivedCredentials.isEmpty && provider.archivedCreditCards.isEmpty) {
+            return Center(
+              child: Text(
+                'No archived items found',
+                style: TextStyle(color: theme.colorScheme.onSurface),
+              ),
+            );
           }
 
-          return ListView.builder(
-            itemCount: archivedCredentials.length,
-            itemBuilder: (context, index) {
-              final credential = archivedCredentials[index];
-
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Slidable(
-                  key: ValueKey(credential.id),
-
-                  // Left action - Delete permanently
-                  startActionPane: ActionPane(
-                    motion: const ScrollMotion(),
-                    children: [
-                      SlidableAction(
-                        onPressed: (context) async {
-                          final confirmed = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Delete Permanently'),
-                              content: const Text('This cannot be undone. Are you sure?'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, false),
-                                  child: const Text('Cancel'),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, true),
-                                  child: const Text('Delete'),
-                                ),
-                              ],
-                            ),
-                          );
-
-                          if (confirmed == true && credential.id != null) {
-                            await provider.deleteCredential(credential.id!);
-                          }
-                        },
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        icon: Icons.delete_forever,
-                        label: 'Delete',
-                      ),
-                    ],
+          return ListView(
+            padding: const EdgeInsets.all(8),
+            children: [
+              // Archived Credentials
+              if (provider.archivedCredentials.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(
+                    'Credentials',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
-
-                  // Right action - Restore
+                ),
+                ...provider.archivedCredentials.map((credential) => Slidable(
+                  key: ValueKey(credential.id),
                   endActionPane: ActionPane(
                     motion: const ScrollMotion(),
                     children: [
                       SlidableAction(
                         onPressed: (context) async {
                           await provider.restoreCredential(credential.id!);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('${credential.title} restored')),
+                          Fluttertoast.showToast(
+                            msg: 'Credential Restored',
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.TOP,
+                            backgroundColor: theme.colorScheme.primary,
+                            textColor: theme.colorScheme.onPrimary,
                           );
                         },
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
                         icon: Icons.restore,
                         label: 'Restore',
                       ),
                     ],
                   ),
-
                   child: ListTile(
-                    leading: const Icon(Icons.archive),
                     title: Text(credential.title),
-                    subtitle: Text('Username: ${credential.username}'),
-                    trailing: Text(
-                      'Archived: ${credential.archivedAt?.day}/${credential.archivedAt?.month}/${credential.archivedAt?.year}',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    subtitle: Text('Archived at: ${credential.archivedAt}'),
+                  ),
+                )),
+              ],
+              // Archived Credit Cards
+              if (provider.archivedCreditCards.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(
+                    'Credit Cards',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                 ),
-              );
-            },
+                ...provider.archivedCreditCards.map((card) => Slidable(
+                  key: ValueKey(card.id),
+                  endActionPane: ActionPane(
+                    motion: const ScrollMotion(),
+                    children: [
+                      SlidableAction(
+                        onPressed: (context) async {
+                          await provider.restoreCreditCard(card.id!);
+                          Fluttertoast.showToast(
+                            msg: 'Credit Card Restored',
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.TOP,
+                            backgroundColor: theme.colorScheme.primary,
+                            textColor: theme.colorScheme.onPrimary,
+                          );
+                        },
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        icon: Icons.restore,
+                        label: 'Restore',
+                      ),
+                    ],
+                  ),
+                  child: ListTile(
+                    title: Text(card.title),
+                    subtitle: Text('Archived at: ${card.archivedAt}'),
+                  ),
+                )),
+              ],
+            ],
           );
         },
       ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:keyvalut/views/Widgets/custom_divider.dart';
+import 'package:keyvalut/views/textforms/card_input_form.dart';
 import 'package:keyvalut/views/textforms/email_input_field.dart';
 import 'package:keyvalut/views/textforms/password_text_field.dart';
 import 'package:keyvalut/views/textforms/title_input_field.dart';
@@ -123,12 +125,7 @@ class _CreateElementFormState extends State<CreateElementForm> {
                 }
                 Navigator.pop(context);
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error: ${e.toString()}'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
+                Fluttertoast.showToast(msg:e.toString() );
               }
             },
             style: ElevatedButton.styleFrom(
@@ -138,6 +135,7 @@ class _CreateElementFormState extends State<CreateElementForm> {
             ),
             child: Text(widget.credential != null ? 'Update' : 'Create'),
           )
+
         ],
       ),
     );

@@ -46,6 +46,7 @@ dependencies:
   barcode: ^2.2.9
   mobile_scanner: ^3.5.5
   flutter_slidable: ^3.0.0
+  fluttertoast: ^8.2.8
 
 
   # UI

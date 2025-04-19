@@ -4,6 +4,7 @@ import 'package:cryptography/cryptography.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // For debugPrint
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:keyvalut/data/credential_model.dart';
 
 class ExportService {
@@ -56,9 +57,7 @@ class ExportService {
             TextButton(
               onPressed: () {
                 if (passwordController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Password cannot be empty')),
-                  );
+                  Fluttertoast.showToast(msg: 'Password cannot be empty');
                   return;
                 }
                 Navigator.pop(context, true);
@@ -70,9 +69,7 @@ class ExportService {
       );
 
       if (result != true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Export canceled')),
-        );
+        Fluttertoast.showToast(msg: 'Export canceled');
         return;
       }
 
@@ -126,13 +123,9 @@ class ExportService {
       );
 
       if (outputPath != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Credentials exported successfully')),
-        );
+        Fluttertoast.showToast(msg: 'Credentials exported successfully');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Export canceled')),
-        );
+        Fluttertoast.showToast(msg: 'Export canceled');
       }
     } catch (e) {
       await FilePicker.platform.clearTemporaryFiles();
