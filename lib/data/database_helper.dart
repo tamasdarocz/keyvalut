@@ -138,8 +138,7 @@ class DatabaseHelper {
     return maps.map((map) => Credential.fromMap(map)).toList();
   }
 
-  Future<List<Map<String, dynamic>>> queryAllCreditCards(
-      {bool includeArchived = false, bool includeDeleted = false}) async {
+  Future<List<Map<String, dynamic>>> queryAllCreditCards({bool includeArchived = false, bool includeDeleted = false}) async {
     final db = await database;
     return await db.query(
       'credit_cards',
@@ -184,56 +183,6 @@ class DatabaseHelper {
     );
   }
 
-  Future<int> archiveCreditCard(int id) async {
-    final db = await database;
-    return db.update(
-      'credit_cards',
-      {
-        'is_archived': 1,
-        'archived_at': DateTime.now().toIso8601String(),
-      },
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
-  Future<int> deleteCreditCard(int id) async {
-    final db = await database;
-    return db.update(
-      'credit_cards',
-      {
-        'is_deleted': 1,
-        'deleted_at': DateTime.now().toIso8601String(),
-      },
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
-  Future<int> permanentlyDeleteCreditCard(int id) async {
-    final db = await database;
-    return db.delete(
-      'credit_cards',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
-  Future<int> restoreCreditCard(int id) async {
-    final db = await database;
-    return db.update(
-      'credit_cards',
-      {
-        'is_archived': 0,
-        'archived_at': null,
-        'is_deleted': 0,
-        'deleted_at': null,
-      },
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
   Future<int> archiveCredential(int id) async {
     final db = await database;
     return db.update(
@@ -273,6 +222,56 @@ class DatabaseHelper {
     final db = await database;
     return db.update(
       'credentials',
+      {
+        'is_archived': 0,
+        'archived_at': null,
+        'is_deleted': 0,
+        'deleted_at': null,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> archiveCreditCard(int id) async {
+    final db = await database;
+    return db.update(
+      'credit_cards',
+      {
+        'is_archived': 1,
+        'archived_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> deleteCreditCard(int id) async {
+    final db = await database;
+    return db.update(
+      'credit_cards',
+      {
+        'is_deleted': 1,
+        'deleted_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> permanentlyDeleteCreditCard(int id) async {
+    final db = await database;
+    return db.delete(
+      'credit_cards',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> restoreCreditCard(int id) async {
+    final db = await database;
+    return db.update(
+      'credit_cards',
       {
         'is_archived': 0,
         'archived_at': null,

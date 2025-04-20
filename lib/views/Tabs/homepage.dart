@@ -20,9 +20,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   int _currentPageIndex = 0;
   final List<Widget> _pages = const [
-    FirstTab(),
+    CredentialsTab(),
     PaymentsTab(),
-    ThirdTab(),
+    NotesTab(),
   ];
   final List<String> _tabTitles = ['Passwords', 'Payments', 'API Keys'];
   int _timeoutDuration = 1;

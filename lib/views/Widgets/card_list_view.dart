@@ -127,9 +127,9 @@ class _CreditCardItemState extends State<CreditCardItem> {
               if (confirmed == true && widget.card.id != null) {
                 await provider.deleteCreditCard(widget.card.id!);
                 Fluttertoast.showToast(
-                  msg: 'Card Moved to Deleted Items',
+                  msg: 'Card Deleted',
                   toastLength: Toast.LENGTH_SHORT,
-                  gravity: ToastGravity.TOP,
+                  gravity: ToastGravity.CENTER,
                   backgroundColor: theme.colorScheme.primary,
                   textColor: theme.colorScheme.onPrimary,
                 );

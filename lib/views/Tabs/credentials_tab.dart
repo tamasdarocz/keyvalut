@@ -3,14 +3,14 @@ import '../../data/database_helper.dart';
 import '../textforms/create_element_form.dart';
 import '../Widgets/credentials_widget.dart';
 
-class FirstTab extends StatefulWidget {
-  const FirstTab({super.key});
+class CredentialsTab extends StatefulWidget {
+  const CredentialsTab({super.key});
 
   @override
-  State<FirstTab> createState() => _FirstTabState();
+  State<CredentialsTab> createState() => _CredentialsTabState();
 }
 
-class _FirstTabState extends State<FirstTab> {
+class _CredentialsTabState extends State<CredentialsTab> {
 
   @override
   Widget build(BuildContext context) {

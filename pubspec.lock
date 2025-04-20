@@ -268,10 +268,10 @@ packages:
     dependency: "direct main"
     description:
       name: freerasp
-      sha256: "17b9e4c54d6ea3e47df4f74fcc269aa981046bc5659182d4b9ed76c6fd049839"
+      sha256: cfff05a951f6314475cefbe6f37c385afd1c36989389735bd78373182fa7d706
       url: "https://pub.dev"
     source: hosted
-    version: "5.0.4"
+    version: "7.0.0"
   google_fonts:
     dependency: "direct main"
     description:

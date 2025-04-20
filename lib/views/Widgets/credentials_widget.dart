@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:keyvalut/views/Widgets/totp_display.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -16,14 +17,23 @@ class CredentialsWidget extends StatelessWidget {
     final credentialProvider = Provider.of<CredentialProvider>(context);
     final theme = Theme.of(context);
 
+    // Load credentials on first build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       credentialProvider.loadCredentials();
     });
 
     return Consumer<CredentialProvider>(
       builder: (context, provider, child) {
+        if (provider.credentials == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
         if (provider.credentials.isEmpty) {
-          return Center(child: Text('No credentials found', style: TextStyle(color: theme.colorScheme.onSurface)));
+          return Center(
+            child: Text(
+              'No credentials found',
+              style: TextStyle(color: theme.colorScheme.onSurface),
+            ),
+          );
         }
 
         return ListView.builder(
@@ -33,13 +43,22 @@ class CredentialsWidget extends StatelessWidget {
             final hasTotpSecret = credential.totpSecret != null && credential.totpSecret!.isNotEmpty;
 
             return Slidable(
-              key: ValueKey(credential.id),
               startActionPane: ActionPane(
                 motion: const ScrollMotion(),
                 children: [
                   SlidableAction(
-                    onPressed: (context) {
-                      provider.moveToArchive(credential.id!);
+                    onPressed: (context) async {
+                      if (credential.id != null) {
+                        await provider.archiveCredential(credential.id!);
+                        Fluttertoast.showToast(
+                          msg: 'Credential Archived',
+                          toastLength: Toast.LENGTH_SHORT,
+                          gravity: ToastGravity.CENTER,
+                          backgroundColor: theme.colorScheme.primary,
+                          textColor: theme.colorScheme.onPrimary,
+                        );
+                      } else {
+                      }
                     },
                     backgroundColor: theme.colorScheme.secondary,
                     foregroundColor: theme.colorScheme.onSecondary,
@@ -66,7 +85,15 @@ class CredentialsWidget extends StatelessWidget {
                         ),
                       );
                       if (confirmed == true && credential.id != null) {
-                        await provider.moveToTrash(credential.id!);
+                        await provider.deleteCredential(credential.id!);
+                        Fluttertoast.showToast(
+                          msg: 'Credential Deleted',
+                          toastLength: Toast.LENGTH_SHORT,
+                          gravity: ToastGravity.CENTER,
+                          backgroundColor: theme.colorScheme.primary,
+                          textColor: theme.colorScheme.onPrimary,
+                        );
+                      } else {
                       }
                     },
                     backgroundColor: theme.colorScheme.error,
@@ -102,7 +129,7 @@ class CredentialsWidget extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 color: theme.cardColor,
                 shape: RoundedRectangleBorder(
-                 borderRadius: BorderRadius.circular(12.0),
+                  borderRadius: BorderRadius.circular(0),
                 ),
                 child: ExpansionTile(
                   minTileHeight: 90,
@@ -188,9 +215,7 @@ class CredentialsWidget extends StatelessWidget {
             icon: Icon(Icons.copy, size: 20, color: theme.colorScheme.onSurface),
             onPressed: () {
               Clipboard.setData(ClipboardData(text: value));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Center(child: Text('$label copied!'))),
-              );
+              Fluttertoast.showToast(msg: 'Copied!', gravity: ToastGravity.CENTER);
             },
           ),
         ],
@@ -250,9 +275,7 @@ class _PasswordRowState extends State<_PasswordRow> {
             icon: Icon(Icons.copy, size: 20, color: theme.colorScheme.onSurface),
             onPressed: () {
               Clipboard.setData(ClipboardData(text: widget.password));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Center(child: Text('Password copied!'))),
-              );
+              Fluttertoast.showToast(msg: 'Password copied!', gravity: ToastGravity.CENTER);
             },
           ),
         ],

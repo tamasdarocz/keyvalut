@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../../data/credential_provider.dart';
-import '../../data/credential_model.dart';
+
 
 class ArchivedItemsView extends StatelessWidget {
   const ArchivedItemsView({super.key});
@@ -61,7 +61,7 @@ class ArchivedItemsView extends StatelessWidget {
                           Fluttertoast.showToast(
                             msg: 'Credential Restored',
                             toastLength: Toast.LENGTH_SHORT,
-                            gravity: ToastGravity.TOP,
+                            gravity: ToastGravity.CENTER,
                             backgroundColor: theme.colorScheme.primary,
                             textColor: theme.colorScheme.onPrimary,
                           );
@@ -103,7 +103,7 @@ class ArchivedItemsView extends StatelessWidget {
                           Fluttertoast.showToast(
                             msg: 'Credit Card Restored',
                             toastLength: Toast.LENGTH_SHORT,
-                            gravity: ToastGravity.TOP,
+                            gravity: ToastGravity.CENTER,
                             backgroundColor: theme.colorScheme.primary,
                             textColor: theme.colorScheme.onPrimary,
                           );

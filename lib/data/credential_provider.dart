@@ -11,6 +11,7 @@ class CredentialProvider with ChangeNotifier {
   List<CreditCard> _deletedCreditCards = [];
   List<Credential> _deletedCredentials = [];
 
+  // Getters
   List<CreditCard> get creditCards => _creditCards;
   List<Credential> get credentials => _credentials;
   List<CreditCard> get archivedCreditCards => _archivedCreditCards;
@@ -18,6 +19,7 @@ class CredentialProvider with ChangeNotifier {
   List<CreditCard> get deletedCreditCards => _deletedCreditCards;
   List<Credential> get deletedCredentials => _deletedCredentials;
 
+  // Load data
   Future<void> loadCreditCards() async {
     final maps = await _dbHelper.queryAllCreditCards();
     _creditCards = maps.map((map) => CreditCard.fromMap(map)).toList();
@@ -55,6 +57,7 @@ class CredentialProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Clear data
   Future<void> clearCredentials() async {
     _credentials.clear();
     _archivedCredentials.clear();
@@ -63,9 +66,11 @@ class CredentialProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addCredential(Credential credential) async {
-    await _dbHelper.insertCredential(credential);
+  // Credential operations
+  Future<int> addCredential(Credential credential) async {
+    final newId = await _dbHelper.insertCredential(credential);
     await loadCredentials();
+    return newId;
   }
 
   Future<void> updateCredential(Credential credential) async {
@@ -75,22 +80,31 @@ class CredentialProvider with ChangeNotifier {
     await loadDeletedItems();
   }
 
-  Future<void> moveToArchive(dynamic item) async {
-    if (item is Credential && item.id != null) {
-      await moveCredentialToArchive(item.id!);
-    } else if (item is CreditCard && item.id != null) {
-      await moveCreditCardToArchive(item.id!);
-    }
+  Future<void> archiveCredential(int id) async {
+    await _dbHelper.archiveCredential(id);
+    await loadCredentials();
+    await loadArchivedItems();
   }
 
-  Future<void> moveToTrash(dynamic item) async {
-    if (item is Credential && item.id != null) {
-      await deleteCredential(item.id!);
-    } else if (item is CreditCard && item.id != null) {
-      await deleteCreditCard(item.id!);
-    }
+  Future<void> deleteCredential(int id) async {
+    await _dbHelper.deleteCredential(id);
+    await loadCredentials();
+    await loadDeletedItems();
   }
 
+  Future<void> permanentlyDeleteCredential(int id) async {
+    await _dbHelper.permanentlyDeleteCredential(id);
+    await loadDeletedItems();
+  }
+
+  Future<void> restoreCredential(int id) async {
+    await _dbHelper.restoreCredential(id);
+    await loadCredentials();
+    await loadArchivedItems();
+    await loadDeletedItems();
+  }
+
+  // Credit Card operations
   Future<void> moveCreditCardToArchive(int id) async {
     await _dbHelper.archiveCreditCard(id);
     await loadCreditCards();
@@ -111,30 +125,6 @@ class CredentialProvider with ChangeNotifier {
   Future<void> restoreCreditCard(int id) async {
     await _dbHelper.restoreCreditCard(id);
     await loadCreditCards();
-    await loadArchivedItems();
-    await loadDeletedItems();
-  }
-
-  Future<void> moveCredentialToArchive(int id) async {
-    await _dbHelper.archiveCredential(id);
-    await loadCredentials();
-    await loadArchivedItems();
-  }
-
-  Future<void> deleteCredential(int id) async {
-    await _dbHelper.deleteCredential(id);
-    await loadCredentials();
-    await loadDeletedItems();
-  }
-
-  Future<void> permanentlyDeleteCredential(int id) async {
-    await _dbHelper.permanentlyDeleteCredential(id);
-    await loadDeletedItems();
-  }
-
-  Future<void> restoreCredential(int id) async {
-    await _dbHelper.restoreCredential(id);
-    await loadCredentials();
     await loadArchivedItems();
     await loadDeletedItems();
   }
