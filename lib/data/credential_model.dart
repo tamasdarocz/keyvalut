@@ -88,6 +88,21 @@ class Credential {
       deletedAt: json['deletedAt'] as String?,
     );
   }
+
+  Map<String, dynamic> toExportJson() {
+    return {
+      'title': title,
+      'website': website,
+      'email': email,
+      'username': username,
+      'password': password,
+      'totpSecret': totpSecret,
+      'isArchived': isArchived,
+      'isDeleted': isDeleted,
+      'archivedAt': archivedAt,
+      'deletedAt': deletedAt,
+    };
+  }
 }
 
 class CreditCard {
@@ -122,6 +137,13 @@ class CreditCard {
     this.isDeleted = false,
     this.deletedAt,
   });
+
+  // Getters to match the names expected by the UI
+  String get cardholderName => ch_name;
+  String get cardNumber => card_number;
+  String get expiryDate => expiry_date;
+  String get cardType => card_type ?? '';
+  String get billingAddress => billing_address ?? '';
 
   Map<String, dynamic> toMap() {
     return {
@@ -197,5 +219,102 @@ class CreditCard {
       isDeleted: json['isDeleted'] as bool? ?? false,
       deletedAt: json['deletedAt'] as String?,
     );
+  }
+
+  Map<String, dynamic> toExportJson() {
+    return {
+      'title': title,
+      'bank_name': bank_name,
+      'ch_name': ch_name,
+      'card_number': card_number,
+      'expiry_date': expiry_date,
+      'cvv': cvv,
+      'card_type': card_type,
+      'billing_address': billing_address,
+      'notes': notes,
+      'isArchived': isArchived,
+      'archivedAt': archivedAt,
+      'isDeleted': isDeleted,
+      'deletedAt': deletedAt,
+    };
+  }
+}
+
+class Note {
+  final int? id;
+  final String title;
+  final String content;
+  final bool isArchived;
+  final String? archivedAt;
+  final bool isDeleted;
+  final String? deletedAt;
+
+  Note({
+    this.id,
+    required this.title,
+    required this.content,
+    this.isArchived = false,
+    this.archivedAt,
+    this.isDeleted = false,
+    this.deletedAt,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'content': content,
+      'is_archived': isArchived ? 1 : 0,
+      'archived_at': archivedAt,
+      'is_deleted': isDeleted ? 1 : 0,
+      'deleted_at': deletedAt,
+    };
+  }
+
+  factory Note.fromMap(Map<String, dynamic> map) {
+    return Note(
+      id: map['id'],
+      title: map['title'],
+      content: map['content'],
+      isArchived: map['is_archived'] == 1,
+      archivedAt: map['archived_at'],
+      isDeleted: map['is_deleted'] == 1,
+      deletedAt: map['deleted_at'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'content': content,
+      'isArchived': isArchived,
+      'archivedAt': archivedAt,
+      'isDeleted': isDeleted,
+      'deletedAt': deletedAt,
+    };
+  }
+
+  factory Note.fromJson(Map<String, dynamic> json) {
+    return Note(
+      id: json['id'],
+      title: json['title'] as String,
+      content: json['content'] as String,
+      isArchived: json['isArchived'] as bool? ?? false,
+      archivedAt: json['archivedAt'] as String?,
+      isDeleted: json['isDeleted'] as bool? ?? false,
+      deletedAt: json['deletedAt'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toExportJson() {
+    return {
+      'title': title,
+      'content': content,
+      'isArchived': isArchived,
+      'archivedAt': archivedAt,
+      'isDeleted': isDeleted,
+      'deletedAt': deletedAt,
+    };
   }
 }

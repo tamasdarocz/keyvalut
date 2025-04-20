@@ -3,9 +3,9 @@ import 'dart:math';
 import 'package:cryptography/cryptography.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'; // For debugPrint
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:keyvalut/data/credential_model.dart';
+import 'package:keyvalut/data/credential_model.dart'; // Adjust import based on your project structure
+import 'package:keyvalut/data/database_helper.dart'; // Adjust import based on your project structure
 
 class ExportService {
   static final _cipher = AesCbc.with256bits(macAlgorithm: Hmac.sha256());
@@ -22,21 +22,21 @@ class ExportService {
       secretKey: SecretKey(passwordBytes),
       nonce: salt,
     );
-    final keyBytes = await hash.extractBytes();
-    debugPrint('Export - Derived key bytes: ${base64Encode(keyBytes)}');
-    return SecretKey(keyBytes);
+    return SecretKey(await hash.extractBytes());
   }
 
-  static Future<void> exportCredentials(
-      BuildContext context,
-      List<Credential> credentials,
-      String fileName,
-      ) async {
+  static Future<void> exportData(BuildContext context, String fileName) async {
     try {
-      // Prompt user for a password
-      final passwordController = TextEditingController();
-      String? password;
+      final dbHelper = DatabaseHelper.instance;
 
+      // Fetch all data, including archived and deleted items
+      final allCredentials = await dbHelper.getCredentials(includeArchived: true, includeDeleted: true);
+      final allCreditCardsMaps = await dbHelper.queryAllCreditCards(includeArchived: true, includeDeleted: true);
+      final allCreditCards = allCreditCardsMaps.map((map) => CreditCard.fromMap(map)).toList();
+      final allNotes = await dbHelper.getNotes(includeArchived: true, includeDeleted: true); // Assumes getNotes is implemented
+
+      // Prompt user for encryption password
+      final passwordController = TextEditingController();
       final result = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
@@ -50,10 +50,7 @@ class ExportService {
             obscureText: true,
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
             TextButton(
               onPressed: () {
                 if (passwordController.text.isEmpty) {
@@ -73,49 +70,31 @@ class ExportService {
         return;
       }
 
-      password = passwordController.text;
+      final password = passwordController.text;
 
-      // Add version information and metadata
+      // Structure JSON data without id fields
       final jsonData = {
-        'version': '2.0',
         'exportDate': DateTime.now().toIso8601String(),
-        'credentials': credentials.map((c) => c.toJson()).toList(),
+        'credentials': allCredentials.map((c) => c.toExportJson()).toList(),
+        'creditCards': allCreditCards.map((c) => c.toExportJson()).toList(),
+        'notes': allNotes.map((n) => n.toExportJson()).toList(),
       };
 
       final jsonString = jsonEncode(jsonData);
       final jsonBytes = utf8.encode(jsonString);
-      debugPrint('JSON data to encrypt: $jsonString');
-      debugPrint('JSON bytes length: ${jsonBytes.length}');
 
-      // Generate a random salt for key derivation (16 bytes)
+      // Encrypt the data
       final salt = List<int>.generate(16, (_) => Random.secure().nextInt(256));
-      debugPrint('Salt length: ${salt.length}, Salt: ${base64Encode(salt)}');
-
-      final secretKey = await _deriveKeyFromPassword(password!, salt);
-
-      // Generate a random IV (nonce) for AES-CBC (16 bytes)
+      final secretKey = await _deriveKeyFromPassword(password, salt);
       final nonce = List<int>.generate(16, (_) => Random.secure().nextInt(256));
-      debugPrint('Nonce length: ${nonce.length}, Nonce: ${base64Encode(nonce)}');
+      final secretBox = await _cipher.encrypt(jsonBytes, secretKey: secretKey, nonce: nonce);
 
-      // Encrypt the JSON data
-      final secretBox = await _cipher.encrypt(
-        jsonBytes,
-        secretKey: secretKey,
-        nonce: nonce,
-      );
-
-      debugPrint('Ciphertext length: ${secretBox.cipherText.length}');
-      debugPrint('Ciphertext (base64): ${base64Encode(secretBox.cipherText)}');
-      debugPrint('MAC length: ${secretBox.mac.bytes.length}');
-
-      // Combine salt, nonce, MAC, and ciphertext
+      // Combine and encode encrypted data
       final encryptedData = base64Encode(salt + nonce + secretBox.mac.bytes + secretBox.cipherText);
-      debugPrint('Combined data length: ${salt.length + nonce.length + secretBox.mac.bytes.length + secretBox.cipherText.length}');
-      debugPrint('Base64 encoded data: $encryptedData');
 
-      // Let the user choose where to save the file
+      // Save the file
       String? outputPath = await FilePicker.platform.saveFile(
-        dialogTitle: 'Save Exported Credentials',
+        dialogTitle: 'Save Exported Data',
         fileName: '$fileName.json',
         type: FileType.custom,
         allowedExtensions: ['json'],
@@ -123,14 +102,13 @@ class ExportService {
       );
 
       if (outputPath != null) {
-        Fluttertoast.showToast(msg: 'Credentials exported successfully');
+        Fluttertoast.showToast(msg: 'Data exported successfully');
       } else {
         Fluttertoast.showToast(msg: 'Export canceled');
       }
     } catch (e) {
-      await FilePicker.platform.clearTemporaryFiles();
       debugPrint('Export error: $e');
-      throw Exception('Error exporting credentials: $e');
+      Fluttertoast.showToast(msg: 'Error exporting data: $e');
     }
   }
 }

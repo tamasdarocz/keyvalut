@@ -4,7 +4,9 @@ import 'package:cryptography/cryptography.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:keyvalut/data/credential_model.dart';
+import 'package:keyvalut/data/database_helper.dart';
 
 class ImportService {
   static final _cipher = AesCbc.with256bits(macAlgorithm: Hmac.sha256());
@@ -67,11 +69,11 @@ class ImportService {
     return passwordController.text;
   }
 
-  static Future<List<Credential>> importCredentials(BuildContext context) async {
+  static Future<void> importData(BuildContext context) async {
     try {
       debugPrint('Opening file picker with FileType.any as fallback');
       FilePickerResult? result = await FilePicker.platform.pickFiles(
-        dialogTitle: 'Select a JSON file from Downloads to import credentials',
+        dialogTitle: 'Select a JSON file to import data',
         type: FileType.any,
         withData: true,
       );
@@ -158,46 +160,91 @@ class ImportService {
       }
 
       final jsonData = jsonDecode(jsonString);
-      List<dynamic> credentialsJson;
-
-      // Handle both new and old formats
-      if (jsonData is Map<String, dynamic> && jsonData.containsKey('credentials')) {
-        // New versioned format
-        credentialsJson = jsonData['credentials'] as List<dynamic>;
-        debugPrint('Detected new versioned format (v${jsonData['version'] ?? 'unknown'})');
-      } else if (jsonData is List) {
-        // Old format (direct list of credentials)
-        credentialsJson = jsonData;
-        debugPrint('Detected old format (list of credentials)');
-      } else {
-        throw Exception('Invalid file format: Expected a JSON list or object with credentials');
+      if (jsonData is! Map<String, dynamic>) {
+        throw Exception('Invalid file format: Expected a JSON object');
       }
 
-      final credentials = credentialsJson.map((json) {
-        if (json is! Map<String, dynamic>) {
-          throw Exception('Invalid credential format in file');
-        }
+      final dbHelper = DatabaseHelper.instance;
 
-        // Special handling for boolean/int conversions to ensure compatibility
-        if (json.containsKey('is_archived') && json['is_archived'] is int) {
-          json['is_archived'] = json['is_archived'] == 1;
-        }
+      // Import credentials
+      final List<Credential> credentials = [];
+      if (jsonData.containsKey('credentials')) {
+        final credentialsJson = jsonData['credentials'] as List<dynamic>;
+        credentials.addAll(credentialsJson.map((json) {
+          if (json is! Map<String, dynamic>) {
+            throw Exception('Invalid credential format in file');
+          }
+          return Credential.fromJson(json);
+        }).toList());
+      }
 
-        if (json.containsKey('is_deleted') && json['is_deleted'] is int) {
-          json['is_deleted'] = json['is_deleted'] == 1;
-        }
+      // Import credit cards
+      final List<CreditCard> creditCards = [];
+      if (jsonData.containsKey('creditCards')) {
+        final creditCardsJson = jsonData['creditCards'] as List<dynamic>;
+        creditCards.addAll(creditCardsJson.map((json) {
+          if (json is! Map<String, dynamic>) {
+            throw Exception('Invalid credit card format in file');
+          }
+          return CreditCard.fromJson(json);
+        }).toList());
+      }
 
-        return Credential.fromJson(json);
-      }).toList();
+      // Import notes
+      final List<Note> notes = [];
+      if (jsonData.containsKey('notes')) {
+        final notesJson = jsonData['notes'] as List<dynamic>;
+        notes.addAll(notesJson.map((json) {
+          if (json is! Map<String, dynamic>) {
+            throw Exception('Invalid note format in file');
+          }
+          return Note.fromJson(json);
+        }).toList());
+      }
 
-      debugPrint('Credentials imported: ${credentials.length} items');
-      return credentials;
+      // Show confirmation dialog
+      final totalItems = credentials.length + creditCards.length + notes.length;
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Import Data'),
+          content: Text('The file contains $totalItems items (${credentials.length} credentials, ${creditCards.length} credit cards, ${notes.length} notes). Do you want to import them?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Import'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true) {
+        Fluttertoast.showToast(msg: 'Import canceled');
+        return;
+      }
+
+      // Insert all items into the database
+      for (var credential in credentials) {
+        await dbHelper.insertCredential(credential);
+      }
+      for (var creditCard in creditCards) {
+        await dbHelper.insertCreditCard(creditCard);
+      }
+      for (var note in notes) {
+        await dbHelper.insertNote(note);
+      }
+
+      Fluttertoast.showToast(msg: 'Successfully imported $totalItems items');
     } catch (e) {
       debugPrint('Import error: $e');
       if (e.toString().contains('jsonDecode')) {
         throw Exception('Error parsing file: Invalid JSON format');
       }
-      throw Exception('Error importing credentials: $e');
+      throw Exception('Error importing data: $e');
     }
   }
 }

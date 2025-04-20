@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
+import '../../services/password_strenght.dart';
+
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -21,7 +23,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Add listener to rebuild the widget tree when the new password changes
+    _newPasswordController.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
   void dispose() {
+    _newPasswordController.removeListener(() {}); // Clean up the listener
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
@@ -76,111 +88,117 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         title: const Text('Change Master Password'),
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Current password field
-              TextFormField(
-                controller: _currentPasswordController,
-                obscureText: _obscureCurrentPassword,
-                decoration: InputDecoration(
-                  labelText: 'Current Password',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureCurrentPassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
+      body: SingleChildScrollView( // Wrap with SingleChildScrollView to handle overflow
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Current password field
+                TextFormField(
+                  controller: _currentPasswordController,
+                  obscureText: _obscureCurrentPassword,
+                  decoration: InputDecoration(
+                    labelText: 'Current Password',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureCurrentPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() => _obscureCurrentPassword = !_obscureCurrentPassword);
+                      },
                     ),
-                    onPressed: () {
-                      setState(() => _obscureCurrentPassword = !_obscureCurrentPassword);
-                    },
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your current password';
+                    }
+                    return null;
+                  },
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your current password';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 8),
+                const SizedBox(height: 8),
 
-              // New password field
-              TextFormField(
-                controller: _newPasswordController,
-                obscureText: _obscureNewPassword,
-                decoration: InputDecoration(
-                  labelText: 'New Password',
-                  prefixIcon: const Icon(Icons.lock),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureNewPassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
+                // New password field
+                TextFormField(
+                  controller: _newPasswordController,
+                  obscureText: _obscureNewPassword,
+                  decoration: InputDecoration(
+                    labelText: 'New Password',
+                    prefixIcon: const Icon(Icons.lock),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureNewPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() => _obscureNewPassword = !_obscureNewPassword);
+                      },
                     ),
-                    onPressed: () {
-                      setState(() => _obscureNewPassword = !_obscureNewPassword);
-                    },
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a new password';
+                    }
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters';
+                    }
+                    return null;
+                  },
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a new password';
-                  }
-                  if (value.length < 6) {
-                    return 'Password must be at least 6 characters';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 8),
+                const SizedBox(height: 8),
 
-              // Confirm password field
-              TextFormField(
-                controller: _confirmPasswordController,
-                obscureText: _obscureConfirmPassword,
-                decoration: InputDecoration(
-                  labelText: 'Confirm New Password',
-                  prefixIcon: const Icon(Icons.lock),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureConfirmPassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
+                // Password strength indicator
+                PasswordStrengthIndicator(password: _newPasswordController.text),
+                const SizedBox(height: 8),
+
+                // Confirm password field
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  obscureText: _obscureConfirmPassword,
+                  decoration: InputDecoration(
+                    labelText: 'Confirm New Password',
+                    prefixIcon: const Icon(Icons.lock),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
+                      },
                     ),
-                    onPressed: () {
-                      setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
-                    },
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please confirm your new password';
+                    }
+                    if (value != _newPasswordController.text) {
+                      return 'Passwords do not match';
+                    }
+                    return null;
+                  },
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please confirm your new password';
-                  }
-                  if (value != _newPasswordController.text) {
-                    return 'Passwords do not match';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 32),
+                const SizedBox(height: 32),
 
-              // Submit button
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                onPressed: _changePassword,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                // Submit button
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ElevatedButton(
+                  onPressed: _changePassword,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Change Password'),
                 ),
-                child: const Text('Change Password'),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

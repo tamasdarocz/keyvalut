@@ -134,7 +134,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Export Credentials'),
+        title: const Text('Export Data'),
         content: TextField(
           controller: _fileNameController,
           decoration: const InputDecoration(
@@ -159,16 +159,10 @@ class _SettingsMenuState extends State<SettingsMenu> {
                 return;
               }
               try {
-                final CredentialProvider provider = Provider.of<CredentialProvider>(context, listen: false);
-                final List<Credential> credentials = provider.credentials;
-                await ExportService.exportCredentials(
-                  context,
-                  credentials,
-                  fileName,
-                );
+                await ExportService.exportData(context, fileName);
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error exporting credentials: $e')),
+                  SnackBar(content: Text('Error exporting data: $e')),
                 );
               }
             },
@@ -183,8 +177,8 @@ class _SettingsMenuState extends State<SettingsMenu> {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Import Credentials'),
-        content: Text('The file contains $count credentials. Do you want to import them?'),
+        title: const Text('Import Data'),
+        content: Text('The file contains $count items. Do you want to import them?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -204,7 +198,6 @@ class _SettingsMenuState extends State<SettingsMenu> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Drawer header
         Container(
           color: Theme.of(context).colorScheme.primary,
           padding: const EdgeInsets.all(16.0).copyWith(top: 48.0),
@@ -255,7 +248,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
                     leading: const Icon(Icons.password),
                     title: const Text('Change Master Password'),
                     onTap: () {
-                      Navigator.pop(context); // Close the drawer
+                      Navigator.pop(context);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -319,7 +312,6 @@ class _SettingsMenuState extends State<SettingsMenu> {
                       ],
                     ),
                   ),
-                  // Add this Card for credential management options
                   Card(
                     elevation: 2,
                     child: Column(
@@ -331,7 +323,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
                           leading: const Icon(Icons.archive),
                           title: const Text('View Archived Items'),
                           onTap: () {
-                            Navigator.pop(context); // Close the drawer
+                            Navigator.pop(context);
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -344,7 +336,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
                           leading: const Icon(Icons.delete_outline),
                           title: const Text('View Deleted Items'),
                           onTap: () {
-                            Navigator.pop(context); // Close the drawer
+                            Navigator.pop(context);
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -353,12 +345,10 @@ class _SettingsMenuState extends State<SettingsMenu> {
                             );
                           },
                         ),
-
                       ],
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // Import and Export buttons in a row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -368,25 +358,19 @@ class _SettingsMenuState extends State<SettingsMenu> {
                           child: ElevatedButton(
                             onPressed: () async {
                               try {
-                                final credentials = await ImportService.importCredentials(context);
-                                final count = credentials.length;
-                                final confirm = await _showImportConfirmationDialog(count);
-                                if (confirm != true) {
-                                  Fluttertoast.showToast(msg: 'Import canceled');
-                                  return;
+                                await ImportService.importData(context);
+                                if (mounted) {
+                                  Provider.of<CredentialProvider>(context, listen: false).loadCredentials();
+                                  Provider.of<CredentialProvider>(context, listen: false).loadCreditCards();
+                                  Provider.of<CredentialProvider>(context, listen: false).loadArchivedItems();
+                                  Provider.of<CredentialProvider>(context, listen: false).loadDeletedItems();
                                 }
-                                final provider = Provider.of<CredentialProvider>(context, listen: false);
-                                for (var credential in credentials) {
-                                  await provider.addCredential(credential);
-                                }
-                                Fluttertoast.showToast(msg: 'Credentials imported successfully');
-
                               } catch (e) {
                                 String errorMessage = e.toString();
                                 if (errorMessage.startsWith('Exception: ')) {
                                   errorMessage = errorMessage.substring('Exception: '.length);
                                 }
-                               Fluttertoast.showToast(msg: errorMessage);
+                                Fluttertoast.showToast(msg: errorMessage);
                               }
                             },
                             child: const Text('Import'),

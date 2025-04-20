@@ -18,9 +18,8 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, fileName),
-      version: 5,
+      version: 1, // Simplified: no versioning for now
       onCreate: _createDB,
-      onUpgrade: _onUpgrade,
     );
   }
 
@@ -59,43 +58,18 @@ class DatabaseHelper {
       deleted_at TEXT
     )
     ''');
-  }
 
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      await db.execute('ALTER TABLE credentials ADD COLUMN totpSecret TEXT');
-      await db.execute('ALTER TABLE credentials ADD COLUMN is_archived INTEGER DEFAULT 0');
-      await db.execute('ALTER TABLE credentials ADD COLUMN is_deleted INTEGER DEFAULT 0');
-      await db.execute('ALTER TABLE credentials ADD COLUMN deleted_at TEXT');
-      await db.execute('ALTER TABLE credentials ADD COLUMN archived_at TEXT');
-    }
-
-    if (oldVersion < 3) {
-      await db.execute('''
-      CREATE TABLE credit_cards (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        bank_name TEXT,
-        ch_name TEXT NOT NULL,
-        card_number TEXT NOT NULL,
-        expiry_date TEXT NOT NULL,
-        cvv TEXT NOT NULL,
-        card_type TEXT,
-        billing_address TEXT,
-        notes TEXT
-      )
-      ''');
-    }
-
-    if (oldVersion < 4) {
-      await db.execute('ALTER TABLE credit_cards ADD COLUMN is_archived INTEGER DEFAULT 0');
-      await db.execute('ALTER TABLE credit_cards ADD COLUMN archived_at TEXT');
-    }
-
-    if (oldVersion < 5) {
-      await db.execute('ALTER TABLE credit_cards ADD COLUMN is_deleted INTEGER DEFAULT 0');
-      await db.execute('ALTER TABLE credit_cards ADD COLUMN deleted_at TEXT');
-    }
+    await db.execute('''
+    CREATE TABLE notes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      is_archived INTEGER DEFAULT 0,
+      archived_at TEXT,
+      is_deleted INTEGER DEFAULT 0,
+      deleted_at TEXT
+    )
+    ''');
   }
 
   Future<void> deleteDatabase() async {
@@ -119,6 +93,15 @@ class DatabaseHelper {
     return db.insert(
       'credit_cards',
       card.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<int> insertNote(Note note) async {
+    final db = await database;
+    return db.insert(
+      'notes',
+      note.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -152,6 +135,21 @@ class DatabaseHelper {
     );
   }
 
+  Future<List<Note>> getNotes({bool includeArchived = false, bool includeDeleted = false}) async {
+    final db = await database;
+    final maps = await db.query(
+      'notes',
+      where: includeArchived && includeDeleted
+          ? null
+          : includeArchived
+          ? 'is_deleted = 0'
+          : includeDeleted
+          ? 'is_archived = 0'
+          : 'is_archived = 0 AND is_deleted = 0',
+    );
+    return maps.map((map) => Note.fromMap(map)).toList();
+  }
+
   Future<Credential?> getCredentialById(int id) async {
     final db = await database;
     final maps = await db.query(
@@ -180,6 +178,16 @@ class DatabaseHelper {
       card.toMap(),
       where: 'id = ?',
       whereArgs: [card.id],
+    );
+  }
+
+  Future<int> updateNote(Note note) async {
+    final db = await database;
+    return db.update(
+      'notes',
+      note.toMap(),
+      where: 'id = ?',
+      whereArgs: [note.id],
     );
   }
 
@@ -272,6 +280,56 @@ class DatabaseHelper {
     final db = await database;
     return db.update(
       'credit_cards',
+      {
+        'is_archived': 0,
+        'archived_at': null,
+        'is_deleted': 0,
+        'deleted_at': null,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> archiveNote(int id) async {
+    final db = await database;
+    return db.update(
+      'notes',
+      {
+        'is_archived': 1,
+        'archived_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> deleteNote(int id) async {
+    final db = await database;
+    return db.update(
+      'notes',
+      {
+        'is_deleted': 1,
+        'deleted_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> permanentlyDeleteNote(int id) async {
+    final db = await database;
+    return db.delete(
+      'notes',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> restoreNote(int id) async {
+    final db = await database;
+    return db.update(
+      'notes',
       {
         'is_archived': 0,
         'archived_at': null,
