@@ -1,123 +1,114 @@
-/*import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:keyvalut/data/credential_model.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:keyvalut/data/credential_provider.dart';
 import 'package:keyvalut/views/screens/note_edit_page.dart';
 
-class NotesPage extends StatefulWidget {
+class NotesPage extends StatelessWidget {
   const NotesPage({super.key});
 
   @override
-  State<NotesPage> createState() => _NotesPageState();
-}
-
-class _NotesPageState extends State<NotesPage> {
-  @override
-  void initState() {
-    super.initState();
-    // Load notes when the page is initialized
-    Provider.of<CredentialProvider>(context, listen: false).loadNotes();
-  }
-
-  void _showNoteOptions(Note note) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Edit'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => NoteEditPage(note: note),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.archive),
-              title: Text(note.isArchived ? 'Unarchive' : 'Archive'),
-              onTap: () {
-                Navigator.pop(context);
-                final provider = Provider.of<CredentialProvider>(context, listen: false);
-                if (note.isArchived) {
-                  provider.restoreNote(note.id!);
-                } else {
-                  provider.archiveNote(note.id!);
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete),
-              title: Text(note.isDeleted ? 'Restore' : 'Delete'),
-              onTap: () {
-                Navigator.pop(context);
-                final provider = Provider.of<CredentialProvider>(context, listen: false);
-                if (note.isDeleted) {
-                  provider.restoreNote(note.id!);
-                } else {
-                  provider.deleteNote(note.id!);
-                }
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<CredentialProvider>(context);
+    final theme = Theme.of(context);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      provider.loadNotes();
+    });
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notes'),
-      ),
       body: Consumer<CredentialProvider>(
         builder: (context, provider, child) {
-          final notes = provider.notes;
-          if (notes.isEmpty) {
-            return const Center(
-              child: Text('No notes available. Create a new note!'),
+          if (provider.notes.isEmpty) {
+            return Center(
+              child: Text(
+                'No notes found',
+                style: TextStyle(color: theme.colorScheme.onSurface),
+              ),
             );
           }
+
           return ListView.builder(
-            itemCount: notes.length,
+            padding: const EdgeInsets.all(8),
+            itemCount: provider.notes.length,
             itemBuilder: (context, index) {
-              final note = notes[index];
-              if (note.isDeleted) return const SizedBox.shrink(); // Skip deleted notes
-              return Card(
-                margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                child: ListTile(
-                  title: Text(
-                    note.title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: note.isArchived ? Colors.grey : null,
+              final note = provider.notes[index];
+              return Slidable(
+                key: ValueKey(note.id),
+                startActionPane: ActionPane(
+                  motion: const ScrollMotion(),
+                  children: [
+                    SlidableAction(
+                      onPressed: (context) async {
+                        await provider.archiveNote(note.id!);
+                        Fluttertoast.showToast(
+                          msg: 'Note Archived',
+                          toastLength: Toast.LENGTH_SHORT,
+                          gravity: ToastGravity.CENTER,
+                          backgroundColor: theme.colorScheme.primary,
+                          textColor: theme.colorScheme.onPrimary,
+                        );
+                      },
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      icon: Icons.archive,
+                      label: 'Archive',
                     ),
+                    SlidableAction(
+                      onPressed: (context) async {
+                        await provider.moveToTrash(note.id!);
+                        Fluttertoast.showToast(
+                          msg: 'Note Moved to Trash',
+                          toastLength: Toast.LENGTH_SHORT,
+                          gravity: ToastGravity.CENTER,
+                          backgroundColor: Colors.red,
+                          textColor: Colors.white,
+                        );
+                      },
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      icon: Icons.delete,
+                      label: 'Delete',
+                    ),
+                  ],
+                ),
+                endActionPane: ActionPane(
+                  motion: const ScrollMotion(),
+                  children: [
+                    SlidableAction(
+                      onPressed: (context) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => NoteEditPage(note: note),
+                          ),
+                        );
+                      },
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      icon: Icons.edit,
+                      label: 'Edit',
+                    ),
+                  ],
+                ),
+                child: Card(
+                  child: ListTile(
+                    title: Text(note.title),
+                    subtitle: Text(
+                      note.content.length > 50
+                          ? '${note.content.substring(0, 50)}...'
+                          : note.content,
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => NoteEditPage(note: note),
+                        ),
+                      );
+                    },
                   ),
-                  subtitle: Text(
-                    note.content.length > 50 ? '${note.content.substring(0, 50)}...' : note.content,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  trailing: Icon(
-                    note.isArchived ? Icons.archive : null,
-                    color: Colors.grey,
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => NoteEditPage(note: note),
-                      ),
-                    );
-                  },
-                  onLongPress: () => _showNoteOptions(note),
                 ),
               );
             },
@@ -133,10 +124,9 @@ class _NotesPageState extends State<NotesPage> {
             ),
           );
         },
+        backgroundColor: theme.colorScheme.primary,
         child: const Icon(Icons.add),
       ),
     );
   }
 }
-
- */

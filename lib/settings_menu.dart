@@ -129,11 +129,11 @@ class _SettingsMenuState extends State<SettingsMenu> {
     );
   }
 
-  Future<void> _showExportDialog(BuildContext context) async {
-    _fileNameController.text = 'credentials'; // Default file name
-    return showDialog(
+  Future<void> _showExportDialog() async {
+    _fileNameController.text = 'keyvault_backup'; // Updated default file name
+    final fileName = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Export Data'),
         content: TextField(
           controller: _fileNameController,
@@ -145,52 +145,42 @@ class _SettingsMenuState extends State<SettingsMenu> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext, null),
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              final fileName = _fileNameController.text.trim();
-              if (fileName.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
+            onPressed: () {
+              final name = _fileNameController.text.trim();
+              if (name.isEmpty) {
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
                   const SnackBar(content: Text('File name cannot be empty')),
                 );
                 return;
               }
-              try {
-                await ExportService.exportData(context, fileName);
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error exporting data: $e')),
-                );
-              }
+              Navigator.pop(dialogContext, name);
             },
             child: const Text('Export'),
           ),
         ],
       ),
     );
-  }
 
-  Future<bool?> _showImportConfirmationDialog(int count) async {
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Import Data'),
-        content: Text('The file contains $count items. Do you want to import them?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Import'),
-          ),
-        ],
-      ),
-    );
+    if (fileName == null || !mounted) return;
+
+    try {
+      await ExportService.exportData(context, fileName);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Data exported successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error exporting data: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -359,11 +349,13 @@ class _SettingsMenuState extends State<SettingsMenu> {
                             onPressed: () async {
                               try {
                                 await ImportService.importData(context);
+                                // Refresh the UI by reloading all data
                                 if (mounted) {
-                                  Provider.of<CredentialProvider>(context, listen: false).loadCredentials();
-                                  Provider.of<CredentialProvider>(context, listen: false).loadCreditCards();
-                                  Provider.of<CredentialProvider>(context, listen: false).loadArchivedItems();
-                                  Provider.of<CredentialProvider>(context, listen: false).loadDeletedItems();
+                                  final provider = Provider.of<CredentialProvider>(context, listen: false);
+                                  await provider.loadCredentials();
+                                  await provider.loadCreditCards();
+                                  await provider.loadArchivedItems();
+                                  await provider.loadDeletedItems();
                                 }
                               } catch (e) {
                                 String errorMessage = e.toString();
@@ -381,7 +373,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4.0),
                           child: ElevatedButton(
-                            onPressed: () => _showExportDialog(context),
+                            onPressed: _showExportDialog,
                             child: const Text('Export'),
                           ),
                         ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:keyvalut/views/screens/notes_page.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/data/credential_provider.dart';
@@ -22,9 +23,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final List<Widget> _pages = const [
     CredentialsTab(),
     PaymentsTab(),
-    NotesTab(),
+    NotesPage(),
   ];
-  final List<String> _tabTitles = ['Passwords', 'Payments', 'API Keys'];
+  final List<String> _tabTitles = ['Passwords', 'Payments', 'Notes'];
   int _timeoutDuration = 1;
   bool _lockImmediately = false;
   bool _requireBiometricsOnResume = false;

@@ -4,7 +4,6 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../../data/credential_provider.dart';
 
-
 class ArchivedItemsView extends StatelessWidget {
   const ArchivedItemsView({super.key});
 
@@ -25,7 +24,9 @@ class ArchivedItemsView extends StatelessWidget {
       ),
       body: Consumer<CredentialProvider>(
         builder: (context, provider, child) {
-          if (provider.archivedCredentials.isEmpty && provider.archivedCreditCards.isEmpty) {
+          if (provider.archivedCredentials.isEmpty &&
+              provider.archivedCreditCards.isEmpty &&
+              provider.archivedNotes.isEmpty) {
             return Center(
               child: Text(
                 'No archived items found',
@@ -71,11 +72,29 @@ class ArchivedItemsView extends StatelessWidget {
                         icon: Icons.restore,
                         label: 'Restore',
                       ),
+                      SlidableAction(
+                        onPressed: (context) async {
+                          await provider.permanentlyDeleteCredential(credential.id!);
+                          Fluttertoast.showToast(
+                            msg: 'Credential Permanently Deleted',
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.CENTER,
+                            backgroundColor: Colors.red,
+                            textColor: Colors.white,
+                          );
+                        },
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        icon: Icons.delete_forever,
+                        label: 'Delete',
+                      ),
                     ],
                   ),
-                  child: ListTile(
-                    title: Text(credential.title),
-                    subtitle: Text('Archived at: ${credential.archivedAt}'),
+                  child: Card(
+                    child: ListTile(
+                      title: Text(credential.title),
+                      subtitle: Text('Archived at: ${credential.archivedAt}'),
+                    ),
                   ),
                 )),
               ],
@@ -113,11 +132,89 @@ class ArchivedItemsView extends StatelessWidget {
                         icon: Icons.restore,
                         label: 'Restore',
                       ),
+                      SlidableAction(
+                        onPressed: (context) async {
+                          await provider.permanentlyDeleteCreditCard(card.id!);
+                          Fluttertoast.showToast(
+                            msg: 'Credit Card Permanently Deleted',
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.CENTER,
+                            backgroundColor: Colors.red,
+                            textColor: Colors.white,
+                          );
+                        },
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        icon: Icons.delete_forever,
+                        label: 'Delete',
+                      ),
                     ],
                   ),
-                  child: ListTile(
-                    title: Text(card.title),
-                    subtitle: Text('Archived at: ${card.archivedAt}'),
+                  child: Card(
+                    child: ListTile(
+                      title: Text(card.title),
+                      subtitle: Text('Archived at: ${card.archivedAt}'),
+                    ),
+                  ),
+                )),
+              ],
+              // Archived Notes
+              if (provider.archivedNotes.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(
+                    'Notes',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                ...provider.archivedNotes.map((note) => Slidable(
+                  key: ValueKey(note.id),
+                  endActionPane: ActionPane(
+                    motion: const ScrollMotion(),
+                    children: [
+                      SlidableAction(
+                        onPressed: (context) async {
+                          await provider.restoreNote(note.id!);
+                          Fluttertoast.showToast(
+                            msg: 'Note Restored',
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.CENTER,
+                            backgroundColor: theme.colorScheme.primary,
+                            textColor: theme.colorScheme.onPrimary,
+                          );
+                        },
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        icon: Icons.restore,
+                        label: 'Restore',
+                      ),
+                      SlidableAction(
+                        onPressed: (context) async {
+                          await provider.permanentlyDeleteNote(note.id!);
+                          Fluttertoast.showToast(
+                            msg: 'Note Permanently Deleted',
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.CENTER,
+                            backgroundColor: Colors.red,
+                            textColor: Colors.white,
+                          );
+                        },
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        icon: Icons.delete_forever,
+                        label: 'Delete',
+                      ),
+                    ],
+                  ),
+                  child: Card(
+                    child: ListTile(
+                      title: Text(note.title),
+                      subtitle: Text('Archived at: ${note.archivedAt}'),
+                    ),
                   ),
                 )),
               ],
