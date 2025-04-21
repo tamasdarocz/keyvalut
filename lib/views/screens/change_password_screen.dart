@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../services/password_strenght.dart';
 
-
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
 
@@ -13,61 +12,74 @@ class ChangePasswordScreen extends StatefulWidget {
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _authService = AuthService();
-  final _currentPasswordController = TextEditingController();
-  final _newPasswordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
+  final _currentCredentialController = TextEditingController();
+  final _newCredentialController = TextEditingController();
+  final _confirmCredentialController = TextEditingController();
 
-  bool _obscureCurrentPassword = true;
-  bool _obscureNewPassword = true;
-  bool _obscureConfirmPassword = true;
+  bool _obscureCurrentCredential = true;
+  bool _obscureNewCredential = true;
+  bool _obscureConfirmCredential = true;
   bool _isLoading = false;
+  bool _isPinMode = false;
+  bool _newIsPinMode = false;
 
   @override
   void initState() {
     super.initState();
-    // Add listener to rebuild the widget tree when the new password changes
-    _newPasswordController.addListener(() {
+    _loadCurrentMode();
+    _newCredentialController.addListener(() {
       setState(() {});
     });
   }
 
+  Future<void> _loadCurrentMode() async {
+    final isPin = await _authService.isPinMode();
+    if (mounted) {
+      setState(() {
+        _isPinMode = isPin;
+        _newIsPinMode = isPin;
+      });
+    }
+  }
+
   @override
   void dispose() {
-    _newPasswordController.removeListener(() {}); // Clean up the listener
-    _currentPasswordController.dispose();
-    _newPasswordController.dispose();
-    _confirmPasswordController.dispose();
+    _newCredentialController.removeListener(() {});
+    _currentCredentialController.dispose();
+    _newCredentialController.dispose();
+    _confirmCredentialController.dispose();
     super.dispose();
   }
 
-  Future<void> _changePassword() async {
+  Future<void> _changeCredential() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
-      // Verify current password
-      final isCurrentPasswordValid = await _authService.verifyMasterPassword(
-        _currentPasswordController.text,
+      final isCurrentValid = await _authService.verifyMasterCredential(
+        _currentCredentialController.text,
       );
 
-      if (!isCurrentPasswordValid) {
+      if (!isCurrentValid) {
         if (mounted) {
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Current password is incorrect')),
+            SnackBar(content: Text('Current ${_isPinMode ? 'PIN' : 'password'} is incorrect')),
           );
         }
         return;
       }
 
-      // Set new password
-      await _authService.setMasterPassword(_newPasswordController.text);
+      await _authService.setMasterCredential(
+        _newCredentialController.text,
+        isPin: _newIsPinMode,
+      );
 
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Master password changed successfully')),
+          SnackBar(content: Text('${_newIsPinMode ? 'PIN' : 'Password'} changed successfully')),
         );
         Navigator.pop(context);
       }
@@ -75,7 +87,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error changing password: ${e.toString()}')),
+          SnackBar(content: Text('Error changing ${_isPinMode ? 'PIN' : 'password'}: ${e.toString()}')),
         );
       }
     }
@@ -85,10 +97,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Change Master Password'),
+        title: Text('Change ${_isPinMode ? 'PIN' : 'Master Password'}'),
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
-      body: SingleChildScrollView( // Wrap with SingleChildScrollView to handle overflow
+      body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(8),
           child: Form(
@@ -96,106 +108,129 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Current password field
                 TextFormField(
-                  controller: _currentPasswordController,
-                  obscureText: _obscureCurrentPassword,
+                  controller: _currentCredentialController,
+                  obscureText: _obscureCurrentCredential,
+                  keyboardType: _isPinMode ? TextInputType.number : TextInputType.text,
                   decoration: InputDecoration(
-                    labelText: 'Current Password',
+                    labelText: 'Current ${_isPinMode ? 'PIN' : 'Password'}',
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureCurrentPassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
+                        _obscureCurrentCredential ? Icons.visibility_off : Icons.visibility,
                       ),
                       onPressed: () {
-                        setState(() => _obscureCurrentPassword = !_obscureCurrentPassword);
+                        setState(() => _obscureCurrentCredential = !_obscureCurrentCredential);
                       },
                     ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your current password';
+                      return 'Please enter your current ${_isPinMode ? 'PIN' : 'password'}';
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 8),
-
-                // New password field
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Select Authentication Type',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SegmentedButton<bool>(
+                  segments: const [
+                    ButtonSegment<bool>(
+                      value: false,
+                      label: Text('Password'),
+                      icon: Icon(Icons.lock),
+                    ),
+                    ButtonSegment<bool>(
+                      value: true,
+                      label: Text('PIN'),
+                      icon: Icon(Icons.dialpad),
+                    ),
+                  ],
+                  selected: {_newIsPinMode},
+                  onSelectionChanged: (newSelection) {
+                    setState(() {
+                      _newIsPinMode = newSelection.first;
+                      _newCredentialController.clear();
+                      _confirmCredentialController.clear();
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
                 TextFormField(
-                  controller: _newPasswordController,
-                  obscureText: _obscureNewPassword,
+                  controller: _newCredentialController,
+                  obscureText: _obscureNewCredential,
+                  keyboardType: _newIsPinMode ? TextInputType.number : TextInputType.text,
                   decoration: InputDecoration(
-                    labelText: 'New Password',
+                    labelText: 'New ${_newIsPinMode ? 'PIN' : 'Password'}',
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureNewPassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
+                        _obscureNewCredential ? Icons.visibility_off : Icons.visibility,
                       ),
                       onPressed: () {
-                        setState(() => _obscureNewPassword = !_obscureNewPassword);
+                        setState(() => _obscureNewCredential = !_obscureNewCredential);
                       },
                     ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a new password';
+                      return 'Please enter a new ${_newIsPinMode ? 'PIN' : 'password'}';
                     }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                    if (_newIsPinMode) {
+                      if (value.length < 6) return 'PIN must be at least 6 digits';
+                      if (!RegExp(r'^\d+$').hasMatch(value)) return 'PIN must be numeric';
+                    } else {
+                      if (value.length < 6) return 'Password must be at least 6 characters';
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 8),
-
-                // Password strength indicator
-                PasswordStrengthIndicator(password: _newPasswordController.text),
+                if (!_newIsPinMode)
+                  PasswordStrengthIndicator(password: _newCredentialController.text),
                 const SizedBox(height: 8),
-
-                // Confirm password field
                 TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: _obscureConfirmPassword,
+                  controller: _confirmCredentialController,
+                  obscureText: _obscureConfirmCredential,
+                  keyboardType: _newIsPinMode ? TextInputType.number : TextInputType.text,
                   decoration: InputDecoration(
-                    labelText: 'Confirm New Password',
+                    labelText: 'Confirm New ${_newIsPinMode ? 'PIN' : 'Password'}',
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureConfirmPassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
+                        _obscureConfirmCredential ? Icons.visibility_off : Icons.visibility,
                       ),
                       onPressed: () {
-                        setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
+                        setState(() => _obscureConfirmCredential = !_obscureConfirmCredential);
                       },
                     ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please confirm your new password';
+                      return 'Please confirm your new ${_newIsPinMode ? 'PIN' : 'password'}';
                     }
-                    if (value != _newPasswordController.text) {
-                      return 'Passwords do not match';
+                    if (value != _newCredentialController.text) {
+                      return '${_newIsPinMode ? 'PINs' : 'Passwords'} do not match';
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 32),
-
-                // Submit button
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : ElevatedButton(
-                  onPressed: _changePassword,
+                  onPressed: _changeCredential,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  child: const Text('Change Password'),
+                  child: Text('Change ${_newIsPinMode ? 'PIN' : 'Password'}'),
                 ),
               ],
             ),

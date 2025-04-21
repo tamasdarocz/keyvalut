@@ -6,16 +6,18 @@ class SetupMasterPasswordScreen extends StatefulWidget {
   const SetupMasterPasswordScreen({super.key});
 
   @override
-  State<SetupMasterPasswordScreen> createState() =>
-      _SetupMasterPasswordScreenState();
+  State<SetupMasterPasswordScreen> createState() => _SetupMasterPasswordScreenState();
 }
 
 class _SetupMasterPasswordScreenState extends State<SetupMasterPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _authService = AuthService();
-  final _passwordController = TextEditingController();
+  final _credentialController = TextEditingController();
   final _confirmController = TextEditingController();
+  bool _isPinMode = false;
   bool _isLoading = false;
+  bool _obscureCredential = true;
+  bool _obscureConfirm = true;
 
   @override
   Widget build(BuildContext context) {
@@ -23,38 +25,90 @@ class _SetupMasterPasswordScreenState extends State<SetupMasterPasswordScreen> {
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'New Password',
-                    prefixIcon: Icon(Icons.lock),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Set Up Authentication',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  validator: _validatePassword,
-                ),
-                TextFormField(
-                  controller: _confirmController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Confirm Password',
-                    prefixIcon: Icon(Icons.lock_reset),
+                  const SizedBox(height: 20),
+                  SegmentedButton<bool>(
+                    segments: const [
+                      ButtonSegment<bool>(
+                        value: false,
+                        label: Text('Password'),
+                        icon: Icon(Icons.lock),
+                      ),
+                      ButtonSegment<bool>(
+                        value: true,
+                        label: Text('PIN'),
+                        icon: Icon(Icons.dialpad),
+                      ),
+                    ],
+                    selected: {_isPinMode},
+                    onSelectionChanged: (newSelection) {
+                      setState(() {
+                        _isPinMode = newSelection.first;
+                        _credentialController.clear();
+                        _confirmController.clear();
+                      });
+                    },
                   ),
-                  validator: _validateConfirm,
-                ),
-                const SizedBox(height: 20),
-                if (_isLoading)
-                  const CircularProgressIndicator()
-                else
-                  ElevatedButton(
-                    onPressed: _handleSetup,
-                    child: const Text('Secure My Vault'),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _credentialController,
+                    obscureText: _obscureCredential,
+                    keyboardType: _isPinMode ? TextInputType.number : TextInputType.text,
+                    decoration: InputDecoration(
+                      labelText: _isPinMode ? 'New PIN' : 'New Password',
+                      prefixIcon: const Icon(Icons.lock),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureCredential ? Icons.visibility_off : Icons.visibility,
+                        ),
+                        onPressed: () {
+                          setState(() => _obscureCredential = !_obscureCredential);
+                        },
+                      ),
+                    ),
+                    validator: _validateCredential,
                   ),
-              ],
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _confirmController,
+                    obscureText: _obscureConfirm,
+                    keyboardType: _isPinMode ? TextInputType.number : TextInputType.text,
+                    decoration: InputDecoration(
+                      labelText: _isPinMode ? 'Confirm PIN' : 'Confirm Password',
+                      prefixIcon: const Icon(Icons.lock_reset),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureConfirm ? Icons.visibility_off : Icons.visibility,
+                        ),
+                        onPressed: () {
+                          setState(() => _obscureConfirm = !_obscureConfirm);
+                        },
+                      ),
+                    ),
+                    validator: _validateConfirm,
+                  ),
+                  const SizedBox(height: 20),
+                  if (_isLoading)
+                    const CircularProgressIndicator()
+                  else
+                    ElevatedButton(
+                      onPressed: _handleSetup,
+                      child: const Text('Secure My Vault'),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -62,16 +116,19 @@ class _SetupMasterPasswordScreenState extends State<SetupMasterPasswordScreen> {
     );
   }
 
-  // Login Password length
-
-  String? _validatePassword(String? value) {
+  String? _validateCredential(String? value) {
     if (value?.isEmpty ?? true) return 'Required';
-    if (value!.length < 4) return 'Minimum 4 characters';
+    if (_isPinMode) {
+      if (value!.length < 6) return 'PIN must be at least 6 digits';
+      if (!RegExp(r'^\d+$').hasMatch(value)) return 'PIN must be numeric';
+    } else {
+      if (value!.length < 6) return 'Password must be at least 6 characters';
+    }
     return null;
   }
 
   String? _validateConfirm(String? value) {
-    if (value != _passwordController.text) return 'Passwords must match';
+    if (value != _credentialController.text) return _isPinMode ? 'PINs must match' : 'Passwords must match';
     return null;
   }
 
@@ -79,7 +136,10 @@ class _SetupMasterPasswordScreenState extends State<SetupMasterPasswordScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-    await _authService.setMasterPassword(_passwordController.text);
+    await _authService.setMasterCredential(
+      _credentialController.text,
+      isPin: _isPinMode,
+    );
 
     if (await _authService.isBiometricAvailable()) {
       await _authService.setBiometricEnabled(true);
@@ -91,5 +151,12 @@ class _SetupMasterPasswordScreenState extends State<SetupMasterPasswordScreen> {
       context,
       MaterialPageRoute(builder: (_) => const HomePage()),
     );
+  }
+
+  @override
+  void dispose() {
+    _credentialController.dispose();
+    _confirmController.dispose();
+    super.dispose();
   }
 }

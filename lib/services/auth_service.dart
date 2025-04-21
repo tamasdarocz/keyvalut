@@ -1,42 +1,84 @@
 import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:math';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:crypto/crypto.dart';
+import 'package:argon2/argon2.dart';
 
 class AuthService {
   final LocalAuthentication _localAuth = LocalAuthentication();
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
-  String? _masterPassword;
-  late List<int> _key;
-  late List<int> _salt;
+  String? _masterCredential;
+  late Uint8List _key;
+  late Uint8List _salt;
 
   AuthService() {
     _initializeKeyAndSalt();
   }
 
-  void _initializeKeyAndSalt() {
-    _key = utf8.encode('your-32-byte-key-here-1234567890'); // Must be 32 bytes
-    _salt = utf8.encode('your-16-byte-salt-here-12345678'); // Must be 16 bytes
+  Future<void> _initializeKeyAndSalt() async {
+    // Check if salt and key exist in storage
+    final storedSalt = await _secureStorage.read(key: 'salt');
+    final storedKey = await _secureStorage.read(key: 'key');
+
+    if (storedSalt != null && storedKey != null) {
+      // Load from storage if they exist
+      _salt = Uint8List.fromList(base64Decode(storedSalt));
+      _key = Uint8List.fromList(base64Decode(storedKey));
+    } else {
+      // Generate new ones if they don't exist
+      final random = Random.secure();
+      _key = Uint8List.fromList(List<int>.generate(32, (_) => random.nextInt(256)));
+      _salt = Uint8List.fromList(List<int>.generate(16, (_) => random.nextInt(256)));
+    }
   }
 
-  Future<void> setMasterPassword(String password) async {
-    _masterPassword = password;
-    final key = sha256.convert(utf8.encode(password)).bytes;
-    await _secureStorage.write(key: 'masterPassword', value: base64Encode(key));
+  Future<void> setMasterCredential(String credential, {required bool isPin}) async {
+    await _initializeKeyAndSalt(); // Ensure salt is loaded or initialized
+    _masterCredential = credential;
+    final parameters = Argon2Parameters(
+      Argon2Parameters.ARGON2_i,
+      _salt,
+      iterations: 2,
+      memoryPowerOf2: 14,
+    );
+    final argon2 = Argon2BytesGenerator();
+    argon2.init(parameters);
+    final passwordBytes = utf8.encode(credential);
+    final result = Uint8List(32);
+    argon2.generateBytes(passwordBytes, result, 0, result.length);
+    await _secureStorage.write(key: 'masterCredential', value: base64Encode(result));
+    await _secureStorage.write(key: 'isPin', value: isPin.toString());
     await _secureStorage.write(key: 'key', value: base64Encode(_key));
     await _secureStorage.write(key: 'salt', value: base64Encode(_salt));
   }
 
-  Future<bool> verifyMasterPassword(String password) async {
-    final storedPassword = await _secureStorage.read(key: 'masterPassword');
-    if (storedPassword == null) return false;
-    final key = sha256.convert(utf8.encode(password)).bytes;
-    return base64Encode(key) == storedPassword;
+  Future<bool> verifyMasterCredential(String credential) async {
+    await _initializeKeyAndSalt(); // Ensure salt is loaded
+    final storedCredential = await _secureStorage.read(key: 'masterCredential');
+    if (storedCredential == null) return false;
+    final parameters = Argon2Parameters(
+      Argon2Parameters.ARGON2_i,
+      _salt,
+      iterations: 2,
+      memoryPowerOf2: 14,
+    );
+    final argon2 = Argon2BytesGenerator();
+    argon2.init(parameters);
+    final passwordBytes = utf8.encode(credential);
+    final result = Uint8List(32);
+    argon2.generateBytes(passwordBytes, result, 0, result.length);
+    return base64Encode(result) == storedCredential;
   }
 
-  Future<bool> isMasterPasswordSet() async {
-    final storedPassword = await _secureStorage.read(key: 'masterPassword');
-    return storedPassword != null;
+  Future<bool> isMasterCredentialSet() async {
+    final storedCredential = await _secureStorage.read(key: 'masterCredential');
+    return storedCredential != null;
+  }
+
+  Future<bool> isPinMode() async {
+    final isPin = await _secureStorage.read(key: 'isPin');
+    return isPin == 'true';
   }
 
   Future<bool> isBiometricAvailable() async {
@@ -50,10 +92,10 @@ class AuthService {
   Future<bool> authenticateWithBiometrics({String reason = 'Please authenticate to access your credentials'}) async {
     try {
       return await _localAuth.authenticate(
-        localizedReason: reason, // Use the provided reason
+        localizedReason: reason,
         options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: true,
+          stickyAuth: false,
+          biometricOnly: false,
         ),
       );
     } catch (e) {
@@ -70,7 +112,7 @@ class AuthService {
     await _secureStorage.write(key: 'biometricEnabled', value: enabled.toString());
   }
 
-  List<int> get key => _key;
-  List<int> get salt => _salt;
-  String? get masterPassword => _masterPassword;
+  Uint8List get key => _key;
+  Uint8List get salt => _salt;
+  String? get masterCredential => _masterCredential;
 }
