@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:keyvalut/data/credential_model.dart';
 import 'package:keyvalut/data/credential_provider.dart';
 
@@ -14,7 +16,8 @@ class NoteEditPage extends StatefulWidget {
 
 class _NoteEditPageState extends State<NoteEditPage> {
   final _titleController = TextEditingController();
-  final _contentController = TextEditingController();
+  final _quillController = quill.QuillController.basic();
+  final _scrollController = ScrollController();
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -22,14 +25,22 @@ class _NoteEditPageState extends State<NoteEditPage> {
     super.initState();
     if (widget.note != null) {
       _titleController.text = widget.note!.title;
-      _contentController.text = widget.note!.content;
+      try {
+        // Parse the JSON content (Quill Delta) if it exists
+        final deltaJson = jsonDecode(widget.note!.content);
+        _quillController.document = quill.Document.fromJson(deltaJson);
+      } catch (e) {
+        // Fallback to plain text if content is not JSON (for backward compatibility)
+        _quillController.document = quill.Document()..insert(0, widget.note!.content);
+      }
     }
   }
 
   @override
   void dispose() {
     _titleController.dispose();
-    _contentController.dispose();
+    _quillController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -37,10 +48,12 @@ class _NoteEditPageState extends State<NoteEditPage> {
     if (!_formKey.currentState!.validate()) return;
 
     final provider = Provider.of<CredentialProvider>(context, listen: false);
+    // Convert Quill Delta to JSON string
+    final deltaJson = jsonEncode(_quillController.document.toDelta().toJson());
     final newNote = Note(
       id: widget.note?.id,
       title: _titleController.text,
-      content: _contentController.text,
+      content: deltaJson,
       isArchived: widget.note?.isArchived ?? false,
       archivedAt: widget.note?.archivedAt,
       isDeleted: widget.note?.isDeleted ?? false,
@@ -88,23 +101,32 @@ class _NoteEditPageState extends State<NoteEditPage> {
                 },
               ),
               const SizedBox(height: 16),
+              // Quill Toolbar for formatting options
+              quill.QuillToolbar.simple(
+                configurations: quill.QuillSimpleToolbarConfigurations(
+                  controller: _quillController,
+                  multiRowsDisplay: false,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Quill Editor for rich text
               Expanded(
-                child: TextFormField(
-                  controller: _contentController,
-                  decoration: const InputDecoration(
-                    labelText: 'Content',
-                    border: OutlineInputBorder(),
-                    alignLabelWithHint: true,
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
+                    borderRadius: BorderRadius.circular(4),
                   ),
-                  maxLines: null,
-                  expands: true,
-                  textAlignVertical: TextAlignVertical.top,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter some content';
-                    }
-                    return null;
-                  },
+                  child: quill.QuillEditor(
+                    controller: _quillController,
+                    scrollController: _scrollController,
+                    focusNode: FocusNode(),
+                    configurations: quill.QuillEditorConfigurations(
+                      placeholder: 'Enter content...',
+                      autoFocus: false,
+                      expands: true,
+                      padding: const EdgeInsets.all(8),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -114,4 +136,3 @@ class _NoteEditPageState extends State<NoteEditPage> {
     );
   }
 }
-

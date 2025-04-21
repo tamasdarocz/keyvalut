@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:keyvalut/data/credential_provider.dart';
 import 'package:keyvalut/views/screens/note_edit_page.dart';
 
@@ -34,6 +36,16 @@ class NotesPage extends StatelessWidget {
             itemCount: provider.notes.length,
             itemBuilder: (context, index) {
               final note = provider.notes[index];
+              // Extract plain text from Quill Delta JSON
+              String plainContent;
+              try {
+                final deltaJson = jsonDecode(note.content);
+                final doc = quill.Document.fromJson(deltaJson);
+                plainContent = doc.toPlainText();
+              } catch (e) {
+                // Fallback to raw content if not JSON (backward compatibility)
+                plainContent = note.content;
+              }
               return Slidable(
                 key: ValueKey(note.id),
                 startActionPane: ActionPane(
@@ -96,9 +108,9 @@ class NotesPage extends StatelessWidget {
                   child: ListTile(
                     title: Text(note.title),
                     subtitle: Text(
-                      note.content.length > 50
-                          ? '${note.content.substring(0, 50)}...'
-                          : note.content,
+                      plainContent.length > 50
+                          ? '${plainContent.substring(0, 50)}...'
+                          : plainContent,
                     ),
                     onTap: () {
                       Navigator.push(
