@@ -26,11 +26,9 @@ class _NoteEditPageState extends State<NoteEditPage> {
     if (widget.note != null) {
       _titleController.text = widget.note!.title;
       try {
-        // Parse the JSON content (Quill Delta) if it exists
         final deltaJson = jsonDecode(widget.note!.content);
         _quillController.document = quill.Document.fromJson(deltaJson);
       } catch (e) {
-        // Fallback to plain text if content is not JSON (for backward compatibility)
         _quillController.document = quill.Document()..insert(0, widget.note!.content);
       }
     }
@@ -48,7 +46,6 @@ class _NoteEditPageState extends State<NoteEditPage> {
     if (!_formKey.currentState!.validate()) return;
 
     final provider = Provider.of<CredentialProvider>(context, listen: false);
-    // Convert Quill Delta to JSON string
     final deltaJson = jsonEncode(_quillController.document.toDelta().toJson());
     final newNote = Note(
       id: widget.note?.id,
@@ -101,7 +98,6 @@ class _NoteEditPageState extends State<NoteEditPage> {
                 },
               ),
               const SizedBox(height: 16),
-              // Quill Toolbar for formatting options
               quill.QuillToolbar.simple(
                 configurations: quill.QuillSimpleToolbarConfigurations(
                   controller: _quillController,
@@ -109,7 +105,6 @@ class _NoteEditPageState extends State<NoteEditPage> {
                 ),
               ),
               const SizedBox(height: 8),
-              // Quill Editor for rich text
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
@@ -123,7 +118,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
                     configurations: quill.QuillEditorConfigurations(
                       placeholder: 'Enter content...',
                       autoFocus: false,
-                      expands: true,
+                      expands: false,
                       padding: const EdgeInsets.all(8),
                     ),
                   ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:keyvalut/services/auth_service.dart';
 import 'package:keyvalut/theme/theme_provider.dart';
@@ -8,9 +9,17 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'data/credential_provider.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final authService = AuthService();
+
+  // Configure background execution
+  const androidConfig = FlutterBackgroundAndroidConfig(
+    notificationTitle: "KeyValut",
+    notificationImportance: AndroidNotificationImportance.normal,
+  );
+  await FlutterBackground.initialize(androidConfig: androidConfig);
+  await FlutterBackground.enableBackgroundExecution();
 
   runApp(
     MultiProvider(
@@ -24,8 +33,37 @@ void main() {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  bool _needsRefresh = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      setState(() {
+        _needsRefresh = true;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +81,7 @@ class MyApp extends StatelessWidget {
           theme: themeProvider.themeData,
           themeMode: themeProvider.themeMode,
           home: FutureBuilder<bool>(
+            key: ValueKey(_needsRefresh),
             future: context.read<AuthService>().isMasterPasswordSet(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -75,6 +114,7 @@ class MyApp extends StatelessWidget {
                   ),
                 );
               }
+              _needsRefresh = false;
               return snapshot.data! ? const LoginScreen() : const SetupMasterPasswordScreen();
             },
           ),
