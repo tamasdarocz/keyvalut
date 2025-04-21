@@ -32,6 +32,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
   int _timeoutDuration = 1;
   bool _lockImmediately = false;
   bool _requireBiometricsOnResume = false;
+  bool _isPinMode = false;
   final TextEditingController _fileNameController = TextEditingController();
 
   @override
@@ -39,12 +40,21 @@ class _SettingsMenuState extends State<SettingsMenu> {
     super.initState();
     _loadBiometricSettings();
     _loadTimeoutSettings();
+    _loadCredentialMode();
   }
 
   @override
   void dispose() {
     _fileNameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadCredentialMode() async {
+    final authService = AuthService();
+    final isPin = await authService.isPinMode();
+    if (mounted) {
+      setState(() => _isPinMode = isPin);
+    }
   }
 
   Future<void> _loadBiometricSettings() async {
@@ -75,6 +85,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
     await authService.setBiometricEnabled(value);
     if (mounted) {
       setState(() => _biometricEnabled = value);
+      widget.onSettingsChanged();
     }
   }
 
@@ -130,7 +141,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
   }
 
   Future<void> _showExportDialog() async {
-    _fileNameController.text = 'keyvault_backup'; // Updated default file name
+    _fileNameController.text = 'keyvault_backup';
     final fileName = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -236,7 +247,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
                   ),
                   ListTile(
                     leading: const Icon(Icons.password),
-                    title: const Text('Change Master Password'),
+                    title: Text('Change ${_isPinMode ? 'PIN' : 'Master Password'}'),
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
@@ -349,7 +360,6 @@ class _SettingsMenuState extends State<SettingsMenu> {
                             onPressed: () async {
                               try {
                                 await ImportService.importData(context);
-                                // Refresh the UI by reloading all data
                                 if (mounted) {
                                   final provider = Provider.of<CredentialProvider>(context, listen: false);
                                   await provider.loadCredentials();

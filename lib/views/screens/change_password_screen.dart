@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../services/auth_service.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:keyvalut/services/auth_service.dart';
+import 'package:provider/provider.dart';
 import '../../services/password_strenght.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
@@ -9,85 +11,77 @@ class ChangePasswordScreen extends StatefulWidget {
   State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
 }
 
+enum CredentialType { pin, password }
+
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _authService = AuthService();
   final _currentCredentialController = TextEditingController();
   final _newCredentialController = TextEditingController();
-  final _confirmCredentialController = TextEditingController();
-
+  final _confirmNewCredentialController = TextEditingController();
+  CredentialType _selectedCredentialType = CredentialType.pin; // Default to PIN
+  bool _isCurrentPinMode = true; // Track the current mode (PIN or Password)
   bool _obscureCurrentCredential = true;
   bool _obscureNewCredential = true;
-  bool _obscureConfirmCredential = true;
+  bool _obscureConfirmNewCredential = true;
   bool _isLoading = false;
-  bool _isPinMode = false;
-  bool _newIsPinMode = false;
 
   @override
   void initState() {
     super.initState();
-    _loadCurrentMode();
-    _newCredentialController.addListener(() {
-      setState(() {});
-    });
+    _checkCredentialMode();
   }
 
-  Future<void> _loadCurrentMode() async {
-    final isPin = await _authService.isPinMode();
+  Future<void> _checkCredentialMode() async {
+    final authService = context.read<AuthService>();
+    final isPin = await authService.isPinMode();
     if (mounted) {
       setState(() {
-        _isPinMode = isPin;
-        _newIsPinMode = isPin;
+        _isCurrentPinMode = isPin; // Set the current mode
+        _selectedCredentialType = isPin ? CredentialType.pin : CredentialType.password; // Set the initial selected mode
       });
     }
   }
 
-  @override
-  void dispose() {
-    _newCredentialController.removeListener(() {});
-    _currentCredentialController.dispose();
-    _newCredentialController.dispose();
-    _confirmCredentialController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _changeCredential() async {
+  Future<void> _handleChangeCredential() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final authService = context.read<AuthService>();
     setState(() => _isLoading = true);
 
     try {
-      final isCurrentValid = await _authService.verifyMasterCredential(
-        _currentCredentialController.text,
-      );
+      final currentCredential = _currentCredentialController.text;
+      final newCredential = _newCredentialController.text;
 
+      final isCurrentValid = await authService.verifyMasterCredential(currentCredential);
       if (!isCurrentValid) {
-        if (mounted) {
-          setState(() => _isLoading = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Current ${_isPinMode ? 'PIN' : 'password'} is incorrect')),
-          );
-        }
+        setState(() => _isLoading = false);
+        Fluttertoast.showToast(
+          msg: _isCurrentPinMode ? 'Current PIN is incorrect' : 'Current password is incorrect',
+          gravity: ToastGravity.CENTER,
+        );
         return;
       }
 
-      await _authService.setMasterCredential(
-        _newCredentialController.text,
-        isPin: _newIsPinMode,
+      await authService.setMasterCredential(
+        newCredential,
+        isPin: _selectedCredentialType == CredentialType.pin,
       );
+      authService.clearCachedCredential(); // Clear cached credential after change
 
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${_newIsPinMode ? 'PIN' : 'Password'} changed successfully')),
+        Fluttertoast.showToast(
+          msg: _selectedCredentialType == CredentialType.pin ? 'PIN changed successfully' : 'Password changed successfully',
+          gravity: ToastGravity.CENTER,
         );
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error changing ${_isPinMode ? 'PIN' : 'password'}: ${e.toString()}')),
+        Fluttertoast.showToast(
+          msg: 'Error changing credential',
+          gravity: ToastGravity.CENTER,
         );
       }
     }
@@ -97,146 +91,123 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Change ${_isPinMode ? 'PIN' : 'Master Password'}'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: const Text('Change Credential'),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextFormField(
-                  controller: _currentCredentialController,
-                  obscureText: _obscureCurrentCredential,
-                  keyboardType: _isPinMode ? TextInputType.number : TextInputType.text,
-                  decoration: InputDecoration(
-                    labelText: 'Current ${_isPinMode ? 'PIN' : 'Password'}',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureCurrentCredential ? Icons.visibility_off : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setState(() => _obscureCurrentCredential = !_obscureCurrentCredential);
-                      },
-                    ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              SegmentedButton<CredentialType>(
+                segments: const [
+                  ButtonSegment<CredentialType>(
+                    value: CredentialType.pin,
+                    label: Text('PIN'),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your current ${_isPinMode ? 'PIN' : 'password'}';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Select Authentication Type',
-                    style: Theme.of(context).textTheme.titleMedium,
+                  ButtonSegment<CredentialType>(
+                    value: CredentialType.password,
+                    label: Text('Password'),
+                  ),
+                ],
+                selected: {_selectedCredentialType},
+                onSelectionChanged: (newSelection) {
+                  setState(() {
+                    _selectedCredentialType = newSelection.first;
+                  });
+                },
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _currentCredentialController,
+                obscureText: _obscureCurrentCredential,
+                keyboardType: _isCurrentPinMode ? TextInputType.number : TextInputType.text,
+                decoration: InputDecoration(
+                  labelText: _isCurrentPinMode ? 'Current PIN' : 'Current Password',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureCurrentCredential ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() => _obscureCurrentCredential = !_obscureCurrentCredential);
+                    },
                   ),
                 ),
-                const SizedBox(height: 8),
-                SegmentedButton<bool>(
-                  segments: const [
-                    ButtonSegment<bool>(
-                      value: false,
-                      label: Text('Password'),
-                      icon: Icon(Icons.lock),
+                validator: (value) {
+                  if (value?.isEmpty ?? true) return 'Required';
+                  if (_isCurrentPinMode && value!.length < 6) return 'PIN must be at least 6 digits';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _newCredentialController,
+                obscureText: _obscureNewCredential,
+                keyboardType: _selectedCredentialType == CredentialType.pin ? TextInputType.number : TextInputType.text,
+                decoration: InputDecoration(
+                  labelText: _selectedCredentialType == CredentialType.pin ? 'New PIN' : 'New Password',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureNewCredential ? Icons.visibility_off : Icons.visibility,
                     ),
-                    ButtonSegment<bool>(
-                      value: true,
-                      label: Text('PIN'),
-                      icon: Icon(Icons.dialpad),
-                    ),
-                  ],
-                  selected: {_newIsPinMode},
-                  onSelectionChanged: (newSelection) {
-                    setState(() {
-                      _newIsPinMode = newSelection.first;
-                      _newCredentialController.clear();
-                      _confirmCredentialController.clear();
-                    });
-                  },
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _newCredentialController,
-                  obscureText: _obscureNewCredential,
-                  keyboardType: _newIsPinMode ? TextInputType.number : TextInputType.text,
-                  decoration: InputDecoration(
-                    labelText: 'New ${_newIsPinMode ? 'PIN' : 'Password'}',
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureNewCredential ? Icons.visibility_off : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setState(() => _obscureNewCredential = !_obscureNewCredential);
-                      },
-                    ),
+                    onPressed: () {
+                      setState(() => _obscureNewCredential = !_obscureNewCredential);
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a new ${_newIsPinMode ? 'PIN' : 'password'}';
-                    }
-                    if (_newIsPinMode) {
-                      if (value.length < 6) return 'PIN must be at least 6 digits';
-                      if (!RegExp(r'^\d+$').hasMatch(value)) return 'PIN must be numeric';
-                    } else {
-                      if (value.length < 6) return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
                 ),
+                validator: (value) {
+                  if (value?.isEmpty ?? true) return 'Required';
+                  if (_selectedCredentialType == CredentialType.pin && value!.length < 6) return 'PIN must be at least 6 digits';
+                  return null;
+                },
+              ),
+              if (_selectedCredentialType == CredentialType.password) ...[
                 const SizedBox(height: 8),
-                if (!_newIsPinMode)
-                  PasswordStrengthIndicator(password: _newCredentialController.text),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _confirmCredentialController,
-                  obscureText: _obscureConfirmCredential,
-                  keyboardType: _newIsPinMode ? TextInputType.number : TextInputType.text,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm New ${_newIsPinMode ? 'PIN' : 'Password'}',
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmCredential ? Icons.visibility_off : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setState(() => _obscureConfirmCredential = !_obscureConfirmCredential);
-                      },
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please confirm your new ${_newIsPinMode ? 'PIN' : 'password'}';
-                    }
-                    if (value != _newCredentialController.text) {
-                      return '${_newIsPinMode ? 'PINs' : 'Passwords'} do not match';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 32),
-                _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : ElevatedButton(
-                  onPressed: _changeCredential,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: Text('Change ${_newIsPinMode ? 'PIN' : 'Password'}'),
-                ),
+                PasswordStrengthIndicator(password: _newCredentialController.text),
               ],
-            ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _confirmNewCredentialController,
+                obscureText: _obscureConfirmNewCredential,
+                keyboardType: _selectedCredentialType == CredentialType.pin ? TextInputType.number : TextInputType.text,
+                decoration: InputDecoration(
+                  labelText: _selectedCredentialType == CredentialType.pin ? 'Confirm New PIN' : 'Confirm New Password',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureConfirmNewCredential ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() => _obscureConfirmNewCredential = !_obscureConfirmNewCredential);
+                    },
+                  ),
+                ),
+                validator: (value) {
+                  if (value?.isEmpty ?? true) return 'Required';
+                  if (value != _newCredentialController.text) return 'Does not match';
+                  if (_selectedCredentialType == CredentialType.pin && value!.length < 6) return 'PIN must be at least 6 digits';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+              if (_isLoading)
+                const Center(child: CircularProgressIndicator())
+              else
+                ElevatedButton(
+                  onPressed: _handleChangeCredential,
+                  child: const Text('Change Credential'),
+                ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _currentCredentialController.dispose();
+    _newCredentialController.dispose();
+    _confirmNewCredentialController.dispose();
+    super.dispose();
   }
 }

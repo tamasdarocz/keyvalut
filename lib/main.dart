@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:keyvalut/services/auth_service.dart';
 import 'package:keyvalut/theme/theme_provider.dart';
@@ -12,14 +11,6 @@ import 'data/credential_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final authService = AuthService();
-
-  // Configure background execution
-  const androidConfig = FlutterBackgroundAndroidConfig(
-    notificationTitle: "KeyValut",
-    notificationImportance: AndroidNotificationImportance.normal,
-  );
-  await FlutterBackground.initialize(androidConfig: androidConfig);
-  await FlutterBackground.enableBackgroundExecution();
 
   runApp(
     MultiProvider(
@@ -42,6 +33,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   bool _needsRefresh = false;
+  bool _shouldLock = false;
 
   @override
   void initState() {
@@ -56,12 +48,23 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
-      setState(() {
-        _needsRefresh = true;
-      });
+    if (state == AppLifecycleState.paused) {
+      final prefs = await SharedPreferences.getInstance();
+      final lockImmediately = prefs.getBool('lockImmediately') ?? false;
+      if (lockImmediately) {
+        setState(() {
+          _shouldLock = true;
+        });
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      if (_shouldLock) {
+        setState(() {
+          _needsRefresh = true;
+          _shouldLock = false;
+        });
+      }
     }
   }
 
@@ -82,7 +85,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           themeMode: themeProvider.themeMode,
           home: FutureBuilder<bool>(
             key: ValueKey(_needsRefresh),
-            future: context.read<AuthService>().isMasterPasswordSet(),
+            future: context.read<AuthService>().isMasterCredentialSet(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Scaffold(body: Center(child: CircularProgressIndicator()));

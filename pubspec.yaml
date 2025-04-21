@@ -52,8 +52,7 @@ dependencies:
   freerasp: ^7.0.0
   pin_code_fields: ^8.0.1
   flutter_quill: ^10.7.0
-  flutter_background: ^1.2.0
-
+  argon2: ^1.0.1
 
   # UI
   cupertino_icons: ^1.0.8

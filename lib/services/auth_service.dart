@@ -35,7 +35,7 @@ class AuthService {
 
   Future<void> setMasterCredential(String credential, {required bool isPin}) async {
     await _initializeKeyAndSalt(); // Ensure salt is loaded or initialized
-    _masterCredential = credential;
+    _masterCredential = credential; // Update the cached credential
     final parameters = Argon2Parameters(
       Argon2Parameters.ARGON2_i,
       _salt,
@@ -91,13 +91,21 @@ class AuthService {
 
   Future<bool> authenticateWithBiometrics({String reason = 'Please authenticate to access your credentials'}) async {
     try {
-      return await _localAuth.authenticate(
+      final success = await _localAuth.authenticate(
         localizedReason: reason,
         options: const AuthenticationOptions(
           stickyAuth: false,
-          biometricOnly: false,
+          biometricOnly: true, // Only use biometrics, show "Cancel" button
         ),
       );
+      if (success) {
+        // After successful biometric authentication, ensure _masterCredential is up to date
+        final storedCredential = await _secureStorage.read(key: 'masterCredential');
+        if (storedCredential != null) {
+          _masterCredential = null; // Clear cache to force reload on next manual verification
+        }
+      }
+      return success;
     } catch (e) {
       return false;
     }
@@ -110,6 +118,11 @@ class AuthService {
 
   Future<void> setBiometricEnabled(bool enabled) async {
     await _secureStorage.write(key: 'biometricEnabled', value: enabled.toString());
+  }
+
+  // Add method to clear cached credential after a PIN change
+  void clearCachedCredential() {
+    _masterCredential = null;
   }
 
   Uint8List get key => _key;

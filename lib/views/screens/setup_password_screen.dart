@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../services/auth_service.dart';
-import '../Tabs/homepage.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:keyvalut/services/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../../services/password_strenght.dart';
+import '../Tabs/login_screen.dart';
 
 class SetupMasterPasswordScreen extends StatefulWidget {
   const SetupMasterPasswordScreen({super.key});
@@ -9,154 +12,149 @@ class SetupMasterPasswordScreen extends StatefulWidget {
   State<SetupMasterPasswordScreen> createState() => _SetupMasterPasswordScreenState();
 }
 
+enum CredentialType { pin, password }
+
 class _SetupMasterPasswordScreenState extends State<SetupMasterPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _authService = AuthService();
   final _credentialController = TextEditingController();
-  final _confirmController = TextEditingController();
-  bool _isPinMode = false;
-  bool _isLoading = false;
+  final _confirmCredentialController = TextEditingController();
+  CredentialType _selectedCredentialType = CredentialType.pin; // Default to PIN
   bool _obscureCredential = true;
-  bool _obscureConfirm = true;
+  bool _obscureConfirmCredential = true;
+  bool _isLoading = false;
+
+  Future<void> _handleSetupCredential() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final authService = context.read<AuthService>();
+    setState(() => _isLoading = true);
+
+    try {
+      await authService.setMasterCredential(
+        _credentialController.text,
+        isPin: _selectedCredentialType == CredentialType.pin,
+      );
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+        Fluttertoast.showToast(
+          msg: _selectedCredentialType == CredentialType.pin ? 'PIN set successfully' : 'Password set successfully',
+          gravity: ToastGravity.CENTER,
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        Fluttertoast.showToast(
+          msg: 'Error setting credential',
+          gravity: ToastGravity.CENTER,
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Set Up Authentication',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+      appBar: AppBar(
+        title: const Text('Setup Credential'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              SegmentedButton<CredentialType>(
+                segments: const [
+                  ButtonSegment<CredentialType>(
+                    value: CredentialType.pin,
+                    label: Text('PIN'),
                   ),
-                  const SizedBox(height: 20),
-                  SegmentedButton<bool>(
-                    segments: const [
-                      ButtonSegment<bool>(
-                        value: false,
-                        label: Text('Password'),
-                        icon: Icon(Icons.lock),
-                      ),
-                      ButtonSegment<bool>(
-                        value: true,
-                        label: Text('PIN'),
-                        icon: Icon(Icons.dialpad),
-                      ),
-                    ],
-                    selected: {_isPinMode},
-                    onSelectionChanged: (newSelection) {
-                      setState(() {
-                        _isPinMode = newSelection.first;
-                        _credentialController.clear();
-                        _confirmController.clear();
-                      });
+                  ButtonSegment<CredentialType>(
+                    value: CredentialType.password,
+                    label: Text('Password'),
+                  ),
+                ],
+                selected: {_selectedCredentialType},
+                onSelectionChanged: (newSelection) {
+                  setState(() {
+                    _selectedCredentialType = newSelection.first;
+                  });
+                },
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _credentialController,
+                obscureText: _obscureCredential,
+                keyboardType: _selectedCredentialType == CredentialType.pin ? TextInputType.number : TextInputType.text,
+                decoration: InputDecoration(
+                  labelText: _selectedCredentialType == CredentialType.pin ? 'PIN' : 'Password',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureCredential ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() => _obscureCredential = !_obscureCredential);
                     },
                   ),
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    controller: _credentialController,
-                    obscureText: _obscureCredential,
-                    keyboardType: _isPinMode ? TextInputType.number : TextInputType.text,
-                    decoration: InputDecoration(
-                      labelText: _isPinMode ? 'New PIN' : 'New Password',
-                      prefixIcon: const Icon(Icons.lock),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureCredential ? Icons.visibility_off : Icons.visibility,
-                        ),
-                        onPressed: () {
-                          setState(() => _obscureCredential = !_obscureCredential);
-                        },
-                      ),
-                    ),
-                    validator: _validateCredential,
-                  ),
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    controller: _confirmController,
-                    obscureText: _obscureConfirm,
-                    keyboardType: _isPinMode ? TextInputType.number : TextInputType.text,
-                    decoration: InputDecoration(
-                      labelText: _isPinMode ? 'Confirm PIN' : 'Confirm Password',
-                      prefixIcon: const Icon(Icons.lock_reset),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureConfirm ? Icons.visibility_off : Icons.visibility,
-                        ),
-                        onPressed: () {
-                          setState(() => _obscureConfirm = !_obscureConfirm);
-                        },
-                      ),
-                    ),
-                    validator: _validateConfirm,
-                  ),
-                  const SizedBox(height: 20),
-                  if (_isLoading)
-                    const CircularProgressIndicator()
-                  else
-                    ElevatedButton(
-                      onPressed: _handleSetup,
-                      child: const Text('Secure My Vault'),
-                    ),
-                ],
+                ),
+                validator: (value) {
+                  if (value?.isEmpty ?? true) return 'Required';
+                  if (_selectedCredentialType == CredentialType.pin && value!.length < 6) return 'PIN must be at least 6 digits';
+                  return null;
+                },
               ),
-            ),
+              if (_selectedCredentialType == CredentialType.password) ...[
+                const SizedBox(height: 8),
+                PasswordStrengthIndicator(password: _credentialController.text),
+              ],
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _confirmCredentialController,
+                obscureText: _obscureConfirmCredential,
+                keyboardType: _selectedCredentialType == CredentialType.pin ? TextInputType.number : TextInputType.text,
+                decoration: InputDecoration(
+                  labelText: _selectedCredentialType == CredentialType.pin ? 'Confirm PIN' : 'Confirm Password',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureConfirmCredential ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() => _obscureConfirmCredential = !_obscureConfirmCredential);
+                    },
+                  ),
+                ),
+                validator: (value) {
+                  if (value?.isEmpty ?? true) return 'Required';
+                  if (value != _credentialController.text) return 'Does not match';
+                  if (_selectedCredentialType == CredentialType.pin && value!.length < 6) return 'PIN must be at least 6 digits';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+              if (_isLoading)
+                const Center(child: CircularProgressIndicator())
+              else
+                ElevatedButton(
+                  onPressed: _handleSetupCredential,
+                  child: const Text('Set Credential'),
+                ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  String? _validateCredential(String? value) {
-    if (value?.isEmpty ?? true) return 'Required';
-    if (_isPinMode) {
-      if (value!.length < 6) return 'PIN must be at least 6 digits';
-      if (!RegExp(r'^\d+$').hasMatch(value)) return 'PIN must be numeric';
-    } else {
-      if (value!.length < 6) return 'Password must be at least 6 characters';
-    }
-    return null;
-  }
-
-  String? _validateConfirm(String? value) {
-    if (value != _credentialController.text) return _isPinMode ? 'PINs must match' : 'Passwords must match';
-    return null;
-  }
-
-  Future<void> _handleSetup() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
-    await _authService.setMasterCredential(
-      _credentialController.text,
-      isPin: _isPinMode,
-    );
-
-    if (await _authService.isBiometricAvailable()) {
-      await _authService.setBiometricEnabled(true);
-    }
-
-    setState(() => _isLoading = false);
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const HomePage()),
-    );
-  }
-
   @override
   void dispose() {
     _credentialController.dispose();
-    _confirmController.dispose();
+    _confirmCredentialController.dispose();
     super.dispose();
   }
 }

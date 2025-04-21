@@ -58,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (success) {
           _navigateToHomePage();
         } else {
-          _showManualEntryDialog();
+          setState(() => _showManualEntry = true); // Show main UI on failure or cancel
         }
       }
     } catch (e) {
@@ -74,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
           msg: errorMsg,
           gravity: ToastGravity.CENTER,
         );
-        _showManualEntryDialog();
+        setState(() => _showManualEntry = true); // Show main UI on error
       }
     }
   }
@@ -117,65 +117,6 @@ class _LoginScreenState extends State<LoginScreen> {
       context,
       MaterialPageRoute(builder: (_) => const HomePage()),
           (Route<dynamic> route) => false,
-    );
-  }
-
-  void _showManualEntryDialog() {
-    setState(() => _credentialController.clear());
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text(
-          _isPinMode ? 'Enter PIN' : 'Enter Password',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: TextFormField(
-          controller: _credentialController,
-          obscureText: _obscureCredential,
-          keyboardType: _isPinMode ? TextInputType.number : TextInputType.text,
-          decoration: InputDecoration(
-            labelText: _isPinMode ? 'PIN' : 'Password',
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscureCredential ? Icons.visibility_off : Icons.visibility,
-                color: Theme.of(context).primaryColor,
-              ),
-              onPressed: () {
-                setState(() => _obscureCredential = !_obscureCredential);
-              },
-            ),
-            border: const OutlineInputBorder(),
-          ),
-          validator: (value) {
-            if (value?.isEmpty ?? true) return 'Required';
-            if (_isPinMode && value!.length < 6) return 'PIN must be at least 6 digits';
-            return null;
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          if (_biometricAvailable) ...[
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                await _tryBiometricLogin();
-              },
-              child: const Text('Use Biometrics'),
-            ),
-          ],
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _handleLogin();
-            },
-            child: const Text('Submit'),
-          ),
-        ],
-      ),
     );
   }
 

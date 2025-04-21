@@ -7,7 +7,6 @@ import '../../data/database_helper.dart';
 import '../../settings_menu.dart';
 import 'credentials_tab.dart';
 import 'payments_tab.dart';
-import 'notes_tab.dart';
 import '../textforms/create_element_form.dart';
 import 'login_screen.dart';
 
@@ -30,6 +29,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _lockImmediately = false;
   bool _requireBiometricsOnResume = false;
   static const int _gracePeriodSeconds = 5;
+  bool _shouldLock = false;
 
   @override
   void initState() {
@@ -55,8 +55,25 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
-    // Existing lifecycle code...
-    // (Keep this method unchanged)
+    if (state == AppLifecycleState.paused) {
+      final prefs = await SharedPreferences.getInstance();
+      final lockImmediately = prefs.getBool('lockImmediately') ?? false;
+      if (lockImmediately) {
+        setState(() {
+          _shouldLock = true;
+        });
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      if (_shouldLock) {
+        setState(() {
+          _shouldLock = false;
+        });
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
+    }
   }
 
   void _logout(BuildContext context) {
