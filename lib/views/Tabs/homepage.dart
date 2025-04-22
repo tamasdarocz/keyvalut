@@ -13,6 +13,8 @@ import 'login_screen.dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
+  static bool isFilePickerActive = false; // Public static variable to track file picker activity
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -58,7 +60,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     if (state == AppLifecycleState.paused) {
       final prefs = await SharedPreferences.getInstance();
       final lockImmediately = prefs.getBool('lockImmediately') ?? false;
-      if (lockImmediately) {
+      if (lockImmediately && !HomePage.isFilePickerActive) { // Skip locking if file picker is active
         setState(() {
           _shouldLock = true;
         });

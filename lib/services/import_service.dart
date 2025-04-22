@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:keyvalut/data/credential_model.dart';
 import 'package:keyvalut/data/database_helper.dart';
+import 'package:keyvalut/views/Tabs/homepage.dart';
 
 class ImportService {
   static final _cipher = AesCbc.with256bits(macAlgorithm: Hmac.sha256());
@@ -71,6 +72,9 @@ class ImportService {
 
   static Future<void> importData(BuildContext context) async {
     try {
+      // Set the file picker flag before opening the file picker
+      HomePage.isFilePickerActive = true;
+
       debugPrint('Opening file picker with FileType.any as fallback');
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         dialogTitle: 'Select a JSON file to import data',
@@ -245,6 +249,9 @@ class ImportService {
         throw Exception('Error parsing file: Invalid JSON format');
       }
       throw Exception('Error importing data: $e');
+    } finally {
+      // Clear the file picker flag after the operation
+      HomePage.isFilePickerActive = false;
     }
   }
 }

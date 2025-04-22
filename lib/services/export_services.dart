@@ -4,8 +4,9 @@ import 'package:cryptography/cryptography.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:keyvalut/data/credential_model.dart'; // Adjust import based on your project structure
-import 'package:keyvalut/data/database_helper.dart'; // Adjust import based on your project structure
+import 'package:keyvalut/data/credential_model.dart';
+import 'package:keyvalut/data/database_helper.dart';
+import 'package:keyvalut/views/Tabs/homepage.dart';
 
 class ExportService {
   static final _cipher = AesCbc.with256bits(macAlgorithm: Hmac.sha256());
@@ -27,13 +28,16 @@ class ExportService {
 
   static Future<void> exportData(BuildContext context, String fileName) async {
     try {
+      // Set the file picker flag before opening the file picker
+      HomePage.isFilePickerActive = true;
+
       final dbHelper = DatabaseHelper.instance;
 
       // Fetch all data, including archived and deleted items
       final allCredentials = await dbHelper.getCredentials(includeArchived: true, includeDeleted: true);
       final allCreditCardsMaps = await dbHelper.queryAllCreditCards(includeArchived: true, includeDeleted: true);
       final allCreditCards = allCreditCardsMaps.map((map) => CreditCard.fromMap(map)).toList();
-      final allNotes = await dbHelper.getNotes(includeArchived: true, includeDeleted: true); // Assumes getNotes is implemented
+      final allNotes = await dbHelper.getNotes(includeArchived: true, includeDeleted: true);
 
       // Prompt user for encryption password
       final passwordController = TextEditingController();
@@ -109,6 +113,9 @@ class ExportService {
     } catch (e) {
       debugPrint('Export error: $e');
       Fluttertoast.showToast(msg: 'Error exporting data: $e');
+    } finally {
+      // Clear the file picker flag after the operation
+      HomePage.isFilePickerActive = false;
     }
   }
 }
