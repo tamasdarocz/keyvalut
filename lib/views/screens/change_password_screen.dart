@@ -92,6 +92,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Change Credential'),
+        centerTitle: true, // Center the title
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context), // Add back button to pop the screen
+          tooltip: 'Back',
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
