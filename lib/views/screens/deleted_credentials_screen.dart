@@ -4,9 +4,73 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../../data/credential_provider.dart';
 
-
 class DeletedItemsView extends StatelessWidget {
   const DeletedItemsView({super.key});
+
+  Future<bool> _confirmBulkAction(BuildContext context, String action, String itemType) async {
+    return (await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('$action All $itemType'),
+        content: Text('Are you sure you want to $action all $itemType items? ${action == "Permanently Delete" ? "This action cannot be undone." : ""}'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    )) ??
+        false;
+  }
+
+  Future<void> _deleteAllItems(BuildContext context, CredentialProvider provider) async {
+    if (provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty) return;
+
+    final confirmed = await _confirmBulkAction(context, 'Permanently Delete', 'Deleted');
+    if (!confirmed) return;
+
+    for (var credential in provider.deletedCredentials) {
+      await provider.permanentlyDeleteCredential(credential.id!);
+    }
+    for (var card in provider.deletedCreditCards) {
+      await provider.permanentlyDeleteCreditCard(card.id!);
+    }
+
+    Fluttertoast.showToast(
+      msg: 'All Deleted Items Permanently Deleted',
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.TOP,
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      textColor: Theme.of(context).colorScheme.onPrimary,
+    );
+  }
+
+  Future<void> _restoreAllItems(BuildContext context, CredentialProvider provider) async {
+    if (provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty) return;
+
+    final confirmed = await _confirmBulkAction(context, 'Restore', 'Deleted');
+    if (!confirmed) return;
+
+    for (var credential in provider.deletedCredentials) {
+      await provider.restoreCredential(credential.id!);
+    }
+    for (var card in provider.deletedCreditCards) {
+      await provider.restoreCreditCard(card.id!);
+    }
+
+    Fluttertoast.showToast(
+      msg: 'All Deleted Items Restored',
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.CENTER,
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      textColor: Theme.of(context).colorScheme.onPrimary,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +86,28 @@ class DeletedItemsView extends StatelessWidget {
         title: const Text('Deleted Items'),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
+        centerTitle: true, // Center the title for consistency
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+          tooltip: 'Back',
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.restore),
+            tooltip: 'Restore All',
+            onPressed: provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty
+                ? null
+                : () => _restoreAllItems(context, provider),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_forever),
+            tooltip: 'Delete All',
+            onPressed: provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty
+                ? null
+                : () => _deleteAllItems(context, provider),
+          ),
+        ],
       ),
       body: Consumer<CredentialProvider>(
         builder: (context, provider, child) {
@@ -61,7 +147,7 @@ class DeletedItemsView extends StatelessWidget {
                           Fluttertoast.showToast(
                             msg: 'Credential Restored',
                             toastLength: Toast.LENGTH_SHORT,
-                            gravity: ToastGravity.TOP,
+                            gravity: ToastGravity.CENTER,
                             backgroundColor: theme.colorScheme.primary,
                             textColor: theme.colorScheme.onPrimary,
                           );
@@ -95,7 +181,7 @@ class DeletedItemsView extends StatelessWidget {
                             Fluttertoast.showToast(
                               msg: 'Credential Permanently Deleted',
                               toastLength: Toast.LENGTH_SHORT,
-                              gravity: ToastGravity.TOP,
+                              gravity: ToastGravity.CENTER,
                               backgroundColor: theme.colorScheme.primary,
                               textColor: theme.colorScheme.onPrimary,
                             );

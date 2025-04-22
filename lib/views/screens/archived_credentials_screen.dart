@@ -7,6 +7,77 @@ import '../../data/credential_provider.dart';
 class ArchivedItemsView extends StatelessWidget {
   const ArchivedItemsView({super.key});
 
+  Future<bool> _confirmBulkAction(BuildContext context, String action, String itemType) async {
+    return (await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('$action All $itemType'),
+        content: Text('Are you sure you want to $action all $itemType items? ${action == "Permanently Delete" ? "This action cannot be undone." : ""}'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    )) ??
+        false;
+  }
+
+  Future<void> _deleteAllItems(BuildContext context, CredentialProvider provider) async {
+    if (provider.archivedCredentials.isEmpty && provider.archivedCreditCards.isEmpty && provider.archivedNotes.isEmpty) return;
+
+    final confirmed = await _confirmBulkAction(context, 'Permanently Delete', 'Archived');
+    if (!confirmed) return;
+
+    for (var credential in provider.archivedCredentials) {
+      await provider.permanentlyDeleteCredential(credential.id!);
+    }
+    for (var card in provider.archivedCreditCards) {
+      await provider.permanentlyDeleteCreditCard(card.id!);
+    }
+    for (var note in provider.archivedNotes) {
+      await provider.permanentlyDeleteNote(note.id!);
+    }
+
+    Fluttertoast.showToast(
+      msg: 'All Archived Items Permanently Deleted',
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.CENTER,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+    );
+  }
+
+  Future<void> _restoreAllItems(BuildContext context, CredentialProvider provider) async {
+    if (provider.archivedCredentials.isEmpty && provider.archivedCreditCards.isEmpty && provider.archivedNotes.isEmpty) return;
+
+    final confirmed = await _confirmBulkAction(context, 'Restore', 'Archived');
+    if (!confirmed) return;
+
+    for (var credential in provider.archivedCredentials) {
+      await provider.restoreCredential(credential.id!);
+    }
+    for (var card in provider.archivedCreditCards) {
+      await provider.restoreCreditCard(card.id!);
+    }
+    for (var note in provider.archivedNotes) {
+      await provider.restoreNote(note.id!);
+    }
+
+    Fluttertoast.showToast(
+      msg: 'All Archived Items Restored',
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.CENTER,
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      textColor: Theme.of(context).colorScheme.onPrimary,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<CredentialProvider>(context);
@@ -21,6 +92,28 @@ class ArchivedItemsView extends StatelessWidget {
         title: const Text('Archived Items'),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
+        centerTitle: true, // Center the title for consistency
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+          tooltip: 'Back',
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.restore),
+            tooltip: 'Restore All',
+            onPressed: provider.archivedCredentials.isEmpty && provider.archivedCreditCards.isEmpty && provider.archivedNotes.isEmpty
+                ? null
+                : () => _restoreAllItems(context, provider),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_forever),
+            tooltip: 'Delete All',
+            onPressed: provider.archivedCredentials.isEmpty && provider.archivedCreditCards.isEmpty && provider.archivedNotes.isEmpty
+                ? null
+                : () => _deleteAllItems(context, provider),
+          ),
+        ],
       ),
       body: Consumer<CredentialProvider>(
         builder: (context, provider, child) {
