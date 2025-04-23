@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:keyvalut/views/screens/notes_page.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/data/credential_provider.dart';
-import '../../data/database_helper.dart';
 import '../../settings_menu.dart';
 import 'credentials_tab.dart';
+import 'notes_page.dart';
 import 'payments_tab.dart';
 import '../textforms/create_element_form.dart';
 import 'login_screen.dart';
+import '../../data/database_helper.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
-  static bool isFilePickerActive = false; // Public static variable to track file picker activity
+  static bool isFilePickerActive = false;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -32,18 +32,40 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _requireBiometricsOnResume = false;
   static const int _gracePeriodSeconds = 5;
   bool _shouldLock = false;
+  String? _currentDatabase;
+  DatabaseHelper? _dbHelper;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadSettings();
+    _loadDatabase();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  Future<void> _loadDatabase() async {
+    final prefs = await SharedPreferences.getInstance();
+    final databaseName = prefs.getString('currentDatabase');
+    if (databaseName != null) {
+      setState(() {
+        _currentDatabase = databaseName;
+        _dbHelper = DatabaseHelper(databaseName);
+        // Ensure CredentialProvider uses the same database
+        Provider.of<CredentialProvider>(context, listen: false).setDatabaseName(databaseName);
+      });
+    } else {
+      // If no database is set, redirect to login screen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
   }
 
   Future<void> _loadSettings() async {
@@ -60,7 +82,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     if (state == AppLifecycleState.paused) {
       final prefs = await SharedPreferences.getInstance();
       final lockImmediately = prefs.getBool('lockImmediately') ?? false;
-      if (lockImmediately && !HomePage.isFilePickerActive) { // Skip locking if file picker is active
+      if (lockImmediately && !HomePage.isFilePickerActive) {
         setState(() {
           _shouldLock = true;
         });
@@ -93,6 +115,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    if (_dbHelper == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -119,7 +147,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => CreateElementForm(dbHelper: DatabaseHelper.instance),
+              builder: (context) => CreateElementForm(dbHelper: _dbHelper!),
             ),
           );
         },

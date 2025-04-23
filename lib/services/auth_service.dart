@@ -6,36 +6,28 @@ import 'package:local_auth/local_auth.dart';
 import 'package:argon2/argon2.dart';
 
 class AuthService {
+  final String databaseName;
   final LocalAuthentication _localAuth = LocalAuthentication();
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   String? _masterCredential;
-  late Uint8List _key;
   late Uint8List _salt;
 
-  AuthService() {
-    _initializeKeyAndSalt();
-  }
+  AuthService(this.databaseName);
 
-  Future<void> _initializeKeyAndSalt() async {
-    // Check if salt and key exist in storage
-    final storedSalt = await _secureStorage.read(key: 'salt');
-    final storedKey = await _secureStorage.read(key: 'key');
-
-    if (storedSalt != null && storedKey != null) {
-      // Load from storage if they exist
+  Future<void> _initializeSalt() async {
+    final saltKey = 'salt_$databaseName';
+    final storedSalt = await _secureStorage.read(key: saltKey);
+    if (storedSalt != null) {
       _salt = Uint8List.fromList(base64Decode(storedSalt));
-      _key = Uint8List.fromList(base64Decode(storedKey));
     } else {
-      // Generate new ones if they don't exist
       final random = Random.secure();
-      _key = Uint8List.fromList(List<int>.generate(32, (_) => random.nextInt(256)));
       _salt = Uint8List.fromList(List<int>.generate(16, (_) => random.nextInt(256)));
+      await _secureStorage.write(key: saltKey, value: base64Encode(_salt));
     }
   }
 
   Future<void> setMasterCredential(String credential, {required bool isPin}) async {
-    await _initializeKeyAndSalt(); // Ensure salt is loaded or initialized
-    _masterCredential = credential; // Update the cached credential
+    await _initializeSalt();
     final parameters = Argon2Parameters(
       Argon2Parameters.ARGON2_i,
       _salt,
@@ -47,15 +39,15 @@ class AuthService {
     final passwordBytes = utf8.encode(credential);
     final result = Uint8List(32);
     argon2.generateBytes(passwordBytes, result, 0, result.length);
-    await _secureStorage.write(key: 'masterCredential', value: base64Encode(result));
-    await _secureStorage.write(key: 'isPin', value: isPin.toString());
-    await _secureStorage.write(key: 'key', value: base64Encode(_key));
-    await _secureStorage.write(key: 'salt', value: base64Encode(_salt));
+    final masterCredentialKey = 'masterCredential_$databaseName';
+    await _secureStorage.write(key: masterCredentialKey, value: base64Encode(result));
+    await _secureStorage.write(key: 'isPin_$databaseName', value: isPin.toString());
   }
 
   Future<bool> verifyMasterCredential(String credential) async {
-    await _initializeKeyAndSalt(); // Ensure salt is loaded
-    final storedCredential = await _secureStorage.read(key: 'masterCredential');
+    await _initializeSalt();
+    final masterCredentialKey = 'masterCredential_$databaseName';
+    final storedCredential = await _secureStorage.read(key: masterCredentialKey);
     if (storedCredential == null) return false;
     final parameters = Argon2Parameters(
       Argon2Parameters.ARGON2_i,
@@ -72,12 +64,14 @@ class AuthService {
   }
 
   Future<bool> isMasterCredentialSet() async {
-    final storedCredential = await _secureStorage.read(key: 'masterCredential');
+    final masterCredentialKey = 'masterCredential_$databaseName';
+    final storedCredential = await _secureStorage.read(key: masterCredentialKey);
     return storedCredential != null;
   }
 
   Future<bool> isPinMode() async {
-    final isPin = await _secureStorage.read(key: 'isPin');
+    final isPinKey = 'isPin_$databaseName';
+    final isPin = await _secureStorage.read(key: isPinKey);
     return isPin == 'true';
   }
 
@@ -95,14 +89,13 @@ class AuthService {
         localizedReason: reason,
         options: const AuthenticationOptions(
           stickyAuth: false,
-          biometricOnly: true, // Only use biometrics, show "Cancel" button
+          biometricOnly: true,
         ),
       );
       if (success) {
-        // After successful biometric authentication, ensure _masterCredential is up to date
-        final storedCredential = await _secureStorage.read(key: 'masterCredential');
+        final storedCredential = await _secureStorage.read(key: 'masterCredential_$databaseName');
         if (storedCredential != null) {
-          _masterCredential = null; // Clear cache to force reload on next manual verification
+          _masterCredential = null;
         }
       }
       return success;
@@ -120,12 +113,7 @@ class AuthService {
     await _secureStorage.write(key: 'biometricEnabled', value: enabled.toString());
   }
 
-  // Add method to clear cached credential after a PIN change
   void clearCachedCredential() {
     _masterCredential = null;
   }
-
-  Uint8List get key => _key;
-  Uint8List get salt => _salt;
-  String? get masterCredential => _masterCredential;
 }

@@ -34,13 +34,29 @@ class _SettingsMenuState extends State<SettingsMenu> {
   bool _requireBiometricsOnResume = false;
   bool _isPinMode = false;
   final TextEditingController _fileNameController = TextEditingController();
+  String? _currentDatabase;
+  AuthService? _authService;
 
   @override
   void initState() {
     super.initState();
-    _loadBiometricSettings();
-    _loadTimeoutSettings();
-    _loadCredentialMode();
+    _loadDatabase();
+  }
+
+  Future<void> _loadDatabase() async {
+    final prefs = await SharedPreferences.getInstance();
+    final databaseName = prefs.getString('currentDatabase');
+    if (databaseName != null) {
+      setState(() {
+        _currentDatabase = databaseName;
+        _authService = AuthService(databaseName);
+      });
+      _loadBiometricSettings();
+      _loadTimeoutSettings();
+      _loadCredentialMode();
+    } else {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
   }
 
   @override
@@ -50,17 +66,17 @@ class _SettingsMenuState extends State<SettingsMenu> {
   }
 
   Future<void> _loadCredentialMode() async {
-    final authService = AuthService();
-    final isPin = await authService.isPinMode();
+    if (_authService == null) return;
+    final isPin = await _authService!.isPinMode();
     if (mounted) {
       setState(() => _isPinMode = isPin);
     }
   }
 
   Future<void> _loadBiometricSettings() async {
-    final authService = AuthService();
-    final available = await authService.isBiometricAvailable();
-    final enabled = await authService.isBiometricEnabled();
+    if (_authService == null) return;
+    final available = await _authService!.isBiometricAvailable();
+    final enabled = await _authService!.isBiometricEnabled();
     if (mounted) {
       setState(() {
         _biometricAvailable = available;
@@ -81,8 +97,8 @@ class _SettingsMenuState extends State<SettingsMenu> {
   }
 
   Future<void> _toggleBiometric(bool value) async {
-    final authService = AuthService();
-    await authService.setBiometricEnabled(value);
+    if (_authService == null) return;
+    await _authService!.setBiometricEnabled(value);
     if (mounted) {
       setState(() => _biometricEnabled = value);
       widget.onSettingsChanged();
@@ -196,6 +212,10 @@ class _SettingsMenuState extends State<SettingsMenu> {
 
   @override
   Widget build(BuildContext context) {
+    if (_authService == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

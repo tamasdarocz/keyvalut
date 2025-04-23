@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:keyvalut/services/auth_service.dart';
 import 'package:provider/provider.dart';
-import '../../services/password_strenght.dart';
+import '../../services/password_strength.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});

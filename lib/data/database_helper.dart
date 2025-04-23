@@ -1,26 +1,24 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'credential_model.dart';
+import 'package:path_provider/path_provider.dart';
+import 'credential_model.dart'; // Assuming this exists
 
 class DatabaseHelper {
-  static final DatabaseHelper instance = DatabaseHelper._init();
-  static Database? _database;
+  final String databaseName;
+  Database? _database;
 
-  DatabaseHelper._init();
+  DatabaseHelper(this.databaseName);
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('credentials.db');
-    return _database!;
-  }
-
-  Future<Database> _initDB(String fileName) async {
-    final dbPath = await getDatabasesPath();
-    return openDatabase(
-      join(dbPath, fileName),
-      version: 1, // Simplified: no versioning for now
+    final directory = await getApplicationDocumentsDirectory();
+    final path = join(directory.path, '$databaseName.db');
+    _database = await openDatabase(
+      path,
+      version: 1,
       onCreate: _createDB,
     );
+    return _database!;
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -70,13 +68,6 @@ class DatabaseHelper {
       deleted_at TEXT
     )
     ''');
-  }
-
-  Future<void> deleteDatabase() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'credentials.db');
-    await databaseFactory.deleteDatabase(path);
-    _database = null;
   }
 
   Future<int> insertCredential(Credential credential) async {

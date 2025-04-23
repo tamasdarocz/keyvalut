@@ -8,6 +8,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:keyvalut/data/credential_model.dart';
 import 'package:keyvalut/data/database_helper.dart';
 import 'package:keyvalut/views/Tabs/homepage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ImportService {
   static final _cipher = AesCbc.with256bits(macAlgorithm: Hmac.sha256());
@@ -168,7 +169,13 @@ class ImportService {
         throw Exception('Invalid file format: Expected a JSON object');
       }
 
-      final dbHelper = DatabaseHelper.instance;
+      // Fetch the current database name from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final databaseName = prefs.getString('currentDatabase');
+      if (databaseName == null) {
+        throw Exception('No database selected. Please log in first.');
+      }
+      final dbHelper = DatabaseHelper(databaseName);
 
       // Import credentials
       final List<Credential> credentials = [];

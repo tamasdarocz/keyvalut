@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter/foundation.dart';
+import 'package:keyvalut/views/Tabs/setup_password_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../services/auth_service.dart';
-import 'homepage.dart';
+import 'package:keyvalut/services/auth_service.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart'; // Import SetupMasterPasswordScreen
+import 'package:keyvalut/views/Tabs/homepage.dart'; // Import Homepage
+
+enum AuthMode { pin, password }
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,192 +17,268 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _authService = AuthService();
-  final _credentialController = TextEditingController();
-  bool _obscureCredential = true;
-  bool _isLoading = false;
-  bool _isPinMode = false;
-  bool _biometricAvailable = false;
-  bool _showManualEntry = false;
+  final TextEditingController _pinController = TextEditingController();
+  bool _isPinVisible = false;
+  String? _selectedDatabase;
+  List<String> _databaseNames = [];
+  bool _isLoading = true;
+  AuthMode _authMode = AuthMode.pin;
 
   @override
   void initState() {
     super.initState();
-    _checkCredentialMode();
-    _checkBiometricAvailability();
+    _loadDatabases();
   }
 
-  Future<void> _checkCredentialMode() async {
-    final isPin = await _authService.isPinMode();
-    if (mounted) {
-      setState(() => _isPinMode = isPin);
-    }
+  @override
+  void dispose() {
+    _pinController.dispose();
+    super.dispose();
   }
 
-  Future<void> _checkBiometricAvailability() async {
-    final available = await _authService.isBiometricAvailable();
-    final enabled = await _authService.isBiometricEnabled();
-    final prefs = await SharedPreferences.getInstance();
-    final requireBiometricsOnResume = prefs.getBool('requireBiometricsOnResume') ?? false;
-
-    if (available && (enabled || requireBiometricsOnResume) && mounted) {
-      setState(() => _biometricAvailable = true);
-      _tryBiometricLogin();
-    } else {
-      setState(() => _showManualEntry = true);
-    }
-  }
-
-  Future<void> _tryBiometricLogin() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadDatabases() async {
     try {
-      final success = await _authService.authenticateWithBiometrics();
+      // Get the app's documents directory
+      final directory = await getApplicationDocumentsDirectory();
+      final files = directory.listSync();
+      final databaseFiles = files
+          .where((file) => file.path.endsWith('.db') && file is File)
+          .map((file) => file.path.split('/').last.replaceAll('.db', ''))
+          .toList();
+
       if (mounted) {
-        setState(() => _isLoading = false);
-        if (success) {
-          _navigateToHomePage();
-        } else {
-          setState(() => _showManualEntry = true); // Show main UI on failure or cancel
-        }
+        setState(() {
+          _databaseNames = databaseFiles;
+          _selectedDatabase = _databaseNames.isNotEmpty ? _databaseNames.first : null;
+          _isLoading = false;
+        });
+      }
+
+      // If a database is selected, check its auth mode
+      if (_selectedDatabase != null) {
+        final authService = AuthService(_selectedDatabase!);
+        final isPin = await authService.isPinMode();
+        setState(() {
+          _authMode = isPin ? AuthMode.pin : AuthMode.password;
+        });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
-        String errorMsg = 'Biometric error. Please use manual login.';
-        if (e.toString().contains('NotEnrolled')) {
-          errorMsg = 'No biometrics enrolled. Please set up biometrics or use manual login.';
-        } else if (e.toString().contains('LockedOut')) {
-          errorMsg = 'Biometrics locked out. Please use manual login.';
-        }
-        Fluttertoast.showToast(
-          msg: errorMsg,
-          gravity: ToastGravity.CENTER,
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading databases: $e')),
         );
-        setState(() => _showManualEntry = true); // Show main UI on error
       }
     }
   }
 
-  Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _unlockVault() async {
+    if (_selectedDatabase == null) {
+      debugPrint('Login failed: No database selected');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a database')),
+      );
+      return;
+    }
 
-    setState(() => _isLoading = true);
+    final input = _pinController.text;
+    debugPrint('Attempting login for database: $_selectedDatabase with ${_authMode == AuthMode.pin ? 'PIN' : 'Password'}');
+
+    if (_authMode == AuthMode.pin) {
+      if (input.length < 6 || !RegExp(r'^\d+$').hasMatch(input)) {
+        debugPrint('Login failed: PIN must be at least 6 digits (entered: $input)');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('PIN must be at least 6 digits')),
+        );
+        return;
+      }
+    } else {
+      if (input.length < 8) {
+        debugPrint('Login failed: Password must be at least 8 characters (entered: $input)');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Password must be at least 8 characters')),
+        );
+        return;
+      }
+    }
 
     try {
-      final success = await _authService.verifyMasterCredential(
-        _credentialController.text,
-      );
+      final authService = AuthService(_selectedDatabase!);
+      final isPinMode = await authService.isPinMode();
+      if (isPinMode != (_authMode == AuthMode.pin)) {
+        debugPrint('Login failed: Database uses ${isPinMode ? "PIN" : "password"} authentication, but ${_authMode == AuthMode.pin ? "PIN" : "password"} mode was selected');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'This database uses ${_authMode == AuthMode.pin ? "password" : "PIN"} authentication. Please switch to the correct mode.',
+            ),
+          ),
+        );
+        return;
+      }
 
-      if (mounted) {
-        setState(() => _isLoading = false);
-
-        if (success) {
-          _navigateToHomePage();
-        } else {
-          Fluttertoast.showToast(
-            msg: _isPinMode ? 'Invalid PIN' : 'Invalid password',
-            gravity: ToastGravity.CENTER,
+      final isAuthenticated = await authService.verifyMasterCredential(input);
+      if (isAuthenticated) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('currentDatabase', _selectedDatabase!);
+        debugPrint('Login successful for database: $_selectedDatabase with ${_authMode == AuthMode.pin ? 'PIN' : 'Password'}: $input');
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const HomePage()),
           );
         }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        Fluttertoast.showToast(
-          msg: 'Error verifying credential',
-          gravity: ToastGravity.CENTER,
+      } else {
+        debugPrint('Login failed for database: $_selectedDatabase - Authentication failed');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Authentication failed')),
         );
       }
+    } catch (e) {
+      debugPrint('Login failed for database: $_selectedDatabase - Error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     }
   }
 
-  void _navigateToHomePage() {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const HomePage()),
-          (Route<dynamic> route) => false,
-    );
+  void _navigateToCreateNewDatabase() {
+    debugPrint('Navigating to SetupMasterPasswordScreen to create a new database');
+    try {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const SetupMasterPasswordScreen()),
+      );
+      debugPrint('Navigation to SetupMasterPasswordScreen completed');
+    } catch (e) {
+      debugPrint('Navigation to SetupMasterPasswordScreen failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Navigation failed: $e')),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: null,
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _isPinMode ? 'Enter PIN' : 'Enter Password',
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 20),
-                  if (_showManualEntry) ...[
-                    TextFormField(
-                      controller: _credentialController,
-                      obscureText: _obscureCredential,
-                      keyboardType: _isPinMode ? TextInputType.number : TextInputType.text,
-                      decoration: InputDecoration(
-                        labelText: _isPinMode ? 'PIN' : 'Password',
-                        prefixIcon: const Icon(Icons.lock),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureCredential ? Icons.visibility_off : Icons.visibility,
-                          ),
-                          onPressed: () {
-                            setState(() => _obscureCredential = !_obscureCredential);
-                          },
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value?.isEmpty ?? true) return 'Required';
-                        if (_isPinMode && value!.length < 6) return 'PIN must be at least 6 digits';
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                  if (_isLoading)
-                    const CircularProgressIndicator()
-                  else
-                    Column(
-                      children: [
-                        if (_showManualEntry) ...[
-                          ElevatedButton(
-                            onPressed: _handleLogin,
-                            child: const Text('Unlock Vault'),
-                          ),
-                          if (_biometricAvailable) ...[
-                            const SizedBox(height: 10),
-                            ElevatedButton.icon(
-                              onPressed: _tryBiometricLogin,
-                              icon: const Icon(Icons.fingerprint),
-                              label: const Text('Use Biometrics'),
-                            ),
-                          ],
-                        ],
-                      ],
-                    ),
-                ],
+      appBar: AppBar(
+        title: const Text('Setup Database'),
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Select Database',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            SegmentedButton<AuthMode>(
+              segments: const [
+                ButtonSegment<AuthMode>(
+                  value: AuthMode.pin,
+                  label: Text('PIN'),
+                  icon: Icon(Icons.lock),
+                ),
+                ButtonSegment<AuthMode>(
+                  value: AuthMode.password,
+                  label: Text('Password'),
+                  icon: Icon(Icons.lock),
+                ),
+              ],
+              selected: {_authMode},
+              onSelectionChanged: (newSelection) {
+                setState(() {
+                  _authMode = newSelection.first;
+                  _pinController.clear();
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(
+                labelText: 'Database Name',
+                border: OutlineInputBorder(),
+              ),
+              value: _selectedDatabase,
+              items: _databaseNames
+                  .map((name) => DropdownMenuItem<String>(
+                value: name,
+                child: Text(name),
+              ))
+                  .toList(),
+              onChanged: (value) async {
+                setState(() {
+                  _selectedDatabase = value;
+                  _pinController.clear();
+                });
+                if (value != null) {
+                  final authService = AuthService(value);
+                  final isPin = await authService.isPinMode();
+                  setState(() {
+                    _authMode = isPin ? AuthMode.pin : AuthMode.password;
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _navigateToCreateNewDatabase,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.yellow[200],
+                  foregroundColor: Colors.black,
+                ),
+                child: const Text('Create New'),
               ),
             ),
-          ),
+            const SizedBox(height: 32),
+            const Text(
+              'Enter PIN/Password',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _pinController,
+              obscureText: !_isPinVisible,
+              decoration: InputDecoration(
+                labelText: _authMode == AuthMode.pin ? 'PIN' : 'Password',
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.lock),
+                suffixIcon: IconButton(
+                  icon: Icon(_isPinVisible ? Icons.visibility_off : Icons.visibility),
+                  onPressed: () {
+                    setState(() {
+                      _isPinVisible = !_isPinVisible;
+                    });
+                  },
+                ),
+              ),
+              keyboardType: _authMode == AuthMode.pin ? TextInputType.number : TextInputType.text,
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _unlockVault,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.yellow[200],
+                  foregroundColor: Colors.black,
+                ),
+                child: const Text('Unlock Vault'),
+              ),
+            ),
+          ],
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _credentialController.dispose();
-    super.dispose();
   }
 }

@@ -3,21 +3,20 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:keyvalut/services/auth_service.dart';
 import 'package:keyvalut/theme/theme_provider.dart';
 import 'package:keyvalut/views/Tabs/login_screen.dart';
-import 'package:keyvalut/views/screens/setup_password_screen.dart';
+import 'package:keyvalut/views/Tabs/setup_password_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'data/credential_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final authService = AuthService();
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => CredentialProvider()),
-        Provider(create: (_) => authService),
+        Provider(create: (_) => AuthService('default')), // Temporary default, will be overridden
       ],
       child: const MyApp(),
     ),
@@ -83,9 +82,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           debugShowCheckedModeBanner: false,
           theme: themeProvider.themeData,
           themeMode: themeProvider.themeMode,
-          home: FutureBuilder<bool>(
+          home: FutureBuilder<String?>(
             key: ValueKey(_needsRefresh),
-            future: context.read<AuthService>().isMasterCredentialSet(),
+            future: SharedPreferences.getInstance().then((prefs) => prefs.getString('currentDatabase')),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -118,7 +117,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 );
               }
               _needsRefresh = false;
-              return snapshot.data! ? const LoginScreen() : const SetupMasterPasswordScreen();
+              final databaseName = snapshot.data;
+              if (databaseName == null) {
+                return const SetupMasterPasswordScreen();
+              }
+              // Update AuthService with the current database
+              Provider.of<AuthService>(context, listen: false);
+              return const LoginScreen();
             },
           ),
         );

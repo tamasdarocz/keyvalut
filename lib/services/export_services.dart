@@ -7,6 +7,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:keyvalut/data/credential_model.dart';
 import 'package:keyvalut/data/database_helper.dart';
 import 'package:keyvalut/views/Tabs/homepage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ExportService {
   static final _cipher = AesCbc.with256bits(macAlgorithm: Hmac.sha256());
@@ -31,7 +32,13 @@ class ExportService {
       // Set the file picker flag before opening the file picker
       HomePage.isFilePickerActive = true;
 
-      final dbHelper = DatabaseHelper.instance;
+      // Fetch the current database name from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final databaseName = prefs.getString('currentDatabase');
+      if (databaseName == null) {
+        throw Exception('No database selected. Please log in first.');
+      }
+      final dbHelper = DatabaseHelper(databaseName);
 
       // Fetch all data, including archived and deleted items
       final allCredentials = await dbHelper.getCredentials(includeArchived: true, includeDeleted: true);
@@ -94,7 +101,7 @@ class ExportService {
       final secretBox = await _cipher.encrypt(jsonBytes, secretKey: secretKey, nonce: nonce);
 
       // Combine and encode encrypted data
-      final encryptedData = base64Encode(salt + nonce + secretBox.mac.bytes + secretBox.cipherText);
+      final encryptedData = base64Encode([...salt, ...nonce, ...secretBox.mac.bytes, ...secretBox.cipherText]);
 
       // Save the file
       String? outputPath = await FilePicker.platform.saveFile(

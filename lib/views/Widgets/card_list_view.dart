@@ -3,12 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/credential_provider.dart';
 import '../../data/database_helper.dart';
 import '../../data/credential_model.dart';
-import '../screens/credit_card_details_page.dart';
+import '../screens/credit_card_details_screen.dart';
 import '../textforms/card_input_form.dart';
-
 
 class CardListView extends StatelessWidget {
   const CardListView({super.key});
@@ -54,9 +54,32 @@ class CreditCardItem extends StatefulWidget {
 
 class _CreditCardItemState extends State<CreditCardItem> {
   bool _isSensitiveVisible = false;
+  DatabaseHelper? _dbHelper;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDatabase();
+  }
+
+  Future<void> _loadDatabase() async {
+    final prefs = await SharedPreferences.getInstance();
+    final databaseName = prefs.getString('currentDatabase');
+    if (databaseName != null) {
+      setState(() {
+        _dbHelper = DatabaseHelper(databaseName);
+      });
+    } else {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_dbHelper == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final theme = Theme.of(context);
     final provider = Provider.of<CredentialProvider>(context, listen: false);
     final maskedNumber = _isSensitiveVisible
@@ -151,7 +174,7 @@ class _CreditCardItemState extends State<CreditCardItem> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => CardInputForm(
-                    dbHelper: DatabaseHelper.instance,
+                    dbHelper: _dbHelper!,
                     card: widget.card,
                   ),
                 ),
@@ -169,7 +192,7 @@ class _CreditCardItemState extends State<CreditCardItem> {
         margin: const EdgeInsets.symmetric(vertical: 5),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: Colors.blueGrey.shade600, // Solid color matching CreditCardDetailsPage
+          color: Colors.blueGrey.shade600,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.2),

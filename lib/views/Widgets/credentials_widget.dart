@@ -4,13 +4,40 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:keyvalut/views/Widgets/totp_display.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/credential_provider.dart';
 import '../textforms/create_element_form.dart';
 import '../../data/database_helper.dart';
 import '../../services/url_service.dart';
 
-class CredentialsWidget extends StatelessWidget {
+class CredentialsWidget extends StatefulWidget {
   const CredentialsWidget({super.key});
+
+  @override
+  State<CredentialsWidget> createState() => _CredentialsWidgetState();
+}
+
+class _CredentialsWidgetState extends State<CredentialsWidget> {
+  DatabaseHelper? _dbHelper;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDatabase();
+  }
+
+  Future<void> _loadDatabase() async {
+    final prefs = await SharedPreferences.getInstance();
+    final databaseName = prefs.getString('currentDatabase');
+    if (databaseName != null) {
+      setState(() {
+        _dbHelper = DatabaseHelper(databaseName);
+      });
+    } else {
+      // Redirect to login if no database is set
+      Navigator.pushReplacementNamed(context, '/login');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +48,10 @@ class CredentialsWidget extends StatelessWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       credentialProvider.loadCredentials();
     });
+
+    if (_dbHelper == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     return Consumer<CredentialProvider>(
       builder: (context, provider, child) {
@@ -57,7 +88,6 @@ class CredentialsWidget extends StatelessWidget {
                           backgroundColor: theme.colorScheme.primary,
                           textColor: theme.colorScheme.onPrimary,
                         );
-                      } else {
                       }
                     },
                     backgroundColor: theme.colorScheme.secondary,
@@ -93,7 +123,6 @@ class CredentialsWidget extends StatelessWidget {
                           backgroundColor: theme.colorScheme.primary,
                           textColor: theme.colorScheme.onPrimary,
                         );
-                      } else {
                       }
                     },
                     backgroundColor: theme.colorScheme.error,
@@ -112,7 +141,7 @@ class CredentialsWidget extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (context) => CreateElementForm(
-                            dbHelper: DatabaseHelper.instance,
+                            dbHelper: _dbHelper!,
                             credential: credential,
                           ),
                         ),

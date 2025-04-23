@@ -23,7 +23,19 @@ class CredentialProvider with ChangeNotifier {
   List<Note> get archivedNotes => _archivedNotes;
   List<Note> get deletedNotes => _deletedNotes;
 
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  late DatabaseHelper _dbHelper;
+
+  CredentialProvider({String? initialDatabaseName}) {
+    _dbHelper = DatabaseHelper(initialDatabaseName ?? 'default');
+  }
+
+  void setDatabaseName(String databaseName) {
+    _dbHelper = DatabaseHelper(databaseName);
+    // Reload data for the new database
+    loadCredentials();
+    loadCreditCards();
+    loadNotes();
+  }
 
   Future<void> loadCredentials() async {
     final allCredentials = await _dbHelper.getCredentials(includeArchived: true, includeDeleted: true);
