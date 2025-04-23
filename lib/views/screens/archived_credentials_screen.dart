@@ -48,8 +48,6 @@ class ArchivedItemsView extends StatelessWidget {
       msg: 'All Archived Items Permanently Deleted',
       toastLength: Toast.LENGTH_SHORT,
       gravity: ToastGravity.CENTER,
-      backgroundColor: Colors.red,
-      textColor: Colors.white,
     );
   }
 
@@ -73,8 +71,6 @@ class ArchivedItemsView extends StatelessWidget {
       msg: 'All Archived Items Restored',
       toastLength: Toast.LENGTH_SHORT,
       gravity: ToastGravity.CENTER,
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      textColor: Theme.of(context).colorScheme.onPrimary,
     );
   }
 
@@ -92,7 +88,7 @@ class ArchivedItemsView extends StatelessWidget {
         title: const Text('Archived Items'),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
-        centerTitle: true, // Center the title for consistency
+        centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -167,17 +163,36 @@ class ArchivedItemsView extends StatelessWidget {
                       ),
                       SlidableAction(
                         onPressed: (context) async {
-                          await provider.permanentlyDeleteCredential(credential.id!);
-                          Fluttertoast.showToast(
-                            msg: 'Credential Permanently Deleted',
-                            toastLength: Toast.LENGTH_SHORT,
-                            gravity: ToastGravity.CENTER,
-                            backgroundColor: Colors.red,
-                            textColor: Colors.white,
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Permanently Delete Credential'),
+                              content: const Text('Are you sure you want to permanently delete this credential? This action cannot be undone.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text('Delete'),
+                                ),
+                              ],
+                            ),
                           );
+                          if (confirmed == true) {
+                            await provider.permanentlyDeleteCredential(credential.id!);
+                            Fluttertoast.showToast(
+                              msg: 'Credential Permanently Deleted',
+                              toastLength: Toast.LENGTH_SHORT,
+                              gravity: ToastGravity.CENTER,
+                              backgroundColor: theme.colorScheme.primary,
+                              textColor: theme.colorScheme.onPrimary,
+                            );
+                          }
                         },
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
+                        backgroundColor: theme.colorScheme.error,
+                        foregroundColor: theme.colorScheme.onError,
                         icon: Icons.delete_forever,
                         label: 'Delete',
                       ),
@@ -227,17 +242,36 @@ class ArchivedItemsView extends StatelessWidget {
                       ),
                       SlidableAction(
                         onPressed: (context) async {
-                          await provider.permanentlyDeleteCreditCard(card.id!);
-                          Fluttertoast.showToast(
-                            msg: 'Credit Card Permanently Deleted',
-                            toastLength: Toast.LENGTH_SHORT,
-                            gravity: ToastGravity.CENTER,
-                            backgroundColor: Colors.red,
-                            textColor: Colors.white,
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Permanently Delete Credit Card'),
+                              content: const Text('Are you sure you want to permanently delete this credit card? This action cannot be undone.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text('Delete'),
+                                ),
+                              ],
+                            ),
                           );
+                          if (confirmed == true) {
+                            await provider.permanentlyDeleteCreditCard(card.id!);
+                            Fluttertoast.showToast(
+                              msg: 'Credit Card Permanently Deleted',
+                              toastLength: Toast.LENGTH_SHORT,
+                              gravity: ToastGravity.CENTER,
+                              backgroundColor: theme.colorScheme.primary,
+                              textColor: theme.colorScheme.onPrimary,
+                            );
+                          }
                         },
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
+                        backgroundColor: theme.colorScheme.error,
+                        foregroundColor: theme.colorScheme.onError,
                         icon: Icons.delete_forever,
                         label: 'Delete',
                       ),
@@ -287,17 +321,36 @@ class ArchivedItemsView extends StatelessWidget {
                       ),
                       SlidableAction(
                         onPressed: (context) async {
-                          await provider.permanentlyDeleteNote(note.id!);
-                          Fluttertoast.showToast(
-                            msg: 'Note Permanently Deleted',
-                            toastLength: Toast.LENGTH_SHORT,
-                            gravity: ToastGravity.CENTER,
-                            backgroundColor: Colors.red,
-                            textColor: Colors.white,
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Permanently Delete Note'),
+                              content: const Text('Are you sure you want to permanently delete this note? This action cannot be undone.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text('Delete'),
+                                ),
+                              ],
+                            ),
                           );
+                          if (confirmed == true) {
+                            await provider.permanentlyDeleteNote(note.id!);
+                            Fluttertoast.showToast(
+                              msg: 'Note Permanently Deleted',
+                              toastLength: Toast.LENGTH_SHORT,
+                              gravity: ToastGravity.CENTER,
+                              backgroundColor: theme.colorScheme.primary,
+                              textColor: theme.colorScheme.onPrimary,
+                            );
+                          }
                         },
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
+                        backgroundColor: theme.colorScheme.error,
+                        foregroundColor: theme.colorScheme.onError,
                         icon: Icons.delete_forever,
                         label: 'Delete',
                       ),

@@ -29,7 +29,7 @@ class DeletedItemsView extends StatelessWidget {
   }
 
   Future<void> _deleteAllItems(BuildContext context, CredentialProvider provider) async {
-    if (provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty) return;
+    if (provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty && provider.deletedNotes.isEmpty) return;
 
     final confirmed = await _confirmBulkAction(context, 'Permanently Delete', 'Deleted');
     if (!confirmed) return;
@@ -39,6 +39,9 @@ class DeletedItemsView extends StatelessWidget {
     }
     for (var card in provider.deletedCreditCards) {
       await provider.permanentlyDeleteCreditCard(card.id!);
+    }
+    for (var note in provider.deletedNotes) {
+      await provider.permanentlyDeleteNote(note.id!);
     }
 
     Fluttertoast.showToast(
@@ -51,7 +54,7 @@ class DeletedItemsView extends StatelessWidget {
   }
 
   Future<void> _restoreAllItems(BuildContext context, CredentialProvider provider) async {
-    if (provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty) return;
+    if (provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty && provider.deletedNotes.isEmpty) return;
 
     final confirmed = await _confirmBulkAction(context, 'Restore', 'Deleted');
     if (!confirmed) return;
@@ -61,6 +64,9 @@ class DeletedItemsView extends StatelessWidget {
     }
     for (var card in provider.deletedCreditCards) {
       await provider.restoreCreditCard(card.id!);
+    }
+    for (var note in provider.deletedNotes) {
+      await provider.restoreNote(note.id!);
     }
 
     Fluttertoast.showToast(
@@ -86,7 +92,7 @@ class DeletedItemsView extends StatelessWidget {
         title: const Text('Deleted Items'),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
-        centerTitle: true, // Center the title for consistency
+        centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -96,14 +102,14 @@ class DeletedItemsView extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.restore),
             tooltip: 'Restore All',
-            onPressed: provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty
+            onPressed: provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty && provider.deletedNotes.isEmpty
                 ? null
                 : () => _restoreAllItems(context, provider),
           ),
           IconButton(
             icon: const Icon(Icons.delete_forever),
             tooltip: 'Delete All',
-            onPressed: provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty
+            onPressed: provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty && provider.deletedNotes.isEmpty
                 ? null
                 : () => _deleteAllItems(context, provider),
           ),
@@ -111,7 +117,7 @@ class DeletedItemsView extends StatelessWidget {
       ),
       body: Consumer<CredentialProvider>(
         builder: (context, provider, child) {
-          if (provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty) {
+          if (provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty && provider.deletedNotes.isEmpty) {
             return Center(
               child: Text(
                 'No deleted items found',
@@ -274,6 +280,83 @@ class DeletedItemsView extends StatelessWidget {
                   child: ListTile(
                     title: Text(card.title),
                     subtitle: Text('Deleted at: ${card.deletedAt}'),
+                  ),
+                )),
+              ],
+              // Deleted Notes
+              if (provider.deletedNotes.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(
+                    'Notes',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                ...provider.deletedNotes.map((note) => Slidable(
+                  key: ValueKey(note.id),
+                  endActionPane: ActionPane(
+                    motion: const ScrollMotion(),
+                    children: [
+                      SlidableAction(
+                        onPressed: (context) async {
+                          await provider.restoreNote(note.id!);
+                          Fluttertoast.showToast(
+                            msg: 'Note Restored',
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.CENTER,
+                            backgroundColor: theme.colorScheme.primary,
+                            textColor: theme.colorScheme.onPrimary,
+                          );
+                        },
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        icon: Icons.restore,
+                        label: 'Restore',
+                      ),
+                      SlidableAction(
+                        onPressed: (context) async {
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Permanently Delete Note'),
+                              content: const Text('Are you sure you want to permanently delete this note? This action cannot be undone.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text('Delete'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirmed == true) {
+                            await provider.permanentlyDeleteNote(note.id!);
+                            Fluttertoast.showToast(
+                              msg: 'Note Permanently Deleted',
+                              toastLength: Toast.LENGTH_SHORT,
+                              gravity: ToastGravity.CENTER,
+                              backgroundColor: theme.colorScheme.primary,
+                              textColor: theme.colorScheme.onPrimary,
+                            );
+                          }
+                        },
+                        backgroundColor: theme.colorScheme.error,
+                        foregroundColor: theme.colorScheme.onError,
+                        icon: Icons.delete_forever,
+                        label: 'Delete',
+                      ),
+                    ],
+                  ),
+                  child: ListTile(
+                    title: Text(note.title),
+                    subtitle: Text('Deleted at: ${note.deletedAt}'),
                   ),
                 )),
               ],
