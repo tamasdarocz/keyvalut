@@ -105,12 +105,12 @@ class AuthService {
   }
 
   Future<bool> isBiometricEnabled() async {
-    final enabled = await _secureStorage.read(key: 'biometricEnabled');
+    final enabled = await _secureStorage.read(key: 'biometricEnabled_$databaseName');
     return enabled == 'true';
   }
 
   Future<void> setBiometricEnabled(bool enabled) async {
-    await _secureStorage.write(key: 'biometricEnabled', value: enabled.toString());
+    await _secureStorage.write(key: 'biometricEnabled_$databaseName', value: enabled.toString());
   }
 
   void clearCachedCredential() {

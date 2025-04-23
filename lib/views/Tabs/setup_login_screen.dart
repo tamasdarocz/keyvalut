@@ -4,19 +4,21 @@ import 'package:keyvalut/services/auth_service.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:keyvalut/views/Tabs/homepage.dart';
-
-import '../../services/password_strength.dart'; // Assuming Homepage is located here
+import 'package:keyvalut/views/Tabs/login_screen.dart';
+import '../../services/password_strength.dart';
 
 enum AuthMode { pin, password }
 
-class SetupMasterPasswordScreen extends StatefulWidget {
-  const SetupMasterPasswordScreen({super.key});
+class SetupLoginScreen extends StatefulWidget {
+  final VoidCallback? onCallback;
+
+  const SetupLoginScreen({super.key, this.onCallback});
 
   @override
-  State<SetupMasterPasswordScreen> createState() => _SetupMasterPasswordScreenState();
+  State<SetupLoginScreen> createState() => _SetupLoginScreenState();
 }
 
-class _SetupMasterPasswordScreenState extends State<SetupMasterPasswordScreen> {
+class _SetupLoginScreenState extends State<SetupLoginScreen> {
   final TextEditingController _databaseNameController = TextEditingController();
   final TextEditingController _pinController = TextEditingController();
   final TextEditingController _confirmPinController = TextEditingController();
@@ -41,7 +43,6 @@ class _SetupMasterPasswordScreenState extends State<SetupMasterPasswordScreen> {
 
   Future<void> _loadExistingDatabases() async {
     try {
-      // Get the app's documents directory to check for existing databases
       final directory = await getApplicationDocumentsDirectory();
       final files = directory.listSync();
       final databaseFiles = files
@@ -115,11 +116,11 @@ class _SetupMasterPasswordScreenState extends State<SetupMasterPasswordScreen> {
     try {
       final authService = AuthService(databaseName);
       await authService.setMasterCredential(pin, isPin: _authMode == AuthMode.pin);
-      // Save the database name to SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('currentDatabase', databaseName);
       debugPrint('Database "$databaseName" created successfully with ${_authMode == AuthMode.pin ? 'PIN' : 'Password'}: $pin');
       if (mounted) {
+        widget.onCallback?.call();
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const HomePage()),
@@ -127,51 +128,81 @@ class _SetupMasterPasswordScreenState extends State<SetupMasterPasswordScreen> {
       }
     } catch (e) {
       debugPrint('Database creation failed for "$databaseName": $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error creating database: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error creating database: $e')),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Setup Database'),
+        centerTitle: true,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+            );
+          },
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SegmentedButton<AuthMode>(
-              segments: const [
-                ButtonSegment<AuthMode>(
-                  value: AuthMode.pin,
-                  label: Text('PIN'),
-                  icon: Icon(Icons.lock),
+            Center(
+              child: SegmentedButton<AuthMode>(
+                segments: const [
+                  ButtonSegment<AuthMode>(
+                    value: AuthMode.pin,
+                    label: Text('PIN'),
+                    icon: Icon(Icons.lock),
+                  ),
+                  ButtonSegment<AuthMode>(
+                    value: AuthMode.password,
+                    label: Text('Password'),
+                    icon: Icon(Icons.lock),
+                  ),
+                ],
+                selected: {_authMode},
+                onSelectionChanged: (newSelection) {
+                  setState(() {
+                    _authMode = newSelection.first;
+                    _pinController.clear();
+                    _confirmPinController.clear();
+                  });
+                },
+                style: SegmentedButton.styleFrom(
+                  selectedBackgroundColor: theme.colorScheme.primary,
+                  selectedForegroundColor: theme.colorScheme.onPrimary,
                 ),
-                ButtonSegment<AuthMode>(
-                  value: AuthMode.password,
-                  label: Text('Password'),
-                  icon: Icon(Icons.lock),
-                ),
-              ],
-              selected: {_authMode},
-              onSelectionChanged: (newSelection) {
-                setState(() {
-                  _authMode = newSelection.first;
-                  _pinController.clear();
-                  _confirmPinController.clear();
-                });
-              },
+              ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _databaseNameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Database Name',
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: theme.colorScheme.onSurface),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: theme.colorScheme.onSurfaceVariant),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: theme.colorScheme.primary),
+                ),
+                prefixIcon: Icon(Icons.storage, color: theme.colorScheme.onSurface),
               ),
             ),
             const SizedBox(height: 16),
@@ -180,10 +211,21 @@ class _SetupMasterPasswordScreenState extends State<SetupMasterPasswordScreen> {
               obscureText: !_isPinVisible,
               decoration: InputDecoration(
                 labelText: _authMode == AuthMode.pin ? 'PIN' : 'Password',
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.lock),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: theme.colorScheme.onSurface),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: theme.colorScheme.onSurfaceVariant),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: theme.colorScheme.primary),
+                ),
+                prefixIcon: Icon(Icons.lock, color: theme.colorScheme.onSurface),
                 suffixIcon: IconButton(
-                  icon: Icon(_isPinVisible ? Icons.visibility_off : Icons.visibility),
+                  icon: Icon(
+                    _isPinVisible ? Icons.visibility_off : Icons.visibility,
+                    color: theme.colorScheme.onSurface,
+                  ),
                   onPressed: () {
                     setState(() {
                       _isPinVisible = !_isPinVisible;
@@ -203,9 +245,21 @@ class _SetupMasterPasswordScreenState extends State<SetupMasterPasswordScreen> {
               obscureText: !_isConfirmPinVisible,
               decoration: InputDecoration(
                 labelText: _authMode == AuthMode.pin ? 'Confirm PIN' : 'Confirm Password',
-                border: const OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: theme.colorScheme.onSurface),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: theme.colorScheme.onSurfaceVariant),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: theme.colorScheme.primary),
+                ),
+                prefixIcon: Icon(Icons.lock, color: theme.colorScheme.onSurface),
                 suffixIcon: IconButton(
-                  icon: Icon(_isConfirmPinVisible ? Icons.visibility_off : Icons.visibility),
+                  icon: Icon(
+                    _isConfirmPinVisible ? Icons.visibility_off : Icons.visibility,
+                    color: theme.colorScheme.onSurface,
+                  ),
                   onPressed: () {
                     setState(() {
                       _isConfirmPinVisible = !_isConfirmPinVisible;
@@ -216,15 +270,19 @@ class _SetupMasterPasswordScreenState extends State<SetupMasterPasswordScreen> {
               keyboardType: _authMode == AuthMode.pin ? TextInputType.number : TextInputType.text,
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
+            Align(
+              alignment: Alignment.center,
               child: ElevatedButton(
                 onPressed: _createNewDatabase,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.yellow[200],
-                  foregroundColor: Colors.black,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  minimumSize: const Size(0, 48),
                 ),
-                child: const Text('Create New Database'),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text('Create New Database'),
+                ),
               ),
             ),
           ],
