@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:keyvalut/services/auth_service.dart';
-import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/password_strength.dart';
 
 class ChangeLoginScreen extends StatefulWidget {
@@ -18,41 +18,49 @@ class _ChangeLoginScreenState extends State<ChangeLoginScreen> {
   final _currentCredentialController = TextEditingController();
   final _newCredentialController = TextEditingController();
   final _confirmNewCredentialController = TextEditingController();
-  CredentialType? _selectedCredentialType; // Initially null until mode is determined
-  bool _isCurrentPinMode = true; // Default to true, will be updated
+  CredentialType _selectedCredentialType = CredentialType.pin;
+  bool _isCurrentPinMode = true;
   bool _obscureCurrentCredential = true;
   bool _obscureNewCredential = true;
   bool _obscureConfirmNewCredential = true;
   bool _isLoading = false;
+  bool _isModeLoading = true;
+  AuthService? _authService;
 
   @override
   void initState() {
     super.initState();
-    _initializeCredentialMode();
+    _initializeAuthService();
   }
 
-  Future<void> _initializeCredentialMode() async {
-    final authService = context.read<AuthService>();
-    final isPin = await authService.isPinMode();
-    // Debug log to verify the mode
+  Future<void> _initializeAuthService() async {
+    final prefs = await SharedPreferences.getInstance();
+    final databaseName = prefs.getString('currentDatabase') ?? 'default';
+    print('ChangeLoginScreen using databaseName: $databaseName'); // Debug log
+    _authService = AuthService(databaseName);
+    await _determineCredentialMode();
+  }
+
+  Future<void> _determineCredentialMode() async {
+    final isPin = await _authService!.isPinMode();
     print('Database mode (isPin): $isPin');
     setState(() {
       _isCurrentPinMode = isPin;
       _selectedCredentialType = isPin ? CredentialType.pin : CredentialType.password;
+      _isModeLoading = false;
     });
   }
 
   Future<void> _handleChangeCredential() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final authService = context.read<AuthService>();
     setState(() => _isLoading = true);
 
     try {
       final currentCredential = _currentCredentialController.text;
       final newCredential = _newCredentialController.text;
 
-      final isCurrentValid = await authService.verifyMasterCredential(currentCredential);
+      final isCurrentValid = await _authService!.verifyMasterCredential(currentCredential);
       if (!isCurrentValid) {
         setState(() => _isLoading = false);
         Fluttertoast.showToast(
@@ -62,11 +70,11 @@ class _ChangeLoginScreenState extends State<ChangeLoginScreen> {
         return;
       }
 
-      await authService.setMasterCredential(
+      await _authService!.setMasterCredential(
         newCredential,
         isPin: _selectedCredentialType == CredentialType.pin,
       );
-      authService.clearCachedCredential(); // Clear cached credential after change
+      _authService!.clearCachedCredential();
 
       if (mounted) {
         setState(() => _isLoading = false);
@@ -99,7 +107,7 @@ class _ChangeLoginScreenState extends State<ChangeLoginScreen> {
           tooltip: 'Back',
         ),
       ),
-      body: _selectedCredentialType == null
+      body: _isModeLoading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
         padding: const EdgeInsets.all(16.0),
@@ -118,7 +126,7 @@ class _ChangeLoginScreenState extends State<ChangeLoginScreen> {
                     label: Text('Password'),
                   ),
                 ],
-                selected: {_selectedCredentialType!},
+                selected: {_selectedCredentialType},
                 onSelectionChanged: (newSelection) {
                   setState(() {
                     _selectedCredentialType = newSelection.first;
