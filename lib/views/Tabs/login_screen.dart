@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
-import 'package:keyvalut/views/Tabs/setup_login_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:keyvalut/views/Tabs/setup_login_screen.dart';
 import 'package:keyvalut/services/auth_service.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
 import 'package:keyvalut/views/Tabs/homepage.dart';
-
-enum AuthMode { pin, password }
+import '../../services/utils.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,14 +13,15 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  // Constants for UI
+  static const double _padding = 16.0;
+  static const double _buttonHeight = 48.0;
+  static const double _fontSizeTitle = 18.0;
+
+  // State management class
+  final _LoginState _state = _LoginState();
   final TextEditingController _pinController = TextEditingController();
-  bool _isPinVisible = false;
-  String? _selectedDatabase;
-  List<String> _databaseNames = [];
-  bool _isLoading = true;
-  AuthMode _authMode = AuthMode.pin;
-  bool _isBiometricAvailable = false;
-  bool _isBiometricEnabled = false;
+  AuthService? _authService;
 
   @override
   void initState() {
@@ -38,96 +35,83 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // Load available databases
   Future<void> _loadDatabases() async {
     try {
-      final directory = await getApplicationDocumentsDirectory();
-      final files = directory.listSync();
-      final databaseFiles = files
-          .where((file) => file.path.endsWith('.db') && file is File)
-          .map((file) => file.path.split('/').last.replaceAll('.db', ''))
-          .toList();
+      setState(() => _state.isLoading = true);
+      final databases = await fetchDatabaseNames();
+      final lastUsedDatabase = await _getLastUsedDatabase();
+      setState(() {
+        _state.databaseNames = databases;
+        _state.selectedDatabase = _selectInitialDatabase(databases, lastUsedDatabase);
+        _state.isLoading = false;
+      });
 
-      if (mounted) {
+      if (_state.selectedDatabase != null) {
+        await _updateAuthService(_state.selectedDatabase!);
+        // Set the initial authMode based on the database
+        final isPin = await _authService!.isPinMode();
         setState(() {
-          _databaseNames = databaseFiles;
-          _selectedDatabase = _databaseNames.isNotEmpty ? _databaseNames.first : null;
-          _isLoading = false;
+          _state.authMode = isPin ? AuthMode.pin : AuthMode.password;
         });
-      }
-
-      if (_selectedDatabase != null) {
-        final authService = AuthService(_selectedDatabase!);
-        final isPin = await authService.isPinMode();
-        final isBiometricAvailable = await authService.isBiometricAvailable();
-        final isBiometricEnabled = await authService.isBiometricEnabled();
-        setState(() {
-          _authMode = isPin ? AuthMode.pin : AuthMode.password;
-          _isBiometricAvailable = isBiometricAvailable;
-          _isBiometricEnabled = isBiometricEnabled;
-        });
+        if (_state.isBiometricAvailable && _state.isBiometricEnabled) {
+          await _unlockWithBiometrics();
+        }
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading databases: $e')),
-        );
-      }
+      setState(() => _state.isLoading = false);
+      handleError(e);
     }
   }
 
+  // Get last used database from preferences
+  Future<String?> _getLastUsedDatabase() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('currentDatabase');
+  }
+
+  // Select initial database
+  String? _selectInitialDatabase(List<String> databases, String? lastUsed) {
+    return lastUsed != null && databases.contains(lastUsed)
+        ? lastUsed
+        : databases.isNotEmpty
+        ? databases.first
+        : null;
+  }
+
+  // Update auth service and auth mode
+  Future<void> _updateAuthService(String databaseName) async {
+    _authService = AuthService(databaseName);
+    final isPin = await _authService!.isPinMode();
+    final isBiometricAvailable = await _authService!.isBiometricAvailable();
+    final isBiometricEnabled = await _authService!.isBiometricEnabled();
+    setState(() {
+      _state.authMode = isPin ? AuthMode.pin : AuthMode.password;
+      _state.isBiometricAvailable = isBiometricAvailable;
+      _state.isBiometricEnabled = isBiometricEnabled;
+    });
+  }
+
+  // Unlock vault with PIN/password
   Future<void> _unlockVault() async {
-    if (_selectedDatabase == null) {
-      debugPrint('Login failed: No database selected');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a database')),
-      );
+    if (_state.selectedDatabase == null || _authService == null) {
+      showToast('Please select a database');
       return;
     }
 
-    final input = _pinController.text;
-    debugPrint('Attempting login for database: $_selectedDatabase with ${_authMode == AuthMode.pin ? 'PIN' : 'Password'}');
-
-    if (_authMode == AuthMode.pin) {
-      if (input.length < 6 || !RegExp(r'^\d+$').hasMatch(input)) {
-        debugPrint('Login failed: PIN must be at least 6 digits (entered: $input)');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PIN must be at least 6 digits')),
-        );
-        return;
-      }
-    } else {
-      if (input.length < 8) {
-        debugPrint('Login failed: Password must be at least 8 characters (entered: $input)');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password must be at least 8 characters')),
-        );
-        return;
-      }
-    }
-
     try {
-      final authService = AuthService(_selectedDatabase!);
-      final isPinMode = await authService.isPinMode();
-      if (isPinMode != (_authMode == AuthMode.pin)) {
-        debugPrint('Login failed: Database uses ${isPinMode ? "PIN" : "password"} authentication, but ${_authMode == AuthMode.pin ? "PIN" : "password"} mode was selected');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'This database uses ${_authMode == AuthMode.pin ? "password" : "PIN"} authentication. Please switch to the correct mode.',
-            ),
-          ),
-        );
-        return;
+      final input = _pinController.text;
+      validateInput(input, _state.authMode);
+
+      final isPinMode = await _authService!.isPinMode();
+      if (isPinMode != (_state.authMode == AuthMode.pin)) {
+        throw AppException(
+            'This database uses ${isPinMode ? "PIN" : "password"} authentication. Please switch to the correct mode.');
       }
 
-      final isAuthenticated = await authService.verifyMasterCredential(input);
+      final isAuthenticated = await _authService!.verifyMasterCredential(input);
       if (isAuthenticated) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('currentDatabase', _selectedDatabase!);
-        debugPrint('Login successful for database: $_selectedDatabase with ${_authMode == AuthMode.pin ? 'PIN' : 'Password'}: $input');
+        await _saveCurrentDatabase(_state.selectedDatabase!);
         if (mounted) {
           Navigator.pushReplacement(
             context,
@@ -135,53 +119,42 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else {
-        debugPrint('Login failed for database: $_selectedDatabase - Authentication failed');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Authentication failed')),
-        );
+        _pinController.clear(); // Clear the input field on incorrect input
+        showToast('Authentication failed');
       }
     } catch (e) {
-      debugPrint('Login failed for database: $_selectedDatabase - Error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      _pinController.clear(); // Clear the input field on error
+      handleError(e);
     }
   }
 
+  // Save current database to preferences
+  Future<void> _saveCurrentDatabase(String databaseName) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('currentDatabase', databaseName);
+  }
+
+  // Unlock with biometrics
   Future<void> _unlockWithBiometrics() async {
-    if (_selectedDatabase == null) {
-      debugPrint('Biometric login failed: No database selected');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a database')),
-      );
+    if (_state.selectedDatabase == null || _authService == null) {
+      showToast('Please select a database');
       return;
     }
-
-    if (!_isBiometricAvailable) {
-      debugPrint('Biometric login failed: Biometrics not available on this device');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Biometrics not available on this device')),
-      );
+    if (!_state.isBiometricAvailable) {
+      showToast('Biometrics not available on this device');
       return;
     }
-
-    if (!_isBiometricEnabled) {
-      debugPrint('Biometric login failed: Biometrics not enabled for this database');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Biometrics not enabled for this database')),
-      );
+    if (!_state.isBiometricEnabled) {
+      showToast('Biometrics not enabled for this database');
       return;
     }
 
     try {
-      final authService = AuthService(_selectedDatabase!);
-      final isAuthenticated = await authService.authenticateWithBiometrics(
-        reason: 'Please authenticate to unlock the vault for $_selectedDatabase',
+      final isAuthenticated = await _authService!.authenticateWithBiometrics(
+        reason: 'Please authenticate to unlock the vault for ${_state.selectedDatabase}',
       );
       if (isAuthenticated) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('currentDatabase', _selectedDatabase!);
-        debugPrint('Biometric login successful for database: $_selectedDatabase');
+        await _saveCurrentDatabase(_state.selectedDatabase!);
         if (mounted) {
           Navigator.pushReplacement(
             context,
@@ -189,35 +162,88 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else {
-        debugPrint('Biometric login failed for database: $_selectedDatabase - User canceled or authentication failed');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Biometric authentication failed')),
-        );
       }
     } catch (e) {
-      debugPrint('Biometric login failed for database: $_selectedDatabase - Error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Biometric Error: $e')),
-      );
+      handleError(e);
     }
   }
 
+  // Navigate to create new database
   void _navigateToCreateNewDatabase() {
-    debugPrint('Navigating to SetupMasterPasswordScreen to create a new database');
     try {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const SetupLoginScreen()),
+        MaterialPageRoute(
+          builder: (_) => SetupLoginScreen(
+            onCallback: _loadDatabases,
+          ),
+        ),
       );
-      debugPrint('Navigation to SetupMasterPasswordScreen completed');
     } catch (e) {
-      debugPrint('Navigation to SetupMasterPasswordScreen failed: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Navigation failed: $e')),
-        );
-      }
+      handleError(e);
     }
+  }
+
+  // Build database selector
+  Widget _buildDatabaseSelector(ThemeData theme) {
+    if (_state.databaseNames.isEmpty) {
+      return Text(
+        'No databases found',
+        style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+      );
+    }
+    return Wrap(
+      spacing: 8.0,
+      runSpacing: 8.0,
+      alignment: WrapAlignment.center,
+      children: _state.databaseNames.map((name) {
+        return ChoiceChip(
+          label: Text(name),
+          selected: _state.selectedDatabase == name,
+          onSelected: (selected) async {
+            if (selected) {
+              setState(() {
+                _state.selectedDatabase = name;
+                _pinController.clear();
+              });
+              await _updateAuthService(name);
+              if (_state.isBiometricAvailable && _state.isBiometricEnabled) {
+                await _unlockWithBiometrics();
+              }
+            }
+          },
+          selectedColor: theme.colorScheme.primary,
+          backgroundColor: theme.colorScheme.surface,
+          labelStyle: TextStyle(
+            color: _state.selectedDatabase == name
+                ? theme.colorScheme.onPrimary
+                : theme.colorScheme.onSurface,
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // Build auth Bond button
+  Widget _buildButton({
+    required VoidCallback onPressed,
+    required String label,
+    required Color backgroundColor,
+    required Color foregroundColor,
+    bool enabled = true,
+  }) {
+    return ElevatedButton(
+      onPressed: enabled ? onPressed : null,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: backgroundColor,
+        foregroundColor: foregroundColor,
+        minimumSize: const Size(0, _buttonHeight),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: _padding),
+        child: Text(label),
+      ),
+    );
   }
 
   @override
@@ -226,193 +252,125 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Setup Database'),
+        centerTitle: true,
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
+        actions: [],
       ),
-      body: _isLoading
+      body: _state.isLoading
           ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
-          : Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: MediaQuery.of(context).size.height -
-                      kToolbarHeight -
-                      MediaQuery.of(context).padding.top -
-                      MediaQuery.of(context).padding.bottom,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Select Database',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SegmentedButton<AuthMode>(
-                      segments: const [
-                        ButtonSegment<AuthMode>(
-                          value: AuthMode.pin,
-                          label: Text('PIN'),
-                          icon: Icon(Icons.lock),
-                        ),
-                        ButtonSegment<AuthMode>(
-                          value: AuthMode.password,
-                          label: Text('Password'),
-                          icon: Icon(Icons.lock),
-                        ),
-                      ],
-                      selected: {_authMode},
-                      onSelectionChanged: (newSelection) {
-                        setState(() {
-                          _authMode = newSelection.first;
-                          _pinController.clear();
-                        });
-                      },
-                      style: SegmentedButton.styleFrom(
-                        selectedBackgroundColor: theme.colorScheme.primary,
-                        selectedForegroundColor: theme.colorScheme.onPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _databaseNames.isEmpty
-                        ? Text(
-                      'No databases found',
-                      style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-                    )
-                        : Wrap(
-                      spacing: 8.0,
-                      runSpacing: 8.0,
-                      alignment: WrapAlignment.center,
-                      children: _databaseNames.map((name) {
-                        return ChoiceChip(
-                          label: Text(name),
-                          selected: _selectedDatabase == name,
-                          onSelected: (selected) async {
-                            if (selected) {
-                              setState(() {
-                                _selectedDatabase = name;
-                                _pinController.clear();
-                              });
-                              final authService = AuthService(name);
-                              final isPin = await authService.isPinMode();
-                              final isBiometricAvailable = await authService.isBiometricAvailable();
-                              final isBiometricEnabled = await authService.isBiometricEnabled();
-                              setState(() {
-                                _authMode = isPin ? AuthMode.pin : AuthMode.password;
-                                _isBiometricAvailable = isBiometricAvailable;
-                                _isBiometricEnabled = isBiometricEnabled;
-                              });
-                            }
-                          },
-                          selectedColor: theme.colorScheme.primary,
-                          backgroundColor: theme.colorScheme.surface,
-                          labelStyle: TextStyle(
-                            color: _selectedDatabase == name
-                                ? theme.colorScheme.onPrimary
-                                : theme.colorScheme.onSurface,
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 32),
-                    Text(
-                      'Enter PIN/Password',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _pinController,
-                      obscureText: !_isPinVisible,
-                      decoration: InputDecoration(
-                        labelText: _authMode == AuthMode.pin ? 'PIN' : 'Password',
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(color: theme.colorScheme.onSurface),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: theme.colorScheme.onSurfaceVariant),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: theme.colorScheme.primary),
-                        ),
-                        prefixIcon: Icon(Icons.lock, color: theme.colorScheme.onSurface),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isPinVisible ? Icons.visibility_off : Icons.visibility,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isPinVisible = !_isPinVisible;
-                            });
-                          },
-                        ),
-                      ),
-                      keyboardType: _authMode == AuthMode.pin ? TextInputType.number : TextInputType.text,
-                    ),
-                    const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.center,
-                      child: ElevatedButton(
-                        onPressed: _unlockVault,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: theme.colorScheme.onPrimary,
-                          minimumSize: const Size(0, 48),
-                        ),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Text('Unlock Vault'),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.center,
-                      child: ElevatedButton(
-                        onPressed: (_isBiometricAvailable && _isBiometricEnabled) ? _unlockWithBiometrics : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.secondary,
-                          foregroundColor: theme.colorScheme.onSecondary,
-                          minimumSize: const Size(0, 48),
-                        ),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Text('Use Biometrics'),
-                        ),
-                      ),
-                    ),
-                  ],
+          : SingleChildScrollView(
+        padding: const EdgeInsets.all(_padding),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                'Select Database',
+                style: TextStyle(
+                  fontSize: _fontSizeTitle,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
-            ),
-          ),
-          Positioned(
-            left: 180,
-            right: 0,
-            bottom: 32,
-            child: Center(
-              child: FloatingActionButton.extended(
+              const SizedBox(height: _padding),
+              _buildDatabaseSelector(theme),
+              const SizedBox(height: _padding),
+              _buildButton(
                 onPressed: _navigateToCreateNewDatabase,
+                label: 'Create New',
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: theme.colorScheme.onPrimary,
-                icon: const Icon(Icons.add),
-                label: const Text('Create New'),
               ),
-            ),
+              const SizedBox(height: _padding),
+              Center(
+                child: SegmentedButton<AuthMode>(
+                  segments: const [
+                    ButtonSegment<AuthMode>(
+                      value: AuthMode.pin,
+                      label: Text('PIN'),
+                      icon: Icon(Icons.lock),
+                    ),
+                    ButtonSegment<AuthMode>(
+                      value: AuthMode.password,
+                      label: Text('Password'),
+                      icon: Icon(Icons.lock),
+                    ),
+                  ],
+                  selected: {_state.authMode},
+                  onSelectionChanged: (newSelection) {
+                    setState(() {
+                      _state.authMode = newSelection.first;
+                      _pinController.clear();
+                    });
+                  },
+                  style: SegmentedButton.styleFrom(
+                    selectedBackgroundColor: theme.colorScheme.primary,
+                    selectedForegroundColor: theme.colorScheme.onPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: _padding),
+              TextField(
+                controller: _pinController,
+                obscureText: !_state.isPinVisible,
+                decoration: InputDecoration(
+                  labelText: _state.authMode == AuthMode.pin ? 'PIN' : 'Password',
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: theme.colorScheme.onSurface),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: theme.colorScheme.primary),
+                  ),
+                  prefixIcon: Icon(Icons.lock, color: theme.colorScheme.onSurface),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _state.isPinVisible ? Icons.visibility_off : Icons.visibility,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    onPressed: () {
+                      setState(() => _state.isPinVisible = !_state.isPinVisible);
+                    },
+                  ),
+                ),
+                keyboardType: _state.authMode == AuthMode.pin
+                    ? TextInputType.number
+                    : TextInputType.text,
+              ),
+              const SizedBox(height: _padding),
+              _buildButton(
+                onPressed: _unlockVault,
+                label: 'Unlock Vault',
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+              ),
+              const SizedBox(height: 8),
+              _buildButton(
+                onPressed: _unlockWithBiometrics,
+                label: 'Use Biometrics',
+                backgroundColor: theme.colorScheme.secondary,
+                foregroundColor: theme.colorScheme.onSecondary,
+                enabled: _state.isBiometricAvailable && _state.isBiometricEnabled,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
+}
+
+// State management class
+class _LoginState {
+  bool isLoading = true;
+  bool isPinVisible = false;
+  String? selectedDatabase;
+  List<String> databaseNames = [];
+  AuthMode authMode = AuthMode.pin;
+  bool isBiometricAvailable = false;
+  bool isBiometricEnabled = false;
 }

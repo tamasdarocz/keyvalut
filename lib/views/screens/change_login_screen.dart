@@ -4,22 +4,22 @@ import 'package:keyvalut/services/auth_service.dart';
 import 'package:provider/provider.dart';
 import '../../services/password_strength.dart';
 
-class ChangePasswordScreen extends StatefulWidget {
-  const ChangePasswordScreen({super.key});
+class ChangeLoginScreen extends StatefulWidget {
+  const ChangeLoginScreen({super.key});
 
   @override
-  State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
+  State<ChangeLoginScreen> createState() => _ChangeLoginScreenState();
 }
 
 enum CredentialType { pin, password }
 
-class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
+class _ChangeLoginScreenState extends State<ChangeLoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _currentCredentialController = TextEditingController();
   final _newCredentialController = TextEditingController();
   final _confirmNewCredentialController = TextEditingController();
-  CredentialType _selectedCredentialType = CredentialType.pin; // Default to PIN
-  bool _isCurrentPinMode = true; // Track the current mode (PIN or Password)
+  CredentialType? _selectedCredentialType; // Initially null until mode is determined
+  bool _isCurrentPinMode = true; // Default to true, will be updated
   bool _obscureCurrentCredential = true;
   bool _obscureNewCredential = true;
   bool _obscureConfirmNewCredential = true;
@@ -28,18 +28,18 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   @override
   void initState() {
     super.initState();
-    _checkCredentialMode();
+    _initializeCredentialMode();
   }
 
-  Future<void> _checkCredentialMode() async {
+  Future<void> _initializeCredentialMode() async {
     final authService = context.read<AuthService>();
     final isPin = await authService.isPinMode();
-    if (mounted) {
-      setState(() {
-        _isCurrentPinMode = isPin; // Set the current mode
-        _selectedCredentialType = isPin ? CredentialType.pin : CredentialType.password; // Set the initial selected mode
-      });
-    }
+    // Debug log to verify the mode
+    print('Database mode (isPin): $isPin');
+    setState(() {
+      _isCurrentPinMode = isPin;
+      _selectedCredentialType = isPin ? CredentialType.pin : CredentialType.password;
+    });
   }
 
   Future<void> _handleChangeCredential() async {
@@ -80,7 +80,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         Fluttertoast.showToast(
-          msg: 'Error changing credential',
+          msg: 'Error changing credential: $e',
           gravity: ToastGravity.CENTER,
         );
       }
@@ -92,14 +92,16 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Change Credential'),
-        centerTitle: true, // Center the title
+        centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context), // Add back button to pop the screen
+          onPressed: () => Navigator.pop(context),
           tooltip: 'Back',
         ),
       ),
-      body: Padding(
+      body: _selectedCredentialType == null
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
@@ -116,7 +118,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     label: Text('Password'),
                   ),
                 ],
-                selected: {_selectedCredentialType},
+                selected: {_selectedCredentialType!},
                 onSelectionChanged: (newSelection) {
                   setState(() {
                     _selectedCredentialType = newSelection.first;
@@ -141,7 +143,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 ),
                 validator: (value) {
                   if (value?.isEmpty ?? true) return 'Required';
-                  if (_isCurrentPinMode && value!.length < 6) return 'PIN must be at least 6 digits';
+                  if (_isCurrentPinMode) {
+                    if (value!.length < 6) return 'PIN must be at least 6 digits';
+                    if (!RegExp(r'^\d+$').hasMatch(value)) return 'PIN must be numeric';
+                  } else {
+                    if (value!.length < 8) return 'Password must be at least 8 characters';
+                  }
                   return null;
                 },
               ),
@@ -163,7 +170,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 ),
                 validator: (value) {
                   if (value?.isEmpty ?? true) return 'Required';
-                  if (_selectedCredentialType == CredentialType.pin && value!.length < 6) return 'PIN must be at least 6 digits';
+                  if (_selectedCredentialType == CredentialType.pin) {
+                    if (value!.length < 6) return 'PIN must be at least 6 digits';
+                    if (!RegExp(r'^\d+$').hasMatch(value)) return 'PIN must be numeric';
+                  } else {
+                    if (value!.length < 8) return 'Password must be at least 8 characters';
+                  }
                   return null;
                 },
               ),
@@ -190,7 +202,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 validator: (value) {
                   if (value?.isEmpty ?? true) return 'Required';
                   if (value != _newCredentialController.text) return 'Does not match';
-                  if (_selectedCredentialType == CredentialType.pin && value!.length < 6) return 'PIN must be at least 6 digits';
+                  if (_selectedCredentialType == CredentialType.pin) {
+                    if (value!.length < 6) return 'PIN must be at least 6 digits';
+                    if (!RegExp(r'^\d+$').hasMatch(value)) return 'PIN must be numeric';
+                  } else {
+                    if (value!.length < 8) return 'Password must be at least 8 characters';
+                  }
                   return null;
                 },
               ),

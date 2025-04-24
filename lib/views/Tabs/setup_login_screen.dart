@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/services/auth_service.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
 import 'package:keyvalut/views/Tabs/homepage.dart';
 import 'package:keyvalut/views/Tabs/login_screen.dart';
 import '../../services/password_strength.dart';
-
-enum AuthMode { pin, password }
+import '../../services/utils.dart';
 
 class SetupLoginScreen extends StatefulWidget {
   final VoidCallback? onCallback;
@@ -43,13 +40,7 @@ class _SetupLoginScreenState extends State<SetupLoginScreen> {
 
   Future<void> _loadExistingDatabases() async {
     try {
-      final directory = await getApplicationDocumentsDirectory();
-      final files = directory.listSync();
-      final databaseFiles = files
-          .where((file) => file.path.endsWith('.db') && file is File)
-          .map((file) => file.path.split('/').last.replaceAll('.db', ''))
-          .toList();
-
+      final databaseFiles = await fetchDatabaseNames();
       if (mounted) {
         setState(() {
           _existingDatabaseNames = databaseFiles;
@@ -57,9 +48,7 @@ class _SetupLoginScreenState extends State<SetupLoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading existing databases: $e')),
-        );
+        handleError(e);
       }
     }
   }
@@ -69,56 +58,25 @@ class _SetupLoginScreenState extends State<SetupLoginScreen> {
     final pin = _pinController.text;
     final confirmPin = _confirmPinController.text;
 
-    debugPrint('Starting database creation for: $databaseName');
-
-    if (databaseName.isEmpty) {
-      debugPrint('Database creation failed: Database name is empty');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Database name cannot be empty')),
-      );
-      return;
-    }
-
-    if (_existingDatabaseNames.contains(databaseName)) {
-      debugPrint('Database creation failed: Database "$databaseName" already exists');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Database name already exists')),
-      );
-      return;
-    }
-
-    if (_authMode == AuthMode.pin) {
-      if (pin.length < 6 || !RegExp(r'^\d+$').hasMatch(pin)) {
-        debugPrint('Database creation failed: PIN must be at least 6 digits (entered: $pin)');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PIN must be at least 6 digits')),
-        );
-        return;
-      }
-    } else {
-      if (pin.length < 8) {
-        debugPrint('Database creation failed: Password must be at least 8 characters (entered: $pin)');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password must be at least 8 characters')),
-        );
-        return;
-      }
-    }
-
-    if (pin != confirmPin) {
-      debugPrint('Database creation failed: PINs/Passwords do not match (entered: $pin, confirm: $confirmPin)');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('PINs/Passwords do not match')),
-      );
-      return;
-    }
-
     try {
+      if (databaseName.isEmpty) {
+        throw AppException('Database name cannot be empty');
+      }
+
+      if (_existingDatabaseNames.contains(databaseName)) {
+        throw AppException('Database name already exists');
+      }
+
+      validateInput(pin, _authMode);
+
+      if (pin != confirmPin) {
+        throw AppException('PINs/Passwords do not match');
+      }
+
       final authService = AuthService(databaseName);
       await authService.setMasterCredential(pin, isPin: _authMode == AuthMode.pin);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('currentDatabase', databaseName);
-      debugPrint('Database "$databaseName" created successfully with ${_authMode == AuthMode.pin ? 'PIN' : 'Password'}: $pin');
       if (mounted) {
         widget.onCallback?.call();
         Navigator.pushReplacement(
@@ -127,11 +85,8 @@ class _SetupLoginScreenState extends State<SetupLoginScreen> {
         );
       }
     } catch (e) {
-      debugPrint('Database creation failed for "$databaseName": $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error creating database: $e')),
-        );
+        handleError(e);
       }
     }
   }
