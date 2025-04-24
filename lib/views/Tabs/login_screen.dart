@@ -4,6 +4,7 @@ import 'package:keyvalut/views/Tabs/setup_login_screen.dart';
 import 'package:keyvalut/services/auth_service.dart';
 import 'package:keyvalut/views/Tabs/homepage.dart';
 import '../../services/utils.dart';
+import '../screens/reset_credential_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,12 +14,10 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // Constants for UI
   static const double _padding = 16.0;
   static const double _buttonHeight = 48.0;
   static const double _fontSizeTitle = 18.0;
 
-  // State management class
   final _LoginState _state = _LoginState();
   final TextEditingController _pinController = TextEditingController();
   AuthService? _authService;
@@ -35,7 +34,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // Load available databases
   Future<void> _loadDatabases() async {
     try {
       setState(() => _state.isLoading = true);
@@ -49,7 +47,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (_state.selectedDatabase != null) {
         await _updateAuthService(_state.selectedDatabase!);
-        // Set the initial authMode based on the database
         final isPin = await _authService!.isPinMode();
         setState(() {
           _state.authMode = isPin ? AuthMode.pin : AuthMode.password;
@@ -64,13 +61,11 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // Get last used database from preferences
   Future<String?> _getLastUsedDatabase() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('currentDatabase');
   }
 
-  // Select initial database
   String? _selectInitialDatabase(List<String> databases, String? lastUsed) {
     return lastUsed != null && databases.contains(lastUsed)
         ? lastUsed
@@ -79,7 +74,6 @@ class _LoginScreenState extends State<LoginScreen> {
         : null;
   }
 
-  // Update auth service and auth mode
   Future<void> _updateAuthService(String databaseName) async {
     _authService = AuthService(databaseName);
     final isPin = await _authService!.isPinMode();
@@ -92,7 +86,6 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  // Unlock vault with PIN/password
   Future<void> _unlockVault() async {
     if (_state.selectedDatabase == null || _authService == null) {
       showToast('Please select a database');
@@ -119,22 +112,20 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else {
-        _pinController.clear(); // Clear the input field on incorrect input
+        _pinController.clear();
         showToast('Authentication failed');
       }
     } catch (e) {
-      _pinController.clear(); // Clear the input field on error
+      _pinController.clear();
       handleError(e);
     }
   }
 
-  // Save current database to preferences
   Future<void> _saveCurrentDatabase(String databaseName) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('currentDatabase', databaseName);
   }
 
-  // Unlock with biometrics
   Future<void> _unlockWithBiometrics() async {
     if (_state.selectedDatabase == null || _authService == null) {
       showToast('Please select a database');
@@ -161,14 +152,12 @@ class _LoginScreenState extends State<LoginScreen> {
             MaterialPageRoute(builder: (_) => const HomePage()),
           );
         }
-      } else {
       }
     } catch (e) {
       handleError(e);
     }
   }
 
-  // Navigate to create new database
   void _navigateToCreateNewDatabase() {
     try {
       Navigator.pushReplacement(
@@ -184,7 +173,28 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // Build database selector
+  Future<void> _showResetMasterCredentialDialog() async {
+    if (_state.selectedDatabase == null || _authService == null) {
+      showToast('Please select a database');
+      return;
+    }
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => ResetCredentialDialog(
+        authService: _authService!,
+        isPinMode: _state.authMode == AuthMode.pin,
+        onResetSuccess: () {
+          _pinController.clear();
+          setState(() async {
+            final isPin = await _authService!.isPinMode();
+            _state.authMode = isPin ? AuthMode.pin : AuthMode.password;
+          });
+        },
+      ),
+    );
+  }
+
   Widget _buildDatabaseSelector(ThemeData theme) {
     if (_state.databaseNames.isEmpty) {
       return Text(
@@ -224,7 +234,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Build auth Bond button
   Widget _buildButton({
     required VoidCallback onPressed,
     required String label,
@@ -356,6 +365,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 foregroundColor: theme.colorScheme.onSecondary,
                 enabled: _state.isBiometricAvailable && _state.isBiometricEnabled,
               ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: _showResetMasterCredentialDialog,
+                child: Text(
+                  'Forgot ${_state.authMode == AuthMode.pin ? 'PIN' : 'Password'}?',
+                  style: TextStyle(color: theme.colorScheme.primary),
+                ),
+              ),
             ],
           ),
         ),
@@ -364,7 +381,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-// State management class
 class _LoginState {
   bool isLoading = true;
   bool isPinVisible = false;

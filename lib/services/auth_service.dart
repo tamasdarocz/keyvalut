@@ -42,7 +42,7 @@ class AuthService {
     return key.toString();
   }
 
-  Future<void> setMasterCredential(String credential, {required bool isPin}) async {
+  Future<String> setMasterCredential(String credential, {required bool isPin}) async {
     await _initializeSalt();
     final parameters = Argon2Parameters(
       Argon2Parameters.ARGON2_i,
@@ -60,13 +60,14 @@ class AuthService {
     await _secureStorage.write(key: 'isPin_$databaseName', value: isPin.toString());
     print('Set isPin for $databaseName: $isPin');
 
-    // Generate and store recovery key if not already set
-    final recoveryKey = await _secureStorage.read(key: 'recoveryKey_$databaseName');
-    if (recoveryKey == null) {
-      final newRecoveryKey = await _generateRecoveryKey();
-      await _secureStorage.write(key: 'recoveryKey_$databaseName', value: newRecoveryKey);
-      print('Generated recovery key for $databaseName: $newRecoveryKey');
+    // Generate and store recovery key if not already set, then return it
+    String recoveryKey = await _secureStorage.read(key: 'recoveryKey_$databaseName') ?? '';
+    if (recoveryKey.isEmpty) {
+      recoveryKey = await _generateRecoveryKey();
+      await _secureStorage.write(key: 'recoveryKey_$databaseName', value: recoveryKey);
+      print('Generated recovery key for $databaseName: $recoveryKey');
     }
+    return recoveryKey;
   }
 
   Future<bool> verifyMasterCredential(String credential) async {

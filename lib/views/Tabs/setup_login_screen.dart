@@ -5,6 +5,7 @@ import 'package:keyvalut/views/Tabs/homepage.dart';
 import 'package:keyvalut/views/Tabs/login_screen.dart';
 import '../../services/password_strength.dart';
 import '../../services/utils.dart';
+import '../screens/recovery_key_dialog.dart';
 
 class SetupLoginScreen extends StatefulWidget {
   final VoidCallback? onCallback;
@@ -53,6 +54,16 @@ class _SetupLoginScreenState extends State<SetupLoginScreen> {
     }
   }
 
+  Future<void> _showRecoveryKeyDialog(String recoveryKey) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => RecoveryKeyDialog(
+        recoveryKey: recoveryKey,
+      ),
+    );
+  }
+
   Future<void> _createNewDatabase() async {
     final databaseName = _databaseNameController.text.trim();
     final pin = _pinController.text;
@@ -74,9 +85,12 @@ class _SetupLoginScreenState extends State<SetupLoginScreen> {
       }
 
       final authService = AuthService(databaseName);
-      await authService.setMasterCredential(pin, isPin: _authMode == AuthMode.pin);
+      final recoveryKey = await authService.setMasterCredential(pin, isPin: _authMode == AuthMode.pin);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('currentDatabase', databaseName);
+
+      await _showRecoveryKeyDialog(recoveryKey);
+
       if (mounted) {
         widget.onCallback?.call();
         Navigator.pushReplacement(

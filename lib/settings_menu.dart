@@ -4,13 +4,15 @@ import 'package:keyvalut/theme/theme_provider.dart';
 import 'package:keyvalut/views/screens/archived_credentials_screen.dart';
 import 'package:keyvalut/views/screens/change_login_screen.dart';
 import 'package:keyvalut/views/screens/deleted_credentials_screen.dart';
+import 'package:keyvalut/views/screens/recovery_key_dialog.dart';
+import 'package:keyvalut/views/screens/reset_credential_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/services/auth_service.dart';
 import 'package:keyvalut/services/export_services.dart';
 import 'package:keyvalut/services/import_service.dart';
 import 'package:keyvalut/data/credential_provider.dart';
-import 'package:keyvalut/data/credential_model.dart';
+
 
 class SettingsMenu extends StatefulWidget {
   final VoidCallback onLogout;
@@ -34,9 +36,6 @@ class _SettingsMenuState extends State<SettingsMenu> {
   bool _requireBiometricsOnResume = false;
   bool _isPinMode = false;
   final TextEditingController _fileNameController = TextEditingController();
-  final TextEditingController _recoveryKeyController = TextEditingController();
-  final TextEditingController _newCredentialController = TextEditingController();
-  final TextEditingController _confirmNewCredentialController = TextEditingController();
   String? _currentDatabase;
   AuthService? _authService;
 
@@ -65,9 +64,6 @@ class _SettingsMenuState extends State<SettingsMenu> {
   @override
   void dispose() {
     _fileNameController.dispose();
-    _recoveryKeyController.dispose();
-    _newCredentialController.dispose();
-    _confirmNewCredentialController.dispose();
     super.dispose();
   }
 
@@ -223,158 +219,29 @@ class _SettingsMenuState extends State<SettingsMenu> {
       Fluttertoast.showToast(msg: 'Recovery key not set');
       return;
     }
-    showDialog(
+    await showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Recovery Key'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'This is your recovery key. Store it in a safe place. You will need it to reset your master credential if you forget it.',
-              style: TextStyle(fontSize: 14),
-            ),
-            const SizedBox(height: 16),
-            SelectableText(
-              recoveryKey,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 16),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Close'),
-          ),
-        ],
+      builder: (dialogContext) => RecoveryKeyDialog(
+        recoveryKey: recoveryKey,
       ),
     );
   }
 
   Future<void> _showResetMasterCredentialDialog() async {
     if (_authService == null) return;
-    _recoveryKeyController.clear();
-    _newCredentialController.clear();
-    _confirmNewCredentialController.clear();
-    bool obscureNewCredential = true;
-    bool obscureConfirmNewCredential = true;
 
-    showDialog(
+    await showDialog(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setDialogState) => AlertDialog(
-          title: const Text('Reset Master Credential'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: _recoveryKeyController,
-                  decoration: const InputDecoration(
-                    labelText: 'Recovery Key',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _newCredentialController,
-                  obscureText: obscureNewCredential,
-                  keyboardType: _isPinMode ? TextInputType.number : TextInputType.text,
-                  decoration: InputDecoration(
-                    labelText: _isPinMode ? 'New PIN' : 'New Password',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        obscureNewCredential ? Icons.visibility_off : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setDialogState(() => obscureNewCredential = !obscureNewCredential);
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _confirmNewCredentialController,
-                  obscureText: obscureConfirmNewCredential,
-                  keyboardType: _isPinMode ? TextInputType.number : TextInputType.text,
-                  decoration: InputDecoration(
-                    labelText: _isPinMode ? 'Confirm New PIN' : 'Confirm New Password',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        obscureConfirmNewCredential ? Icons.visibility_off : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setDialogState(() => obscureConfirmNewCredential = !obscureConfirmNewCredential);
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                final recoveryKey = _recoveryKeyController.text.trim();
-                final newCredential = _newCredentialController.text;
-                final confirmNewCredential = _confirmNewCredentialController.text;
-
-                if (recoveryKey.isEmpty) {
-                  Fluttertoast.showToast(msg: 'Recovery key is required');
-                  return;
-                }
-                if (newCredential.isEmpty) {
-                  Fluttertoast.showToast(msg: 'New ${_isPinMode ? 'PIN' : 'password'} is required');
-                  return;
-                }
-                if (_isPinMode) {
-                  if (newCredential.length < 6) {
-                    Fluttertoast.showToast(msg: 'PIN must be at least 6 digits');
-                    return;
-                  }
-                  if (!RegExp(r'^\d+$').hasMatch(newCredential)) {
-                    Fluttertoast.showToast(msg: 'PIN must be numeric');
-                    return;
-                  }
-                } else {
-                  if (newCredential.length < 8) {
-                    Fluttertoast.showToast(msg: 'Password must be at least 8 characters');
-                    return;
-                  }
-                }
-                if (newCredential != confirmNewCredential) {
-                  Fluttertoast.showToast(msg: 'Credentials do not match');
-                  return;
-                }
-
-                try {
-                  await _authService!.resetMasterCredentialWithRecoveryKey(
-                    recoveryKey,
-                    newCredential,
-                    isPin: _isPinMode,
-                  );
-                  if (mounted) {
-                    Navigator.pop(dialogContext);
-                    Fluttertoast.showToast(msg: 'Master credential reset successfully');
-                    widget.onLogout(); // Log out to force re-authentication
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    Fluttertoast.showToast(msg: e.toString());
-                  }
-                }
-              },
-              child: const Text('Reset'),
-            ),
-          ],
-        ),
+      builder: (dialogContext) => ResetCredentialDialog(
+        authService: _authService!,
+        isPinMode: _isPinMode,
+        onResetSuccess: () {
+          setState(() async {
+            final isPin = await _authService!.isPinMode();
+            _isPinMode = isPin;
+          });
+          widget.onLogout();
+        },
       ),
     );
   }

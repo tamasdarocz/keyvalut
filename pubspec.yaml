@@ -40,8 +40,8 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   collection: ^1.17.2
   path_provider: ^2.0.11
+  universal_html: ^2.2.4
   file_picker: ^10.1.2
-  share_plus: ^10.0.0
   device_info_plus: ^10.1.1
   barcode: ^2.2.9
   mobile_scanner: ^3.5.5
@@ -53,6 +53,9 @@ dependencies:
   pin_code_fields: ^8.0.1
   flutter_quill: ^10.7.0
   argon2: ^1.0.1
+  share_plus: ^11.0.0
+
+
 
   # UI
   cupertino_icons: ^1.0.8
