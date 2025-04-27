@@ -25,11 +25,13 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
 
   Future<void> _checkCameraPermission() async {
     final status = await Permission.camera.request();
-    if (status.isGranted) {
+if (status.isGranted) {
       setState(() {
         _isPermissionGranted = true;
-      });
-    } else {
+      }
+);
+    }
+else {
       setState(() {
         _errorMessage = 'Camera permission denied. Please enable it in settings.';
       });
@@ -44,47 +46,47 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_errorMessage != null) {
+if (_errorMessage != null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Scan QR Code')),
-        body: Center(
+ body: Center(
           child: Text(
             _errorMessage!,
-            style: const TextStyle(color: Colors.red),
-            textAlign: TextAlign.center,
+ style: const TextStyle(color: Colors.red),
+ textAlign: TextAlign.center,
           ),
         ),
       );
     }
 
-    if (!_isPermissionGranted) {
+if (!_isPermissionGranted) {
       return Scaffold(
         appBar: AppBar(title: const Text('Scan QR Code')),
-        body: const Center(child: CircularProgressIndicator()),
+ body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Scan QR Code')),
-      body: Stack(
+ body: Stack(
         children: [
           MobileScanner(
             controller: cameraController,
-            onDetect: (BarcodeCapture capture) {
+ onDetect: (BarcodeCapture capture) {
               final List<Barcode> barcodes = capture.barcodes;
               for (final barcode in barcodes) {
-                if (barcode.rawValue != null) {
+if (barcode.rawValue != null) {
                   _processQR(barcode.rawValue!);
                 }
               }
             },
           ),
-          Center(
+ Center(
             child: CustomPaint(
               painter: ScannerFramePainter(),
-              child: const SizedBox(
+ child: const SizedBox(
                 width: 250,
-                height: 250,
+ height: 250,
               ),
             ),
           ),
@@ -96,17 +98,18 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   void _processQR(String qrData) {
     try {
       final uri = Uri.parse(qrData);
-      if (uri.scheme != 'otpauth' || uri.host != 'totp') {
+if (uri.scheme != 'otpauth' || uri.host != 'totp') {
         throw Exception('Invalid TOTP QR code');
       }
       final label = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : 'Unknown';
       final secret = uri.queryParameters['secret'] ?? '';
-      if (secret.isEmpty) {
+if (secret.isEmpty) {
         throw Exception('No secret found in QR code');
       }
       widget.onQRScanned(label, secret);
       Navigator.pop(context);
-    } catch (e) {
+    }
+catch (e) {
       Fluttertoast.showToast(msg: e.toString());
     }
   }
@@ -116,8 +119,8 @@ class ScannerFramePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.0;
+..style = PaintingStyle.stroke
+..strokeWidth = 4.0;
 
     const cornerLength = 30.0;
 

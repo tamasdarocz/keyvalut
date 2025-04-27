@@ -15,7 +15,7 @@ void showToast(String message, {Color backgroundColor = Colors.red, Color textCo
   Fluttertoast.showToast(
     msg: message,
     gravity: ToastGravity.CENTER,
-    toastLength: Toast.LENGTH_LONG,
+    toastLength: Toast.LENGTH_SHORT,
     backgroundColor: backgroundColor,
     textColor: textColor,
   );

@@ -1,14 +1,18 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'credential_model.dart'; // Assuming this exists
+import 'package:sqflite/sqflite.dart' as sqflite;
+import 'credential_model.dart';
 
+/// A helper class to manage SQLite database operations for storing credentials, credit cards, and notes.
 class DatabaseHelper {
   final String databaseName;
   Database? _database;
 
+  /// Creates a [DatabaseHelper] instance with the specified [databaseName].
   DatabaseHelper(this.databaseName);
 
+  /// Provides access to the SQLite database instance, creating it if it doesn't exist.
   Future<Database> get database async {
     if (_database != null) return _database!;
     final directory = await getApplicationDocumentsDirectory();
@@ -21,6 +25,7 @@ class DatabaseHelper {
     return _database!;
   }
 
+  /// Creates the database schema with tables for credentials, credit cards, and notes.
   Future<void> _createDB(Database db, int version) async {
     await db.execute('''
     CREATE TABLE credentials (
@@ -70,6 +75,22 @@ class DatabaseHelper {
     ''');
   }
 
+  /// Deletes the database file associated with this [databaseName].
+  ///
+  /// This method closes the database connection and deletes the database file from the file system.
+  /// After deletion, the database instance is reset to null.
+  Future<void> deleteDatabase() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final path = join(directory.path, '$databaseName.db');
+    await database; // Ensure the database is opened
+    await _database?.close(); // Close the database
+    _database = null; // Reset the database instance
+    await sqflite.deleteDatabase(path); // Use sqflite's deleteDatabase function
+  }
+
+  /// Inserts a [credential] into the credentials table.
+  ///
+  /// Returns the ID of the inserted credential.
   Future<int> insertCredential(Credential credential) async {
     final db = await database;
     return db.insert(
@@ -79,6 +100,9 @@ class DatabaseHelper {
     );
   }
 
+  /// Inserts a [card] into the credit_cards table.
+  ///
+  /// Returns the ID of the inserted credit card.
   Future<int> insertCreditCard(CreditCard card) async {
     final db = await database;
     return db.insert(
@@ -88,6 +112,9 @@ class DatabaseHelper {
     );
   }
 
+  /// Inserts a [note] into the notes table.
+  ///
+  /// Returns the ID of the inserted note.
   Future<int> insertNote(Note note) async {
     final db = await database;
     return db.insert(
@@ -97,6 +124,11 @@ class DatabaseHelper {
     );
   }
 
+  /// Retrieves a list of credentials from the database.
+  ///
+  /// - If [includeArchived] is true, includes archived credentials.
+  /// - If [includeDeleted] is true, includes deleted credentials.
+  /// - By default, only non-archived and non-deleted credentials are returned.
   Future<List<Credential>> getCredentials({bool includeArchived = false, bool includeDeleted = false}) async {
     final db = await database;
     final maps = await db.query(
@@ -112,6 +144,11 @@ class DatabaseHelper {
     return maps.map((map) => Credential.fromMap(map)).toList();
   }
 
+  /// Retrieves a list of credit cards from the database.
+  ///
+  /// - If [includeArchived] is true, includes archived credit cards.
+  /// - If [includeDeleted] is true, includes deleted credit cards.
+  /// - By default, only non-archived and non-deleted credit cards are returned.
   Future<List<Map<String, dynamic>>> queryAllCreditCards({bool includeArchived = false, bool includeDeleted = false}) async {
     final db = await database;
     return await db.query(
@@ -126,6 +163,11 @@ class DatabaseHelper {
     );
   }
 
+  /// Retrieves a list of notes from the database.
+  ///
+  /// - If [includeArchived] is true, includes archived notes.
+  /// - If [includeDeleted] is true, includes deleted notes.
+  /// - By default, only non-archived and non-deleted notes are returned.
   Future<List<Note>> getNotes({bool includeArchived = false, bool includeDeleted = false}) async {
     final db = await database;
     final maps = await db.query(
@@ -141,6 +183,9 @@ class DatabaseHelper {
     return maps.map((map) => Note.fromMap(map)).toList();
   }
 
+  /// Retrieves a credential by its [id].
+  ///
+  /// Returns null if no credential is found with the given [id].
   Future<Credential?> getCredentialById(int id) async {
     final db = await database;
     final maps = await db.query(
@@ -152,6 +197,9 @@ class DatabaseHelper {
     return maps.isNotEmpty ? Credential.fromMap(maps.first) : null;
   }
 
+  /// Updates a [credential] in the database.
+  ///
+  /// Returns the number of rows affected.
   Future<int> updateCredential(Credential credential) async {
     final db = await database;
     return db.update(
@@ -162,6 +210,9 @@ class DatabaseHelper {
     );
   }
 
+  /// Updates a [card] in the database.
+  ///
+  /// Returns the number of rows affected.
   Future<int> updateCreditCard(CreditCard card) async {
     final db = await database;
     return db.update(
@@ -172,6 +223,9 @@ class DatabaseHelper {
     );
   }
 
+  /// Updates a [note] in the database.
+  ///
+  /// Returns the number of rows affected.
   Future<int> updateNote(Note note) async {
     final db = await database;
     return db.update(
@@ -182,6 +236,10 @@ class DatabaseHelper {
     );
   }
 
+  /// Archives a credential by its [id].
+  ///
+  /// Sets the `is_archived` flag to 1 and records the archival timestamp.
+  /// Returns the number of rows affected.
   Future<int> archiveCredential(int id) async {
     final db = await database;
     return db.update(
@@ -195,6 +253,10 @@ class DatabaseHelper {
     );
   }
 
+  /// Marks a credential as deleted by its [id].
+  ///
+  /// Sets the `is_deleted` flag to 1 and records the deletion timestamp.
+  /// Returns the number of rows affected.
   Future<int> deleteCredential(int id) async {
     final db = await database;
     return db.update(
@@ -208,6 +270,9 @@ class DatabaseHelper {
     );
   }
 
+  /// Permanently deletes a credential by its [id] from the database.
+  ///
+  /// Returns the number of rows affected.
   Future<int> permanentlyDeleteCredential(int id) async {
     final db = await database;
     return db.delete(
@@ -217,6 +282,10 @@ class DatabaseHelper {
     );
   }
 
+  /// Restores a credential by its [id].
+  ///
+  /// Clears the `is_archived` and `is_deleted` flags and their timestamps.
+  /// Returns the number of rows affected.
   Future<int> restoreCredential(int id) async {
     final db = await database;
     return db.update(
@@ -232,6 +301,10 @@ class DatabaseHelper {
     );
   }
 
+  /// Archives a credit card by its [id].
+  ///
+  /// Sets the `is_archived` flag to 1 and records the archival timestamp.
+  /// Returns the number of rows affected.
   Future<int> archiveCreditCard(int id) async {
     final db = await database;
     return db.update(
@@ -245,6 +318,10 @@ class DatabaseHelper {
     );
   }
 
+  /// Marks a credit card as deleted by its [id].
+  ///
+  /// Sets the `is_deleted` flag to 1 and records the deletion timestamp.
+  /// Returns the number of rows affected.
   Future<int> deleteCreditCard(int id) async {
     final db = await database;
     return db.update(
@@ -258,6 +335,9 @@ class DatabaseHelper {
     );
   }
 
+  /// Permanently deletes a credit card by its [id] from the database.
+  ///
+  /// Returns the number of rows affected.
   Future<int> permanentlyDeleteCreditCard(int id) async {
     final db = await database;
     return db.delete(
@@ -267,6 +347,10 @@ class DatabaseHelper {
     );
   }
 
+  /// Restores a credit card by its [id].
+  ///
+  /// Clears the `is_archived` and `is_deleted` flags and their timestamps.
+  /// Returns the number of rows affected.
   Future<int> restoreCreditCard(int id) async {
     final db = await database;
     return db.update(
@@ -282,6 +366,10 @@ class DatabaseHelper {
     );
   }
 
+  /// Archives a note by its [id].
+  ///
+  /// Sets the `is_archived` flag to 1 and records the archival timestamp.
+  /// Returns the number of rows affected.
   Future<int> archiveNote(int id) async {
     final db = await database;
     return db.update(
@@ -295,6 +383,10 @@ class DatabaseHelper {
     );
   }
 
+  /// Marks a note as deleted by its [id].
+  ///
+  /// Sets the `is_deleted` flag to 1 and records the deletion timestamp.
+  /// Returns the number of rows affected.
   Future<int> deleteNote(int id) async {
     final db = await database;
     return db.update(
@@ -308,6 +400,9 @@ class DatabaseHelper {
     );
   }
 
+  /// Permanently deletes a note by its [id] from the database.
+  ///
+  /// Returns the number of rows affected.
   Future<int> permanentlyDeleteNote(int id) async {
     final db = await database;
     return db.delete(
@@ -317,6 +412,10 @@ class DatabaseHelper {
     );
   }
 
+  /// Restores a note by its [id].
+  ///
+  /// Clears the `is_archived` and `is_deleted` flags and their timestamps.
+  /// Returns the number of rows affected.
   Future<int> restoreNote(int id) async {
     final db = await database;
     return db.update(

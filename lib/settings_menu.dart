@@ -12,12 +12,17 @@ import 'package:keyvalut/services/auth_service.dart';
 import 'package:keyvalut/services/export_services.dart';
 import 'package:keyvalut/services/import_service.dart';
 import 'package:keyvalut/data/credential_provider.dart';
+import 'package:keyvalut/data/database_helper.dart'; // Added import for DatabaseHelper
 
-
+/// A settings menu widget that allows users to manage app settings, including theme, authentication, and database operations.
 class SettingsMenu extends StatefulWidget {
   final VoidCallback onLogout;
   final VoidCallback onSettingsChanged;
 
+  /// Creates a [SettingsMenu] widget.
+  ///
+  /// - [onLogout] is called when the user logs out.
+  /// - [onSettingsChanged] is called when settings are modified.
   const SettingsMenu({
     super.key,
     required this.onLogout,
@@ -36,6 +41,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
   bool _requireBiometricsOnResume = false;
   bool _isPinMode = false;
   final TextEditingController _fileNameController = TextEditingController();
+  final TextEditingController _credentialController = TextEditingController();
   String? _currentDatabase;
   AuthService? _authService;
 
@@ -45,6 +51,23 @@ class _SettingsMenuState extends State<SettingsMenu> {
     _loadDatabase();
   }
 
+  @override
+  void dispose() {
+    _fileNameController.dispose();
+    _credentialController.dispose();
+    super.dispose();
+  }
+
+  /// Loads the current credential mode (PIN or password) for the database.
+  Future<void> _loadCredentialMode() async {
+    if (_authService == null) return;
+    final isPin = await _authService!.isPinMode();
+    if (mounted) {
+      setState(() => _isPinMode = isPin);
+    }
+  }
+
+  /// Loads the current database name and initializes authentication settings.
   Future<void> _loadDatabase() async {
     final prefs = await SharedPreferences.getInstance();
     final databaseName = prefs.getString('currentDatabase');
@@ -61,20 +84,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
     }
   }
 
-  @override
-  void dispose() {
-    _fileNameController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadCredentialMode() async {
-    if (_authService == null) return;
-    final isPin = await _authService!.isPinMode();
-    if (mounted) {
-      setState(() => _isPinMode = isPin);
-    }
-  }
-
+  /// Loads biometric authentication settings for the database.
   Future<void> _loadBiometricSettings() async {
     if (_authService == null) return;
     final available = await _authService!.isBiometricAvailable();
@@ -87,6 +97,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
     }
   }
 
+  /// Loads timeout settings from SharedPreferences.
   Future<void> _loadTimeoutSettings() async {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
@@ -98,6 +109,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
     }
   }
 
+  /// Toggles biometric authentication and updates the settings.
   Future<void> _toggleBiometric(bool value) async {
     if (_authService == null) return;
     await _authService!.setBiometricEnabled(value);
@@ -107,6 +119,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
     }
   }
 
+  /// Sets the timeout duration for automatic logout.
   Future<void> _setTimeoutDuration(int value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('timeoutDuration', value);
@@ -116,6 +129,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
     }
   }
 
+  /// Toggles immediate locking when the app is sent to the background.
   Future<void> _toggleLockImmediately(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('lockImmediately', value);
@@ -125,6 +139,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
     }
   }
 
+  /// Toggles requiring biometrics on app resume.
   Future<void> _toggleRequireBiometricsOnResume(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('requireBiometricsOnResume', value);
@@ -134,6 +149,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
     }
   }
 
+  /// Shows a confirmation dialog for logging out.
   void _confirmLogout() {
     showDialog(
       context: context,
@@ -158,8 +174,11 @@ class _SettingsMenuState extends State<SettingsMenu> {
     );
   }
 
-  Future<void> _showExportDialog() async {
-    _fileNameController.text = 'keyvault_backup';
+  /// Shows a dialog to export data to a JSON file.
+  ///
+  /// Returns the exported file name if successful, null otherwise.
+  Future<String?> _showExportDialog() async {
+    _fileNameController.text = 'keyvault_backup_${_currentDatabase ?? "backup"}';
     final fileName = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -194,7 +213,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
       ),
     );
 
-    if (fileName == null || !mounted) return;
+    if (fileName == null || !mounted) return null;
 
     try {
       await ExportService.exportData(context, fileName);
@@ -203,15 +222,18 @@ class _SettingsMenuState extends State<SettingsMenu> {
           const SnackBar(content: Text('Data exported successfully')),
         );
       }
+      return fileName;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error exporting data: $e')),
         );
       }
+      return null;
     }
   }
 
+  /// Shows a dialog to display the recovery key for the database.
   Future<void> _showRecoveryKeyDialog() async {
     if (_authService == null) return;
     final recoveryKey = await _authService!.getRecoveryKey();
@@ -227,6 +249,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
     );
   }
 
+  /// Shows a dialog to reset the master credential (PIN or password).
   Future<void> _showResetMasterCredentialDialog() async {
     if (_authService == null) return;
 
@@ -242,6 +265,78 @@ class _SettingsMenuState extends State<SettingsMenu> {
           });
           widget.onLogout();
         },
+      ),
+    );
+  }
+
+  /// Shows a dialog to confirm database deletion, with an option to export data first.
+  ///
+  /// The user is first prompted to export their data. If they proceed, they must
+  /// check a confirmation box and enter their PIN or password to delete the database.
+  /// Upon successful deletion, the user is logged out.
+  Future<void> _showDeleteDatabaseDialog() async {
+    if (_authService == null || _currentDatabase == null) return;
+
+    // Step 1: Show the export prompt dialog
+    final shouldProceed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Export Data Before Deletion'),
+        content: const Text('Would you like to export your data before deleting the database? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false), // Cancel deletion
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true), // Skip export, proceed to deletion
+            child: const Text('Skip'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext); // Close this dialog
+              final exportResult = await _showExportDialog();
+              if (exportResult != null) {
+                // Export successful, proceed to deletion confirmation
+                if (mounted) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => _DeleteConfirmationDialog(
+                        authService: _authService!,
+                        isPinMode: _isPinMode,
+                        currentDatabase: _currentDatabase!,
+                        onDeleteSuccess: () {
+                          Navigator.pop(context); // Close settings menu
+                          widget.onLogout(); // Log out the user
+                        },
+                      ),
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Export'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldProceed != true || !mounted) return;
+
+    // Step 2: Show the deletion confirmation dialog if the user skipped export
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => _DeleteConfirmationDialog(
+          authService: _authService!,
+          isPinMode: _isPinMode,
+          currentDatabase: _currentDatabase!,
+          onDeleteSuccess: () {
+            Navigator.pop(context); // Close settings menu
+            widget.onLogout(); // Log out the user
+          },
+        ),
       ),
     );
   }
@@ -425,6 +520,21 @@ class _SettingsMenuState extends State<SettingsMenu> {
                       ],
                     ),
                   ),
+                  Card(
+                    elevation: 2,
+                    child: Column(
+                      children: [
+                        const ListTile(
+                          title: Text('Database Management'),
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.delete_forever, color: Colors.red),
+                          title: const Text('Delete Database', style: TextStyle(color: Colors.red)),
+                          onTap: _showDeleteDatabaseDialog,
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -482,6 +592,131 @@ class _SettingsMenuState extends State<SettingsMenu> {
               ),
             ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A widget that displays a dialog to confirm database deletion with authentication.
+class _DeleteConfirmationDialog extends StatefulWidget {
+  final AuthService authService;
+  final bool isPinMode;
+  final String currentDatabase;
+  final VoidCallback onDeleteSuccess;
+
+  const _DeleteConfirmationDialog({
+    required this.authService,
+    required this.isPinMode,
+    required this.currentDatabase,
+    required this.onDeleteSuccess,
+  });
+
+  @override
+  State<_DeleteConfirmationDialog> createState() => _DeleteConfirmationDialogState();
+}
+
+class _DeleteConfirmationDialogState extends State<_DeleteConfirmationDialog> {
+  final TextEditingController _credentialController = TextEditingController();
+  bool _isConfirmed = false;
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    _credentialController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Delete Database'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Are you sure you want to delete this database? This action cannot be undone.'),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Checkbox(
+                value: _isConfirmed,
+                onChanged: (value) {
+                  setState(() {
+                    _isConfirmed = value ?? false;
+                  });
+                },
+              ),
+              const Text('I understand this action is permanent'),
+            ],
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _credentialController,
+            obscureText: true,
+            decoration: InputDecoration(
+              labelText: widget.isPinMode ? 'PIN' : 'Password',
+              border: const OutlineInputBorder(),
+              errorText: _errorMessage,
+            ),
+            keyboardType: widget.isPinMode ? TextInputType.number : TextInputType.text,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: _isConfirmed
+              ? () async {
+            final input = _credentialController.text.trim();
+            if (input.isEmpty) {
+              setState(() {
+                _errorMessage = 'Please enter your ${widget.isPinMode ? 'PIN' : 'password'}';
+              });
+              return;
+            }
+
+            final isAuthenticated = await widget.authService.verifyMasterCredential(input);
+            if (!isAuthenticated) {
+              setState(() {
+                _errorMessage = 'Incorrect ${widget.isPinMode ? 'PIN' : 'password'}';
+              });
+              return;
+            }
+
+            try {
+              // Delete the database
+              final dbHelper = DatabaseHelper(widget.currentDatabase);
+              final provider = Provider.of<CredentialProvider>(context, listen: false);
+              await provider.clearAllData(); // Clear in-memory data
+              await (await dbHelper.database).close(); // Close the database
+              await dbHelper.deleteDatabase(); // Delete the database file
+
+              // Clear the current database from SharedPreferences
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.remove('currentDatabase');
+
+              // Reset CredentialProvider
+              provider.setDatabaseName('default');
+
+              if (mounted) {
+                Navigator.pop(context); // Close this dialog
+                Fluttertoast.showToast(msg: 'Database deleted successfully');
+                widget.onDeleteSuccess(); // Trigger logout
+              }
+            } catch (e) {
+              if (mounted) {
+                setState(() {
+                  _errorMessage = 'Error deleting database: $e';
+                });
+              }
+            }
+          }
+              : null,
+          child: const Text('Delete', style: TextStyle(color: Colors.red)),
         ),
       ],
     );

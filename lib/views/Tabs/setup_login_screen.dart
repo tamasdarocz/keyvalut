@@ -1,3 +1,5 @@
+/// A screen that allows users to create a new database by setting its name and master credential (PIN or password).
+/// Displays a recovery key dialog upon successful database creation.
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/services/auth_service.dart';
@@ -8,8 +10,10 @@ import '../../services/utils.dart';
 import '../screens/recovery_key_dialog.dart';
 
 class SetupLoginScreen extends StatefulWidget {
+  /// A callback function to be called after a new database is successfully created.
   final VoidCallback? onCallback;
 
+  /// Creates a SetupLoginScreen widget.
   const SetupLoginScreen({super.key, this.onCallback});
 
   @override
@@ -17,12 +21,25 @@ class SetupLoginScreen extends StatefulWidget {
 }
 
 class _SetupLoginScreenState extends State<SetupLoginScreen> {
+  /// Controller for the database name input field.
   final TextEditingController _databaseNameController = TextEditingController();
+
+  /// Controller for the PIN/password input field.
   final TextEditingController _pinController = TextEditingController();
+
+  /// Controller for the confirm PIN/password input field.
   final TextEditingController _confirmPinController = TextEditingController();
+
+  /// Whether the PIN/password input is visible.
   bool _isPinVisible = false;
+
+  /// Whether the confirm PIN/password input is visible.
   bool _isConfirmPinVisible = false;
+
+  /// The current authentication mode (PIN or password).
   AuthMode _authMode = AuthMode.pin;
+
+  /// List of existing database names to prevent duplicates.
   List<String> _existingDatabaseNames = [];
 
   @override
@@ -39,6 +56,7 @@ class _SetupLoginScreenState extends State<SetupLoginScreen> {
     super.dispose();
   }
 
+  /// Loads the list of existing databases to prevent duplicate database names.
   Future<void> _loadExistingDatabases() async {
     try {
       final databaseFiles = await fetchDatabaseNames();
@@ -54,6 +72,8 @@ class _SetupLoginScreenState extends State<SetupLoginScreen> {
     }
   }
 
+  /// Shows a dialog displaying the recovery key for the newly created database.
+  /// [recoveryKey] The recovery key to display.
   Future<void> _showRecoveryKeyDialog(String recoveryKey) async {
     await showDialog(
       context: context,
@@ -64,6 +84,8 @@ class _SetupLoginScreenState extends State<SetupLoginScreen> {
     );
   }
 
+  /// Creates a new database with the provided name and master credential.
+  /// Validates inputs, shows the recovery key, and navigates to HomePage on success.
   Future<void> _createNewDatabase() async {
     final databaseName = _databaseNameController.text.trim();
     final pin = _pinController.text;
