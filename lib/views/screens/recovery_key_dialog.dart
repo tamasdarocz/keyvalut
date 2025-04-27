@@ -1,11 +1,11 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 import 'dart:convert';
 
 class RecoveryKeyDialog extends StatelessWidget {
@@ -21,29 +21,17 @@ class RecoveryKeyDialog extends StatelessWidget {
       final content = 'KeyVault Recovery Key: $recoveryKey';
       final bytes = utf8.encode(content);
 
-      // Use FilePicker to let the user choose the save location, reusing the approach from ExportService
-      String? outputPath = await FilePicker.platform.saveFile(
-        dialogTitle: 'Save Recovery Key',
-        fileName: 'recovery_key.txt',
-        type: FileType.custom,
-        allowedExtensions: ['txt'],
-        bytes: bytes, // Provide bytes for web; native will handle writing manually
-      );
+      if (kIsWeb) {
+        // Web: Use FilePicker.platform.saveFile with bytes
+        String? outputPath = await FilePicker.platform.saveFile(
+          dialogTitle: 'Save Recovery Key',
+          fileName: 'recovery_key.txt',
+          type: FileType.custom,
+          allowedExtensions: ['txt'],
+          bytes: bytes,
+        );
 
-      if (outputPath != null) {
-        if (!kIsWeb) {
-          // Native: Write the file to the user-selected path
-          final file = await File(outputPath).writeAsBytes(bytes);
-          Fluttertoast.showToast(
-            msg: 'Recovery key saved to ${file.path}',
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.CENTER,
-            backgroundColor: Colors.black54,
-            textColor: Colors.white,
-            fontSize: 16.0,
-          );
-        } else {
-          // Web: FilePicker already handled the download with the bytes provided
+        if (outputPath != null) {
           Fluttertoast.showToast(
             msg: 'Recovery key exported successfully',
             toastLength: Toast.LENGTH_SHORT,
@@ -52,12 +40,36 @@ class RecoveryKeyDialog extends StatelessWidget {
             textColor: Colors.white,
             fontSize: 16.0,
           );
+        } else {
+          Fluttertoast.showToast(
+            msg: 'Export cancelled',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.CENTER,
+            backgroundColor: Colors.black54,
+            textColor: Colors.white,
+            fontSize: 16.0,
+          );
         }
       } else {
-        // User cancelled the save operation
+        // Native: Write to a temporary file and share it
+        final tempDir = await getTemporaryDirectory();
+        final fileName = 'recovery_key_${DateTime.now().millisecondsSinceEpoch}.txt';
+        final tempFile = File('${tempDir.path}/$fileName');
+        await tempFile.writeAsBytes(bytes);
+
+        // Share the temporary file as an XFile
+        final xFile = XFile(tempFile.path);
+        await SharePlus.instance.share(
+          ShareParams(
+            text: 'Here is your KeyVault Recovery Key file.',
+            subject: 'KeyVault Recovery Key',
+            files: [xFile], // Use XFile instead of String path
+          ),
+        );
+
         Fluttertoast.showToast(
-          msg: 'Export cancelled',
-          toastLength: Toast.LENGTH_SHORT,
+          msg: 'Recovery key shared. Please save the file.',
+          toastLength: Toast.LENGTH_LONG,
           gravity: ToastGravity.CENTER,
           backgroundColor: Colors.black54,
           textColor: Colors.white,
