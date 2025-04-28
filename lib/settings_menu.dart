@@ -11,7 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/services/auth_service.dart';
 import 'package:keyvalut/services/export_services.dart';
 import 'package:keyvalut/services/import_service.dart';
-import 'package:keyvalut/data/credential_provider.dart';
+import 'package:keyvalut/data/database_provider.dart';
 import 'package:keyvalut/views/dialogs/delete_confirmation_dialog.dart';
 
 /// A settings menu widget that allows users to manage app settings, including theme, authentication, and database operations.

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:keyvalut/data/credential_provider.dart';
+import 'package:keyvalut/data/database_provider.dart';
 import '../../settings_menu.dart';
 import 'credentials_tab.dart';
 import 'notes_page.dart';

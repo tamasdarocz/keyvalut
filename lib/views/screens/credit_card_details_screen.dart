@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../data/credential_model.dart';
+import '../../data/database_model.dart';
 
 class CreditCardDetailsPage extends StatefulWidget {
   final CreditCard card;

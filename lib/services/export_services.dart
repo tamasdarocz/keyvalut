@@ -4,7 +4,7 @@ import 'package:cryptography/cryptography.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:keyvalut/data/credential_model.dart';
+import 'package:keyvalut/data/database_model.dart';
 import 'package:keyvalut/data/database_helper.dart';
 import 'package:keyvalut/views/Tabs/homepage.dart';
 import 'package:shared_preferences/shared_preferences.dart';

@@ -5,7 +5,7 @@ import 'package:keyvalut/theme/theme_provider.dart';
 import 'package:keyvalut/views/Tabs/login_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'data/credential_provider.dart';
+import 'data/database_provider.dart';
 import 'services/utils.dart';
 import 'data/database_helper.dart';
 

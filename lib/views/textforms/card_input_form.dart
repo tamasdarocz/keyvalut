@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../data/database_helper.dart';
-import '../../data/credential_model.dart';
+import '../../data/database_model.dart';
 import '../Widgets/top_message.dart';
 
 class CardInputForm extends StatefulWidget {

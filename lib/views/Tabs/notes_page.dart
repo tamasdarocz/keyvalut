@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
-import 'package:keyvalut/data/credential_provider.dart';
+import 'package:keyvalut/data/database_provider.dart';
 import 'package:keyvalut/views/screens/note_edit_page.dart';
 
 class NotesPage extends StatelessWidget {

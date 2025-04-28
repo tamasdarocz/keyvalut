@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import '../../data/credential_provider.dart';
+import '../../data/database_provider.dart';
 
 class ArchivedItemsView extends StatelessWidget {
   const ArchivedItemsView({super.key});

@@ -3,7 +3,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/services/auth_service.dart';
-import 'package:keyvalut/data/credential_provider.dart';
+import 'package:keyvalut/data/database_provider.dart';
 import 'package:keyvalut/data/database_helper.dart';
 import 'package:keyvalut/services/utils.dart';
 import 'package:keyvalut/views/Tabs/login_screen.dart';

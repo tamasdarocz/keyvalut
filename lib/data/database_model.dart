@@ -1,4 +1,4 @@
-class Credential {
+class Logins {
   final int? id;
   final String title;
   final String? website;
@@ -13,7 +13,7 @@ class Credential {
   final String createdAt; // Added created_at
   final String updatedAt; // Added updated_at
 
-  Credential({
+  Logins({
     this.id,
     required this.title,
     this.website,
@@ -48,8 +48,8 @@ class Credential {
     };
   }
 
-  factory Credential.fromMap(Map<String, dynamic> map) {
-    return Credential(
+  factory Logins.fromMap(Map<String, dynamic> map) {
+    return Logins(
       id: map['id'],
       title: map['title'],
       website: map['website'],
@@ -84,8 +84,8 @@ class Credential {
     };
   }
 
-  factory Credential.fromJson(Map<String, dynamic> json) {
-    return Credential(
+  factory Logins.fromJson(Map<String, dynamic> json) {
+    return Logins(
       id: json['id'],
       title: json['title'] as String,
       website: json['website'] as String?,

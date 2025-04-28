@@ -10,13 +10,13 @@ import 'package:keyvalut/views/textforms/username_input_field.dart';
 import 'package:keyvalut/views/textforms/website_input_field.dart';
 import 'package:provider/provider.dart';
 
-import '../../data/credential_provider.dart';
-import '../../data/credential_model.dart';
+import '../../data/database_provider.dart';
+import '../../data/database_model.dart';
 import '../../data/database_helper.dart';
 
 class CreateElementForm extends StatefulWidget {
   final DatabaseHelper dbHelper;
-  final Credential? credential;
+  final Logins? credential;
   const CreateElementForm({super.key, this.credential, required this.dbHelper});
 
   @override
@@ -105,7 +105,7 @@ class _CreateElementFormState extends State<CreateElementForm> {
                 return;
               }
 
-              final credential = Credential(
+              final credential = Logins(
                 id: widget.credential?.id,
                 title: titleController.text,
                 username: usernameController.text,

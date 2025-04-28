@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/views/Tabs/setup_login_screen.dart';
 import 'package:keyvalut/services/auth_service.dart';
 import 'package:keyvalut/views/Tabs/homepage.dart';
-import 'package:keyvalut/data/credential_provider.dart';
+import 'package:keyvalut/data/database_provider.dart';
 import '../../data/database_helper.dart';
 import '../../services/utils.dart';
 import '../dialogs/reset_credential_dialog.dart';

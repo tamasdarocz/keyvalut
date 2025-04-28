@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:keyvalut/data/credential_model.dart';
+import 'package:keyvalut/data/database_model.dart';
 
 class DatabaseHelper {
   final String databaseName;
@@ -189,7 +189,7 @@ class DatabaseHelper {
     }
   }
 
-  Future<void> insertCredential(Credential credential) async {
+  Future<void> insertCredential(Logins credential) async {
     final db = await database;
     await db.insert(
       'credentials',
@@ -198,7 +198,7 @@ class DatabaseHelper {
     );
   }
 
-  Future<List<Credential>> getCredentials({
+  Future<List<Logins>> getCredentials({
     bool includeArchived = false,
     bool includeDeleted = false,
   }) async {
@@ -220,10 +220,10 @@ class DatabaseHelper {
           ? [0]
           : [0, 0],
     );
-    return maps.map((map) => Credential.fromMap(map)).toList();
+    return maps.map((map) => Logins.fromMap(map)).toList();
   }
 
-  Future<void> updateCredential(Credential credential) async {
+  Future<void> updateCredential(Logins credential) async {
     final db = await database;
     await db.update(
       'credentials',

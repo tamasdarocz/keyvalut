@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
-import 'package:keyvalut/data/credential_model.dart';
+import 'package:keyvalut/data/database_model.dart';
 import 'package:keyvalut/data/database_helper.dart';
 
 class CredentialProvider with ChangeNotifier {
-  List<Credential> _credentials = [];
-  List<Credential> _archivedCredentials = [];
-  List<Credential> _deletedCredentials = [];
+  List<Logins> _credentials = [];
+  List<Logins> _archivedCredentials = [];
+  List<Logins> _deletedCredentials = [];
   List<CreditCard> _creditCards = [];
   List<CreditCard> _archivedCreditCards = [];
   List<CreditCard> _deletedCreditCards = [];
@@ -13,9 +13,9 @@ class CredentialProvider with ChangeNotifier {
   List<Note> _archivedNotes = [];
   List<Note> _deletedNotes = [];
 
-  List<Credential> get credentials => _credentials;
-  List<Credential> get archivedCredentials => _archivedCredentials;
-  List<Credential> get deletedCredentials => _deletedCredentials;
+  List<Logins> get credentials => _credentials;
+  List<Logins> get archivedCredentials => _archivedCredentials;
+  List<Logins> get deletedCredentials => _deletedCredentials;
   List<CreditCard> get creditCards => _creditCards;
   List<CreditCard> get archivedCreditCards => _archivedCreditCards;
   List<CreditCard> get deletedCreditCards => _deletedCreditCards;
@@ -154,7 +154,7 @@ class CredentialProvider with ChangeNotifier {
     await clearNotes();
   }
 
-  Future<void> addCredential(Credential credential) async {
+  Future<void> addCredential(Logins credential) async {
     if (_dbHelper == null) {
       print('CredentialProvider - addCredential: _dbHelper is null');
       return;
@@ -181,12 +181,12 @@ class CredentialProvider with ChangeNotifier {
     await loadNotes();
   }
 
-  Future<void> updateCredential(Credential credential) async {
+  Future<void> updateCredential(Logins credential) async {
     if (_dbHelper == null) {
       print('CredentialProvider - updateCredential: _dbHelper is null');
       return;
     }
-    final updatedCredential = Credential(
+    final updatedCredential = Logins(
       id: credential.id,
       title: credential.title,
       website: credential.website,

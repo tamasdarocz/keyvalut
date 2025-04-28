@@ -5,7 +5,7 @@ import 'package:keyvalut/views/Widgets/totp_display.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../data/credential_provider.dart';
+import '../../data/database_provider.dart';
 import '../textforms/create_element_form.dart';
 import '../../data/database_helper.dart';
 import '../../services/url_service.dart';

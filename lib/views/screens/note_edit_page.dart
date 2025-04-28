@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
-import 'package:keyvalut/data/credential_model.dart';
-import 'package:keyvalut/data/credential_provider.dart';
+import 'package:keyvalut/data/database_model.dart';
+import 'package:keyvalut/data/database_provider.dart';
 
 class NoteEditPage extends StatefulWidget {
   final Note? note;
