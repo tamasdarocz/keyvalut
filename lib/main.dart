@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:keyvalut/services/auth_service.dart';
 import 'package:keyvalut/theme/theme_provider.dart';
 import 'package:keyvalut/views/Tabs/login_screen.dart';
-import 'package:keyvalut/views/Tabs/setup_login_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'data/credential_provider.dart';
@@ -13,6 +13,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final initialDatabaseName = await getInitialDatabaseName();
+  print('main - Initial database name: $initialDatabaseName'); // Debug log
   runApp(
     MultiProvider(
       providers: [
@@ -20,7 +21,6 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) => CredentialProvider(initialDatabaseName: initialDatabaseName),
         ),
-        // Removed Provider for AuthService
       ],
       child: const MyApp(),
     ),
@@ -30,7 +30,33 @@ void main() async {
 Future<String?> getInitialDatabaseName() async {
   final databases = await fetchDatabaseNames();
   final prefs = await SharedPreferences.getInstance();
-  return databases.isNotEmpty ? prefs.getString('currentDatabase') : null;
+  final currentDatabase = prefs.getString('currentDatabase');
+  print('getInitialDatabaseName - Databases: $databases, currentDatabase: $currentDatabase'); // Debug log
+
+  // Filter out 'default' if it has no credentials set
+  final validDatabases = <String>[];
+  for (final dbName in databases) {
+    if (dbName == 'default') {
+      final authService = AuthService(dbName);
+      if (!await authService.isMasterCredentialSet()) {
+        final dbHelper = DatabaseHelper(dbName);
+        await dbHelper.deleteDatabase();
+        continue;
+      }
+    }
+    validDatabases.add(dbName);
+  }
+
+  // Update currentDatabase if necessary
+  if (validDatabases.isEmpty) {
+    await prefs.remove('currentDatabase');
+    return null;
+  }
+  if (currentDatabase != null && !validDatabases.contains(currentDatabase)) {
+    await prefs.setString('currentDatabase', validDatabases.first);
+    return validDatabases.first;
+  }
+  return validDatabases.isNotEmpty ? currentDatabase : null;
 }
 
 class MyApp extends StatefulWidget {
@@ -127,18 +153,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 );
               }
               _needsRefresh = false;
-              final databaseName = snapshot.data;
-              if (databaseName == null) {
-                return SetupLoginScreen(
-                  onCallback: () {
-                    // Refresh the app state after creating a new database
-                    if (mounted) {
-                      setState(() {});
-                    }
-                  },
-                );
-              }
-              return const LoginScreen();
+              print('MyApp - FutureBuilder databaseName: ${snapshot.data}'); // Debug log
+              return const LoginScreen(); // Always start on LoginScreen
             },
           ),
         );

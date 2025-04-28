@@ -10,6 +10,8 @@ class Credential {
   final bool isDeleted;
   final String? archivedAt;
   final String? deletedAt;
+  final String createdAt; // Added created_at
+  final String updatedAt; // Added updated_at
 
   Credential({
     this.id,
@@ -23,7 +25,10 @@ class Credential {
     this.isDeleted = false,
     this.archivedAt,
     this.deletedAt,
-  });
+    String? createdAt, // Allow createdAt to be passed in (e.g., from database)
+    String? updatedAt, // Allow updatedAt to be passed in (e.g., from database)
+  })  : createdAt = createdAt ?? DateTime.now().toIso8601String(),
+        updatedAt = updatedAt ?? DateTime.now().toIso8601String();
 
   Map<String, dynamic> toMap() {
     return {
@@ -38,6 +43,8 @@ class Credential {
       'is_deleted': isDeleted ? 1 : 0,
       'archived_at': archivedAt,
       'deleted_at': deletedAt,
+      'created_at': createdAt, // Include created_at
+      'updated_at': updatedAt, // Include updated_at
     };
   }
 
@@ -54,6 +61,8 @@ class Credential {
       isDeleted: map['is_deleted'] == 1,
       archivedAt: map['archived_at'],
       deletedAt: map['deleted_at'],
+      createdAt: map['created_at'], // Read created_at
+      updatedAt: map['updated_at'], // Read updated_at
     );
   }
 
@@ -70,6 +79,8 @@ class Credential {
       'isDeleted': isDeleted,
       'archivedAt': archivedAt,
       'deletedAt': deletedAt,
+      'createdAt': createdAt, // Include createdAt
+      'updatedAt': updatedAt, // Include updatedAt
     };
   }
 
@@ -86,6 +97,8 @@ class Credential {
       isDeleted: json['isDeleted'] as bool? ?? false,
       archivedAt: json['archivedAt'] as String?,
       deletedAt: json['deletedAt'] as String?,
+      createdAt: json['createdAt'] as String?, // Read createdAt
+      updatedAt: json['updatedAt'] as String?, // Read updatedAt
     );
   }
 
@@ -101,6 +114,8 @@ class Credential {
       'isDeleted': isDeleted,
       'archivedAt': archivedAt,
       'deletedAt': deletedAt,
+      'createdAt': createdAt, // Include createdAt
+      'updatedAt': updatedAt, // Include updatedAt
     };
   }
 }
@@ -120,6 +135,8 @@ class CreditCard {
   final String? archivedAt;
   final bool isDeleted;
   final String? deletedAt;
+  final String createdAt; // Added created_at
+  final String updatedAt; // Added updated_at
 
   CreditCard({
     this.id,
@@ -136,9 +153,11 @@ class CreditCard {
     this.archivedAt,
     this.isDeleted = false,
     this.deletedAt,
-  });
+    String? createdAt, // Allow createdAt to be passed in
+    String? updatedAt, // Allow updatedAt to be passed in
+  })  : createdAt = createdAt ?? DateTime.now().toIso8601String(),
+        updatedAt = updatedAt ?? DateTime.now().toIso8601String();
 
-  // Getters to match the names expected by the UI
   String get cardholderName => ch_name;
   String get cardNumber => card_number;
   String get expiryDate => expiry_date;
@@ -161,6 +180,8 @@ class CreditCard {
       'archived_at': archivedAt,
       'is_deleted': isDeleted ? 1 : 0,
       'deleted_at': deletedAt,
+      'created_at': createdAt, // Include created_at
+      'updated_at': updatedAt, // Include updated_at
     };
   }
 
@@ -180,6 +201,8 @@ class CreditCard {
       archivedAt: map['archived_at'],
       isDeleted: map['is_deleted'] == 1,
       deletedAt: map['deleted_at'],
+      createdAt: map['created_at'], // Read created_at
+      updatedAt: map['updated_at'], // Read updated_at
     );
   }
 
@@ -199,6 +222,8 @@ class CreditCard {
       'archivedAt': archivedAt,
       'isDeleted': isDeleted,
       'deletedAt': deletedAt,
+      'createdAt': createdAt, // Include createdAt
+      'updatedAt': updatedAt, // Include updatedAt
     };
   }
 
@@ -218,6 +243,8 @@ class CreditCard {
       archivedAt: json['archivedAt'] as String?,
       isDeleted: json['isDeleted'] as bool? ?? false,
       deletedAt: json['deletedAt'] as String?,
+      createdAt: json['createdAt'] as String?, // Read createdAt
+      updatedAt: json['updatedAt'] as String?, // Read updatedAt
     );
   }
 
@@ -236,6 +263,8 @@ class CreditCard {
       'archivedAt': archivedAt,
       'isDeleted': isDeleted,
       'deletedAt': deletedAt,
+      'createdAt': createdAt, // Include createdAt
+      'updatedAt': updatedAt, // Include updatedAt
     };
   }
 }
@@ -248,6 +277,8 @@ class Note {
   final String? archivedAt;
   final bool isDeleted;
   final String? deletedAt;
+  final String createdAt; // Added created_at
+  final String updatedAt; // Added updated_at
 
   Note({
     this.id,
@@ -257,7 +288,10 @@ class Note {
     this.archivedAt,
     this.isDeleted = false,
     this.deletedAt,
-  });
+    String? createdAt, // Allow createdAt to be passed in
+    String? updatedAt, // Allow updatedAt to be passed in
+  })  : createdAt = createdAt ?? DateTime.now().toIso8601String(),
+        updatedAt = updatedAt ?? DateTime.now().toIso8601String();
 
   Map<String, dynamic> toMap() {
     return {
@@ -268,6 +302,8 @@ class Note {
       'archived_at': archivedAt,
       'is_deleted': isDeleted ? 1 : 0,
       'deleted_at': deletedAt,
+      'created_at': createdAt, // Include created_at
+      'updated_at': updatedAt, // Include updated_at
     };
   }
 
@@ -280,6 +316,8 @@ class Note {
       archivedAt: map['archived_at'],
       isDeleted: map['is_deleted'] == 1,
       deletedAt: map['deleted_at'],
+      createdAt: map['created_at'], // Read created_at
+      updatedAt: map['updated_at'], // Read updated_at
     );
   }
 
@@ -292,6 +330,8 @@ class Note {
       'archivedAt': archivedAt,
       'isDeleted': isDeleted,
       'deletedAt': deletedAt,
+      'createdAt': createdAt, // Include createdAt
+      'updatedAt': updatedAt, // Include updatedAt
     };
   }
 
@@ -304,6 +344,8 @@ class Note {
       archivedAt: json['archivedAt'] as String?,
       isDeleted: json['isDeleted'] as bool? ?? false,
       deletedAt: json['deletedAt'] as String?,
+      createdAt: json['createdAt'] as String?, // Read createdAt
+      updatedAt: json['updatedAt'] as String?, // Read updatedAt
     );
   }
 
@@ -315,6 +357,8 @@ class Note {
       'archivedAt': archivedAt,
       'isDeleted': isDeleted,
       'deletedAt': deletedAt,
+      'createdAt': createdAt, // Include createdAt
+      'updatedAt': updatedAt, // Include updatedAt
     };
   }
 }

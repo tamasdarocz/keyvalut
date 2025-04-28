@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:keyvalut/data/database_helper.dart';
 
 enum AuthMode { pin, password }
 
@@ -43,9 +45,18 @@ void validateInput(String input, AuthMode authMode) {
 // Fetch database names from storage
 Future<List<String>> fetchDatabaseNames() async {
   final directory = await getApplicationDocumentsDirectory();
-  return directory
-      .listSync()
-      .where((file) => file.path.endsWith('.db') && file is File)
-      .map((file) => file.path.split('/').last.replaceAll('.db', ''))
+  final files = await directory.list().toList();
+  final databaseFiles = files
+      .where((file) => file is File && file.path.endsWith('.db'))
+      .map((file) => file.path.split(Platform.pathSeparator).last.replaceAll('.db', ''))
       .toList();
+
+  print('fetchDatabaseNames - Found database files: $databaseFiles'); // Detailed log
+
+  // Check if 'default' is in the list and log a stack trace if found
+  if (databaseFiles.contains('default')) {
+    print('fetchDatabaseNames - "default" database found at: ${StackTrace.current}');
+  }
+
+  return databaseFiles;
 }

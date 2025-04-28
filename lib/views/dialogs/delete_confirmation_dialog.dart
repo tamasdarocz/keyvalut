@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/services/auth_service.dart';
 import 'package:keyvalut/data/credential_provider.dart';
 import 'package:keyvalut/data/database_helper.dart';
+import 'package:keyvalut/services/utils.dart';
+import 'package:keyvalut/views/Tabs/login_screen.dart';
 
 /// A dialog widget that confirms database deletion with authentication.
 ///
@@ -48,7 +50,10 @@ class _DeleteConfirmationDialogState extends State<DeleteConfirmationDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Are you sure you want to delete this database? This action cannot be undone.'),
+          const Text(
+            'Are you sure you want to delete this database? This action cannot be undone.',
+            overflow: TextOverflow.ellipsis,
+          ),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -108,17 +113,35 @@ class _DeleteConfirmationDialogState extends State<DeleteConfirmationDialog> {
               await (await dbHelper.database).close(); // Close the database
               await dbHelper.deleteDatabase(); // Delete the database file
 
-              // Clear the current database from SharedPreferences
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.remove('currentDatabase');
+              // Fetch remaining databases
+              final remainingDatabases = await fetchDatabaseNames();
 
-              // Reset CredentialProvider
-              provider.setDatabaseName('default');
+              // Update SharedPreferences
+              final prefs = await SharedPreferences.getInstance();
+              if (remainingDatabases.isEmpty) {
+                await prefs.remove('currentDatabase');
+              } else {
+                await prefs.setString('currentDatabase', remainingDatabases.first);
+              }
+
+              // Update CredentialProvider
+              if (remainingDatabases.isEmpty) {
+                provider.setDatabaseName(''); // Clear the database name if no databases remain
+              } else {
+                provider.setDatabaseName(remainingDatabases.first); // Set to the first remaining database
+              }
 
               if (mounted) {
                 Navigator.pop(context); // Close this dialog
                 Fluttertoast.showToast(msg: 'Database deleted successfully');
-                widget.onDeleteSuccess(); // Trigger logout
+                widget.onDeleteSuccess(); // Trigger logout or navigation
+                // Ensure navigation to LoginScreen if not already handled by onDeleteSuccess
+                if (remainingDatabases.isEmpty) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                }
               }
             } catch (e) {
               if (mounted) {

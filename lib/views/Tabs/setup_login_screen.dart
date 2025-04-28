@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/services/auth_service.dart';
 import 'package:keyvalut/views/Tabs/homepage.dart';
 import 'package:keyvalut/views/Tabs/login_screen.dart';
+import 'package:keyvalut/data/credential_provider.dart';
 import '../../services/password_strength.dart';
 import '../../services/utils.dart';
 import '../dialogs/recovery_key_dialog.dart';
@@ -108,6 +110,10 @@ class _SetupLoginScreenState extends State<SetupLoginScreen> {
       final recoveryKey = await authService.setMasterCredential(pin, isPin: _authMode == AuthMode.pin);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('currentDatabase', databaseName);
+
+      // Update CredentialProvider with the new database name
+      final provider = Provider.of<CredentialProvider>(context, listen: false);
+      provider.setDatabaseName(databaseName);
 
       await _showRecoveryKeyDialog(recoveryKey);
 
