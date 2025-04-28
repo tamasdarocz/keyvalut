@@ -1,11 +1,11 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
+import 'package:path_provider/path_provider.dart'; // For temporary directory on native platforms
+import 'dart:io' show File; // For file writing on native platforms
 import 'dart:convert';
 import 'package:cryptography/cryptography.dart'; // For AES encryption
 import 'dart:math'; // For random key generation
@@ -32,6 +32,10 @@ class RecoveryKeyDialog extends StatelessWidget {
     final keyBase64 = base64Encode(keyBytes);
     await prefs.setString('recovery_symmetric_key', keyBase64);
 
+    if (kDebugMode) {
+      print('Generated and stored new symmetric key: $keyBase64');
+    }
+
     return secretKey;
   }
 
@@ -43,6 +47,11 @@ class RecoveryKeyDialog extends StatelessWidget {
       throw Exception('Symmetric key not found. Cannot export recovery key.');
     }
     final keyBytes = base64Decode(keyBase64);
+
+    if (kDebugMode) {
+      print('Retrieved symmetric key: $keyBase64');
+    }
+
     return SecretKey(keyBytes);
   }
 
@@ -66,6 +75,10 @@ class RecoveryKeyDialog extends StatelessWidget {
       final contentJson = jsonEncode(content);
       final bytes = utf8.encode(contentJson);
 
+      if (kDebugMode) {
+        print('Content JSON: $contentJson');
+      }
+
       // Encrypt the recovery key
       final nonce = List<int>.generate(16, (_) => Random.secure().nextInt(256));
       final secretBox = await _cipher.encrypt(bytes, secretKey: secretKey, nonce: nonce);
@@ -73,28 +86,69 @@ class RecoveryKeyDialog extends StatelessWidget {
       // Combine nonce, MAC, and ciphertext into a single string
       final encryptedData = base64Encode([...nonce, ...secretBox.mac.bytes, ...secretBox.cipherText]);
 
-      // Use FilePicker to save the file on all platforms
-      String? outputPath = await FilePicker.platform.saveFile(
-        dialogTitle: 'Save Recovery Key File',
-        fileName: 'recovery_key.keyfile',
-        type: FileType.custom,
-        allowedExtensions: ['keyfile'],
-        bytes: utf8.encode(encryptedData),
-      );
+      if (kDebugMode) {
+        print('Nonce: ${base64Encode(nonce)}');
+        print('MAC: ${base64Encode(secretBox.mac.bytes)}');
+        print('Ciphertext: ${base64Encode(secretBox.cipherText)}');
+        print('Encrypted data (base64): $encryptedData');
+      }
 
-      if (outputPath != null) {
-        Fluttertoast.showToast(
-          msg: 'Recovery key file exported successfully. Store it securely!',
-          toastLength: Toast.LENGTH_LONG,
-          gravity: ToastGravity.CENTER,
-          backgroundColor: Colors.black54,
-          textColor: Colors.white,
-          fontSize: 16.0,
+      // Use FilePicker on web, temporary file and sharing on native platforms
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'recovery_key_$timestamp.keyfile'; // Desired file name with timestamp
+
+      if (kIsWeb) {
+        // On web, use FilePicker.platform.saveFile with bytes
+        String? outputPath = await FilePicker.platform.saveFile(
+          dialogTitle: 'Save Recovery Key File',
+          fileName: fileName,
+          type: FileType.custom,
+          allowedExtensions: ['keyfile'],
+          bytes: utf8.encode(encryptedData),
         );
+
+        if (outputPath != null) {
+          Fluttertoast.showToast(
+            msg: 'Recovery key file exported successfully. Store it securely!',
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.CENTER,
+            backgroundColor: Colors.black54,
+            textColor: Colors.white,
+            fontSize: 16.0,
+          );
+        } else {
+          Fluttertoast.showToast(
+            msg: 'Export cancelled',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.CENTER,
+            backgroundColor: Colors.black54,
+            textColor: Colors.white,
+            fontSize: 16.0,
+          );
+        }
       } else {
+        // On native platforms, write to a temporary file and share it
+        final tempDir = await getTemporaryDirectory();
+        final tempFile = File('${tempDir.path}/$fileName');
+        await tempFile.writeAsString(encryptedData);
+
+        if (kDebugMode) {
+          final writtenData = await tempFile.readAsString();
+          print('Written data in temp file: $writtenData');
+        }
+
+        final xFile = XFile(tempFile.path);
+        await SharePlus.instance.share(
+          ShareParams(
+            text: 'Here is your KeyVault Recovery Key file. Store it securely!',
+            subject: 'KeyVault Recovery Key File',
+            files: [xFile],
+          ),
+        );
+
         Fluttertoast.showToast(
-          msg: 'Export cancelled',
-          toastLength: Toast.LENGTH_SHORT,
+          msg: 'Recovery key file shared. Please save it securely with the .keyfile extension!',
+          toastLength: Toast.LENGTH_LONG,
           gravity: ToastGravity.CENTER,
           backgroundColor: Colors.black54,
           textColor: Colors.white,

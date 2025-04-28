@@ -259,11 +259,15 @@ class _SettingsMenuState extends State<SettingsMenu> {
       builder: (dialogContext) => ResetCredentialDialog(
         authService: _authService!,
         isPinMode: _isPinMode,
-        onResetSuccess: () {
-          setState(() async {
-            final isPin = await _authService!.isPinMode();
-            _isPinMode = isPin;
-          });
+        onResetSuccess: () async {
+          // Perform async work first
+          final isPin = await _authService!.isPinMode();
+          // Then update state synchronously
+          if (mounted) {
+            setState(() {
+              _isPinMode = isPin;
+            });
+          }
           widget.onLogout();
         },
       ),
