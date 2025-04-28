@@ -102,7 +102,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   void _logout(BuildContext context) {
     final databaseProvider = Provider.of<DatabaseProvider>(context, listen: false);
-    databaseProvider.clearLogins();
 
     Navigator.pushAndRemoveUntil(
       context,

@@ -51,11 +51,10 @@ Future<List<String>> fetchDatabaseNames() async {
       .map((file) => file.path.split(Platform.pathSeparator).last.replaceAll('.db', ''))
       .toList();
 
-  print('fetchDatabaseNames - Found database files: $databaseFiles'); // Detailed log
+  // Detailed log
 
   // Check if 'default' is in the list and log a stack trace if found
   if (databaseFiles.contains('default')) {
-    print('fetchDatabaseNames - "default" database found at: ${StackTrace.current}');
   }
 
   return databaseFiles;

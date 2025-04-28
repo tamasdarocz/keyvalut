@@ -21,6 +21,9 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
+    if (databaseName.isEmpty) {
+      throw Exception('Database name cannot be empty');
+    }
     final directory = await getApplicationDocumentsDirectory();
     final path = join(directory.path, '$databaseName.db');
     return await openDatabase(
@@ -100,12 +103,9 @@ class DatabaseHelper {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Drop all existing tables
     await db.execute('DROP TABLE IF EXISTS logins');
     await db.execute('DROP TABLE IF EXISTS credit_cards');
     await db.execute('DROP TABLE IF EXISTS notes');
-
-    // Recreate the latest schema
     await _onCreate(db, newVersion);
   }
 

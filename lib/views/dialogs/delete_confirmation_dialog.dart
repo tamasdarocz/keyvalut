@@ -8,11 +8,6 @@ import 'package:keyvalut/data/database_helper.dart';
 import 'package:keyvalut/services/utils.dart';
 import 'package:keyvalut/views/Tabs/login_screen.dart';
 
-/// A dialog widget that confirms database deletion with authentication.
-///
-/// The user must check a confirmation box and enter their PIN or password
-/// to proceed with deleting the database. Upon successful deletion,
-/// the [onDeleteSuccess] callback is triggered.
 class DeleteConfirmationDialog extends StatefulWidget {
   final AuthService authService;
   final bool isPinMode;
@@ -51,7 +46,13 @@ class _DeleteConfirmationDialogState extends State<DeleteConfirmationDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Are you sure you want to delete this database? This action cannot be undone.',
+            'This will permanently delete all logins, credit cards, and notes in this database. This action cannot be undone.',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Are you sure you want to proceed?',
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 16),
@@ -124,7 +125,7 @@ class _DeleteConfirmationDialogState extends State<DeleteConfirmationDialog> {
                 await prefs.setString('currentDatabase', remainingDatabases.first);
               }
 
-              // Update CredentialProvider
+              // Update DatabaseProvider
               if (remainingDatabases.isEmpty) {
                 provider.setDatabaseName(''); // Clear the database name if no databases remain
               } else {
@@ -135,7 +136,6 @@ class _DeleteConfirmationDialogState extends State<DeleteConfirmationDialog> {
                 Navigator.pop(context); // Close this dialog
                 Fluttertoast.showToast(msg: 'Database deleted successfully');
                 widget.onDeleteSuccess(); // Trigger logout or navigation
-                // Ensure navigation to LoginScreen if not already handled by onDeleteSuccess
                 if (remainingDatabases.isEmpty) {
                   Navigator.pushReplacement(
                     context,
