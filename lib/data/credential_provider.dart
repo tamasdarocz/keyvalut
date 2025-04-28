@@ -23,22 +23,48 @@ class CredentialProvider with ChangeNotifier {
   List<Note> get archivedNotes => _archivedNotes;
   List<Note> get deletedNotes => _deletedNotes;
 
-  late DatabaseHelper _dbHelper;
+  DatabaseHelper? _dbHelper; // Make nullable
 
   CredentialProvider({String? initialDatabaseName}) {
-    _dbHelper = DatabaseHelper(initialDatabaseName ?? 'default');
+    if (initialDatabaseName != null && initialDatabaseName.isNotEmpty) {
+      _dbHelper = DatabaseHelper(initialDatabaseName);
+      loadCredentials();
+      loadCreditCards();
+      loadNotes();
+    }
   }
 
   void setDatabaseName(String databaseName) {
-    _dbHelper = DatabaseHelper(databaseName);
-    // Reload data for the new database
-    loadCredentials();
-    loadCreditCards();
-    loadNotes();
+    if (databaseName.isNotEmpty) {
+      _dbHelper = DatabaseHelper(databaseName);
+      // Reload data for the new database
+      loadCredentials();
+      loadCreditCards();
+      loadNotes();
+    } else {
+      _dbHelper = null;
+      _credentials = [];
+      _archivedCredentials = [];
+      _deletedCredentials = [];
+      _creditCards = [];
+      _archivedCreditCards = [];
+      _deletedCreditCards = [];
+      _notes = [];
+      _archivedNotes = [];
+      _deletedNotes = [];
+      notifyListeners();
+    }
   }
 
   Future<void> loadCredentials() async {
-    final allCredentials = await _dbHelper.getCredentials(includeArchived: true, includeDeleted: true);
+    if (_dbHelper == null) {
+      _credentials = [];
+      _archivedCredentials = [];
+      _deletedCredentials = [];
+      notifyListeners();
+      return;
+    }
+    final allCredentials = await _dbHelper!.getCredentials(includeArchived: true, includeDeleted: true);
     _credentials = allCredentials.where((c) => !c.isArchived && !c.isDeleted).toList();
     _archivedCredentials = allCredentials.where((c) => c.isArchived && !c.isDeleted).toList();
     _deletedCredentials = allCredentials.where((c) => c.isDeleted).toList();
@@ -46,7 +72,14 @@ class CredentialProvider with ChangeNotifier {
   }
 
   Future<void> loadCreditCards() async {
-    final allCreditCardsMaps = await _dbHelper.queryAllCreditCards(includeArchived: true, includeDeleted: true);
+    if (_dbHelper == null) {
+      _creditCards = [];
+      _archivedCreditCards = [];
+      _deletedCreditCards = [];
+      notifyListeners();
+      return;
+    }
+    final allCreditCardsMaps = await _dbHelper!.queryAllCreditCards(includeArchived: true, includeDeleted: true);
     final allCreditCards = allCreditCardsMaps.map((map) => CreditCard.fromMap(map)).toList();
     _creditCards = allCreditCards.where((c) => !c.isArchived && !c.isDeleted).toList();
     _archivedCreditCards = allCreditCards.where((c) => c.isArchived && !c.isDeleted).toList();
@@ -55,7 +88,14 @@ class CredentialProvider with ChangeNotifier {
   }
 
   Future<void> loadNotes() async {
-    final allNotes = await _dbHelper.getNotes(includeArchived: true, includeDeleted: true);
+    if (_dbHelper == null) {
+      _notes = [];
+      _archivedNotes = [];
+      _deletedNotes = [];
+      notifyListeners();
+      return;
+    }
+    final allNotes = await _dbHelper!.getNotes(includeArchived: true, includeDeleted: true);
     _notes = allNotes.where((n) => !n.isArchived && !n.isDeleted).toList();
     _archivedNotes = allNotes.where((n) => n.isArchived && !n.isDeleted).toList();
     _deletedNotes = allNotes.where((n) => n.isDeleted).toList();
@@ -75,19 +115,22 @@ class CredentialProvider with ChangeNotifier {
   }
 
   Future<void> clearCredentials() async {
-    final db = await _dbHelper.database;
+    if (_dbHelper == null) return;
+    final db = await _dbHelper!.database;
     await db.delete('credentials');
     await loadCredentials();
   }
 
   Future<void> clearCreditCards() async {
-    final db = await _dbHelper.database;
+    if (_dbHelper == null) return;
+    final db = await _dbHelper!.database;
     await db.delete('credit_cards');
     await loadCreditCards();
   }
 
   Future<void> clearNotes() async {
-    final db = await _dbHelper.database;
+    if (_dbHelper == null) return;
+    final db = await _dbHelper!.database;
     await db.delete('notes');
     await loadNotes();
   }
@@ -99,97 +142,116 @@ class CredentialProvider with ChangeNotifier {
   }
 
   Future<void> addCredential(Credential credential) async {
-    await _dbHelper.insertCredential(credential);
+    if (_dbHelper == null) return;
+    await _dbHelper!.insertCredential(credential);
     await loadCredentials();
   }
 
   Future<void> addCreditCard(CreditCard card) async {
-    await _dbHelper.insertCreditCard(card);
+    if (_dbHelper == null) return;
+    await _dbHelper!.insertCreditCard(card);
     await loadCreditCards();
   }
 
   Future<void> addNote(Note note) async {
-    await _dbHelper.insertNote(note);
+    if (_dbHelper == null) return;
+    await _dbHelper!.insertNote(note);
     await loadNotes();
   }
 
   Future<void> updateCredential(Credential credential) async {
-    await _dbHelper.updateCredential(credential);
+    if (_dbHelper == null) return;
+    await _dbHelper!.updateCredential(credential);
     await loadCredentials();
   }
 
   Future<void> updateCreditCard(CreditCard card) async {
-    await _dbHelper.updateCreditCard(card);
+    if (_dbHelper == null) return;
+    await _dbHelper!.updateCreditCard(card);
     await loadCreditCards();
   }
 
   Future<void> updateNote(Note note) async {
-    await _dbHelper.updateNote(note);
+    if (_dbHelper == null) return;
+    await _dbHelper!.updateNote(note);
     await loadNotes();
   }
 
   Future<void> archiveCredential(int id) async {
-    await _dbHelper.archiveCredential(id);
+    if (_dbHelper == null) return;
+    await _dbHelper!.archiveCredential(id);
     await loadCredentials();
   }
 
   Future<void> archiveCreditCard(int id) async {
-    await _dbHelper.archiveCreditCard(id);
+    if (_dbHelper == null) return;
+    await _dbHelper!.archiveCreditCard(id);
     await loadCreditCards();
   }
 
   Future<void> moveCreditCardToArchive(int id) async {
-    await _dbHelper.archiveCreditCard(id);
+    if (_dbHelper == null) return;
+    await _dbHelper!.archiveCreditCard(id);
     await loadCreditCards();
   }
 
   Future<void> archiveNote(int id) async {
-    await _dbHelper.archiveNote(id);
+    if (_dbHelper == null) return;
+    await _dbHelper!.archiveNote(id);
     await loadNotes();
   }
 
   Future<void> deleteCredential(int id) async {
-    await _dbHelper.deleteCredential(id);
+    if (_dbHelper == null) return;
+    await _dbHelper!.deleteCredential(id);
     await loadCredentials();
   }
 
   Future<void> deleteCreditCard(int id) async {
-    await _dbHelper.deleteCreditCard(id);
+    if (_dbHelper == null) return;
+    await _dbHelper!.deleteCreditCard(id);
     await loadCreditCards();
   }
 
   Future<void> moveToTrash(int id) async {
-    await _dbHelper.deleteNote(id);
+    if (_dbHelper == null) return;
+    await _dbHelper!.deleteNote(id);
     await loadNotes();
   }
 
   Future<void> restoreCredential(int id) async {
-    await _dbHelper.restoreCredential(id);
+    if (_dbHelper == null) return;
+    await _dbHelper!.restoreCredential(id);
     await loadCredentials();
   }
 
   Future<void> restoreCreditCard(int id) async {
-    await _dbHelper.restoreCreditCard(id);
+    if (_dbHelper == null) return;
+    await _dbHelper!.restoreCreditCard(id);
     await loadCreditCards();
   }
 
   Future<void> restoreNote(int id) async {
-    await _dbHelper.restoreNote(id);
+    if (_dbHelper == null) return;
+    await _dbHelper!.restoreNote(id);
     await loadNotes();
   }
 
   Future<void> permanentlyDeleteCredential(int id) async {
-    await _dbHelper.permanentlyDeleteCredential(id);
+    if (_dbHelper == null) return;
+    await _dbHelper!.permanentlyDeleteCredential(id);
     await loadCredentials();
   }
 
   Future<void> permanentlyDeleteCreditCard(int id) async {
-    await _dbHelper.permanentlyDeleteCreditCard(id);
+    if (_dbHelper == null) return;
+    await _dbHelper!.permanentlyDeleteCreditCard(id);
     await loadCreditCards();
   }
 
   Future<void> permanentlyDeleteNote(int id) async {
-    await _dbHelper.permanentlyDeleteNote(id);
+    if (_dbHelper == null) return;
+    await _dbHelper!.permanentlyDeleteNote(id);
     await loadNotes();
   }
 }

@@ -1,5 +1,3 @@
-/// A screen that allows users to create a new database by setting its name and master credential (PIN or password).
-/// Displays a recovery key dialog upon successful database creation.
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/services/auth_service.dart';
@@ -7,7 +5,7 @@ import 'package:keyvalut/views/Tabs/homepage.dart';
 import 'package:keyvalut/views/Tabs/login_screen.dart';
 import '../../services/password_strength.dart';
 import '../../services/utils.dart';
-import '../screens/recovery_key_dialog.dart';
+import '../dialogs/recovery_key_dialog.dart';
 
 class SetupLoginScreen extends StatefulWidget {
   /// A callback function to be called after a new database is successfully created.

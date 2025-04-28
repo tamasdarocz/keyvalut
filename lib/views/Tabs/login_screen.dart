@@ -6,7 +6,7 @@ import 'package:keyvalut/views/Tabs/setup_login_screen.dart';
 import 'package:keyvalut/services/auth_service.dart';
 import 'package:keyvalut/views/Tabs/homepage.dart';
 import '../../services/utils.dart';
-import '../screens/reset_credential_dialog.dart';
+import '../dialogs/reset_credential_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   /// Creates a LoginScreen widget.
@@ -60,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
     Future.doWhile(() async {
       if (!mounted) return false; // Stop if the widget is disposed
       if (_authService == null) {
-        await Future.delayed(const Duration(seconds: 1));
+        await Future.delayed(const Duration(seconds: 60));
         return true;
       }
       final isLockedOut = await _authService!.isLockedOut();
@@ -69,12 +69,11 @@ class _LoginScreenState extends State<LoginScreen> {
         _isLockedOut = isLockedOut;
         _remainingLockoutTime = remainingTime;
       });
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(const Duration(seconds: 60));
       return true;
     });
   }
 
-  /// Loads the list of available databases and sets the default database.
   /// Also triggers biometric authentication if enabled and no lockout or forced reset is active.
   Future<void> _loadDatabases() async {
     try {
@@ -84,6 +83,9 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() {
         _state.databaseNames = databases;
         _state.selectedDatabase = _selectInitialDatabase(databases, lastUsedDatabase);
+        if (_state.databaseNames.isEmpty) {
+          _state.selectedDatabase = null; // Explicitly clear selectedDatabase
+        }
         _state.isLoading = false;
       });
 
@@ -103,6 +105,12 @@ class _LoginScreenState extends State<LoginScreen> {
         if (await _authService!.isForceResetRequired()) {
           _showResetMasterCredentialDialog();
         }
+      } else {
+        setState(() {
+          _authService = null;
+          _isLockedOut = false;
+          _remainingLockoutTime = '0 seconds';
+        });
       }
     } catch (e) {
       setState(() => _state.isLoading = false);
@@ -428,103 +436,105 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: _padding),
               _buildDatabaseSelector(theme),
-              const SizedBox(height: _padding),
-              Center(
-                child: SegmentedButton<AuthMode>(
-                  segments: const [
-                    ButtonSegment<AuthMode>(
-                      value: AuthMode.pin,
-                      label: Text('PIN'),
-                      icon: Icon(Icons.lock),
+              if (_state.databaseNames.isNotEmpty) ...[
+                const SizedBox(height: _padding),
+                Center(
+                  child: SegmentedButton<AuthMode>(
+                    segments: const [
+                      ButtonSegment<AuthMode>(
+                        value: AuthMode.pin,
+                        label: Text('PIN'),
+                        icon: Icon(Icons.lock),
+                      ),
+                      ButtonSegment<AuthMode>(
+                        value: AuthMode.password,
+                        label: Text('Password'),
+                        icon: Icon(Icons.lock),
+                      ),
+                    ],
+                    selected: {_state.authMode},
+                    onSelectionChanged: (newSelection) {
+                      setState(() {
+                        _state.authMode = newSelection.first;
+                        _pinController.clear();
+                      });
+                    },
+                    style: SegmentedButton.styleFrom(
+                      selectedBackgroundColor: theme.colorScheme.primary,
+                      selectedForegroundColor: theme.colorScheme.onPrimary,
                     ),
-                    ButtonSegment<AuthMode>(
-                      value: AuthMode.password,
-                      label: Text('Password'),
-                      icon: Icon(Icons.lock),
-                    ),
-                  ],
-                  selected: {_state.authMode},
-                  onSelectionChanged: (newSelection) {
-                    setState(() {
-                      _state.authMode = newSelection.first;
-                      _pinController.clear();
-                    });
-                  },
-                  style: SegmentedButton.styleFrom(
-                    selectedBackgroundColor: theme.colorScheme.primary,
-                    selectedForegroundColor: theme.colorScheme.onPrimary,
                   ),
                 ),
-              ),
-              const SizedBox(height: _padding),
-              TextField(
-                controller: _pinController,
-                obscureText: !_state.isPinVisible,
-                enabled: !_isLockedOut, // Disable input during lockout
-                decoration: InputDecoration(
-                  labelText: _state.authMode == AuthMode.pin ? 'PIN' : 'Password',
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: theme.colorScheme.onSurface),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: theme.colorScheme.onSurfaceVariant),
-                  ),
-                  disabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: theme.colorScheme.error),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: theme.colorScheme.primary),
-                  ),
-                  prefixIcon: Icon(
-                    Icons.lock,
-                    color: _isLockedOut
-                        ? theme.colorScheme.error // Red during lockout
-                        : theme.colorScheme.onSurface,
-                  ),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _state.isPinVisible ? Icons.visibility_off : Icons.visibility,
+                const SizedBox(height: _padding),
+                TextField(
+                  controller: _pinController,
+                  obscureText: !_state.isPinVisible,
+                  enabled: !_isLockedOut, // Disable input during lockout
+                  decoration: InputDecoration(
+                    labelText: _state.authMode == AuthMode.pin ? 'PIN' : 'Password',
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: theme.colorScheme.onSurface),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                    disabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: theme.colorScheme.error),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: theme.colorScheme.primary),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.lock,
                       color: _isLockedOut
                           ? theme.colorScheme.error // Red during lockout
                           : theme.colorScheme.onSurface,
                     ),
-                    onPressed: () {
-                      setState(() => _state.isPinVisible = !_state.isPinVisible);
-                    },
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _state.isPinVisible ? Icons.visibility_off : Icons.visibility,
+                        color: _isLockedOut
+                            ? theme.colorScheme.error // Red during lockout
+                            : theme.colorScheme.onSurface,
+                      ),
+                      onPressed: () {
+                        setState(() => _state.isPinVisible = !_state.isPinVisible);
+                      },
+                    ),
+                    helperText: _isLockedOut ? 'Remaining lockout time: $_remainingLockoutTime' : null,
+                    helperStyle: TextStyle(
+                      color: theme.colorScheme.error,
+                      fontSize: 12,
+                    ),
                   ),
-                  helperText: _isLockedOut ? 'Remaining lockout time: $_remainingLockoutTime' : null,
-                  helperStyle: TextStyle(
-                    color: theme.colorScheme.error,
-                    fontSize: 12,
+                  keyboardType: _state.authMode == AuthMode.pin
+                      ? TextInputType.number
+                      : TextInputType.text,
+                ),
+                const SizedBox(height: _padding),
+                _buildButton(
+                  onPressed: _unlockVault,
+                  label: 'Unlock Trezor',
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                ),
+                const SizedBox(height: 8),
+                _buildButton(
+                  onPressed: _unlockWithBiometrics,
+                  label: 'Use Biometrics',
+                  backgroundColor: theme.colorScheme.secondary,
+                  foregroundColor: theme.colorScheme.onSecondary,
+                  enabled: _state.isBiometricAvailable && _state.isBiometricEnabled,
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: _showResetMasterCredentialDialog,
+                  child: Text(
+                    'Forgot ${_state.authMode == AuthMode.pin ? 'PIN' : 'Password'}?',
+                    style: TextStyle(color: theme.colorScheme.primary),
                   ),
                 ),
-                keyboardType: _state.authMode == AuthMode.pin
-                    ? TextInputType.number
-                    : TextInputType.text,
-              ),
-              const SizedBox(height: _padding),
-              _buildButton(
-                onPressed: _unlockVault,
-                label: 'Unlock Trezor',
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-              ),
-              const SizedBox(height: 8),
-              _buildButton(
-                onPressed: _unlockWithBiometrics,
-                label: 'Use Biometrics',
-                backgroundColor: theme.colorScheme.secondary,
-                foregroundColor: theme.colorScheme.onSecondary,
-                enabled: _state.isBiometricAvailable && _state.isBiometricEnabled,
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: _showResetMasterCredentialDialog,
-                child: Text(
-                  'Forgot ${_state.authMode == AuthMode.pin ? 'PIN' : 'Password'}?',
-                  style: TextStyle(color: theme.colorScheme.primary),
-                ),
-              ),
+              ],
             ],
           ),
         ),

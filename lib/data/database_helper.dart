@@ -12,6 +12,13 @@ class DatabaseHelper {
   /// Creates a [DatabaseHelper] instance with the specified [databaseName].
   DatabaseHelper(this.databaseName);
 
+  /// Checks if the database file exists.
+  Future<bool> databaseExists() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final path = join(directory.path, '$databaseName.db');
+    return await databaseFactory.databaseExists(path);
+  }
+
   /// Provides access to the SQLite database instance, creating it if it doesn't exist.
   Future<Database> get database async {
     if (_database != null) return _database!;

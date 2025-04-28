@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:keyvalut/theme/theme_provider.dart';
+import 'package:keyvalut/views/dialogs/recovery_key_dialog.dart';
+import 'package:keyvalut/views/dialogs/reset_credential_dialog.dart';
 import 'package:keyvalut/views/screens/archived_credentials_screen.dart';
 import 'package:keyvalut/views/screens/change_login_screen.dart';
 import 'package:keyvalut/views/screens/deleted_credentials_screen.dart';
-import 'package:keyvalut/views/screens/recovery_key_dialog.dart';
-import 'package:keyvalut/views/screens/reset_credential_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/services/auth_service.dart';
 import 'package:keyvalut/services/export_services.dart';
 import 'package:keyvalut/services/import_service.dart';
 import 'package:keyvalut/data/credential_provider.dart';
-import 'package:keyvalut/data/database_helper.dart'; // Added import for DatabaseHelper
+import 'package:keyvalut/views/dialogs/delete_confirmation_dialog.dart';
 
 /// A settings menu widget that allows users to manage app settings, including theme, authentication, and database operations.
 class SettingsMenu extends StatefulWidget {
@@ -302,7 +302,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => _DeleteConfirmationDialog(
+                      builder: (context) => DeleteConfirmationDialog(
                         authService: _authService!,
                         isPinMode: _isPinMode,
                         currentDatabase: _currentDatabase!,
@@ -328,7 +328,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => _DeleteConfirmationDialog(
+        builder: (context) => DeleteConfirmationDialog(
           authService: _authService!,
           isPinMode: _isPinMode,
           currentDatabase: _currentDatabase!,
@@ -592,131 +592,6 @@ class _SettingsMenuState extends State<SettingsMenu> {
               ),
             ),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-/// A widget that displays a dialog to confirm database deletion with authentication.
-class _DeleteConfirmationDialog extends StatefulWidget {
-  final AuthService authService;
-  final bool isPinMode;
-  final String currentDatabase;
-  final VoidCallback onDeleteSuccess;
-
-  const _DeleteConfirmationDialog({
-    required this.authService,
-    required this.isPinMode,
-    required this.currentDatabase,
-    required this.onDeleteSuccess,
-  });
-
-  @override
-  State<_DeleteConfirmationDialog> createState() => _DeleteConfirmationDialogState();
-}
-
-class _DeleteConfirmationDialogState extends State<_DeleteConfirmationDialog> {
-  final TextEditingController _credentialController = TextEditingController();
-  bool _isConfirmed = false;
-  String? _errorMessage;
-
-  @override
-  void dispose() {
-    _credentialController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Delete Database'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Are you sure you want to delete this database? This action cannot be undone.'),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Checkbox(
-                value: _isConfirmed,
-                onChanged: (value) {
-                  setState(() {
-                    _isConfirmed = value ?? false;
-                  });
-                },
-              ),
-              const Text('I understand this action is permanent'),
-            ],
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _credentialController,
-            obscureText: true,
-            decoration: InputDecoration(
-              labelText: widget.isPinMode ? 'PIN' : 'Password',
-              border: const OutlineInputBorder(),
-              errorText: _errorMessage,
-            ),
-            keyboardType: widget.isPinMode ? TextInputType.number : TextInputType.text,
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: _isConfirmed
-              ? () async {
-            final input = _credentialController.text.trim();
-            if (input.isEmpty) {
-              setState(() {
-                _errorMessage = 'Please enter your ${widget.isPinMode ? 'PIN' : 'password'}';
-              });
-              return;
-            }
-
-            final isAuthenticated = await widget.authService.verifyMasterCredential(input);
-            if (!isAuthenticated) {
-              setState(() {
-                _errorMessage = 'Incorrect ${widget.isPinMode ? 'PIN' : 'password'}';
-              });
-              return;
-            }
-
-            try {
-              // Delete the database
-              final dbHelper = DatabaseHelper(widget.currentDatabase);
-              final provider = Provider.of<CredentialProvider>(context, listen: false);
-              await provider.clearAllData(); // Clear in-memory data
-              await (await dbHelper.database).close(); // Close the database
-              await dbHelper.deleteDatabase(); // Delete the database file
-
-              // Clear the current database from SharedPreferences
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.remove('currentDatabase');
-
-              // Reset CredentialProvider
-              provider.setDatabaseName('default');
-
-              if (mounted) {
-                Navigator.pop(context); // Close this dialog
-                Fluttertoast.showToast(msg: 'Database deleted successfully');
-                widget.onDeleteSuccess(); // Trigger logout
-              }
-            } catch (e) {
-              if (mounted) {
-                setState(() {
-                  _errorMessage = 'Error deleting database: $e';
-                });
-              }
-            }
-          }
-              : null,
-          child: const Text('Delete', style: TextStyle(color: Colors.red)),
         ),
       ],
     );

@@ -1,26 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:keyvalut/services/auth_service.dart';
 import 'package:keyvalut/theme/theme_provider.dart';
 import 'package:keyvalut/views/Tabs/login_screen.dart';
 import 'package:keyvalut/views/Tabs/setup_login_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'data/credential_provider.dart';
+import 'services/utils.dart';
+import 'data/database_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  final initialDatabaseName = await getInitialDatabaseName();
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => CredentialProvider()),
-        Provider(create: (_) => AuthService('default')), // Temporary default, will be overridden
+        ChangeNotifierProvider(
+          create: (_) => CredentialProvider(initialDatabaseName: initialDatabaseName),
+        ),
+        // Removed Provider for AuthService
       ],
       child: const MyApp(),
     ),
   );
+}
+
+Future<String?> getInitialDatabaseName() async {
+  final databases = await fetchDatabaseNames();
+  final prefs = await SharedPreferences.getInstance();
+  return databases.isNotEmpty ? prefs.getString('currentDatabase') : null;
 }
 
 class MyApp extends StatefulWidget {
@@ -119,10 +129,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               _needsRefresh = false;
               final databaseName = snapshot.data;
               if (databaseName == null) {
-                return const SetupLoginScreen();
+                return SetupLoginScreen(
+                  onCallback: () {
+                    // Refresh the app state after creating a new database
+                    if (mounted) {
+                      setState(() {});
+                    }
+                  },
+                );
               }
-              // Update AuthService with the current database
-              Provider.of<AuthService>(context, listen: false);
               return const LoginScreen();
             },
           ),

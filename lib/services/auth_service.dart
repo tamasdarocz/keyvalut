@@ -18,7 +18,6 @@ class AuthService {
   /// Instance of FlutterSecureStorage for securely storing credentials and related data.
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
-
   /// Salt used for hashing the master credential.
   late Uint8List _salt;
 
@@ -74,6 +73,13 @@ class AuthService {
     return key.toString();
   }
 
+  /// Sets whether the authentication mode is PIN or Password.
+  /// [isPin] True to use PIN mode, false to use Password mode.
+  Future<void> setPinMode(bool isPin) async {
+    final isPinKey = 'isPin_$databaseName';
+    await _secureStorage.write(key: isPinKey, value: isPin.toString());
+  }
+
   /// Sets the master credential (PIN or password) for the database.
   /// [credential] The PIN or password to set.
   /// [isPin] Whether the credential is a PIN (true) or password (false).
@@ -93,7 +99,7 @@ class AuthService {
     argon2.generateBytes(passwordBytes, result, 0, result.length);
     final masterCredentialKey = 'masterCredential_$databaseName';
     await _secureStorage.write(key: masterCredentialKey, value: base64Encode(result));
-    await _secureStorage.write(key: 'isPin_$databaseName', value: isPin.toString());
+    await setPinMode(isPin); // Update the PIN mode
 
     // Generate and store recovery key if not already set, then return it
     String recoveryKey = await _secureStorage.read(key: 'recoveryKey_$databaseName') ?? '';
@@ -155,6 +161,24 @@ class AuthService {
   Future<bool> verifyRecoveryKey(String recoveryKey) async {
     final storedRecoveryKey = await _secureStorage.read(key: 'recoveryKey_$databaseName');
     return storedRecoveryKey == recoveryKey;
+  }
+
+  /// Recovers the master credential using the recovery key.
+  /// [recoveryKey] The recovery key to verify the recovery operation.
+  /// Returns the master credential if the recovery key is valid, null otherwise.
+  Future<String?> recoverCredential(String recoveryKey) async {
+    final isValid = await verifyRecoveryKey(recoveryKey);
+    if (!isValid) return null;
+
+    // Since we store the hashed credential, we can't retrieve the original PIN/password.
+    // For recovery purposes, we'll need to store the plaintext credential securely
+    // or implement a different mechanism. For now, we'll return null to indicate
+    // that direct recovery of the plaintext credential isn't supported.
+    // Alternatively, we could store the plaintext credential encrypted with the recovery key,
+    // but this would require additional implementation.
+
+    // Placeholder: Indicate that direct recovery isn't implemented.
+    return null;
   }
 
   /// Resets the master credential using a recovery key.
