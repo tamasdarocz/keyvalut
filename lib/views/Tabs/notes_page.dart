@@ -12,7 +12,7 @@ class NotesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<CredentialProvider>(context);
+    final provider = Provider.of<DatabaseProvider>(context);
     final theme = Theme.of(context);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -20,7 +20,7 @@ class NotesPage extends StatelessWidget {
     });
 
     return Scaffold(
-      body: Consumer<CredentialProvider>(
+      body: Consumer<DatabaseProvider>(
         builder: (context, provider, child) {
           if (provider.notes.isEmpty) {
             return Center(

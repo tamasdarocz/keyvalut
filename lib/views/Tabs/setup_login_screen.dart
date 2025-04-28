@@ -112,7 +112,7 @@ class _SetupLoginScreenState extends State<SetupLoginScreen> {
       await prefs.setString('currentDatabase', databaseName);
 
       // Update CredentialProvider with the new database name
-      final provider = Provider.of<CredentialProvider>(context, listen: false);
+      final provider = Provider.of<DatabaseProvider>(context, listen: false);
       provider.setDatabaseName(databaseName);
 
       await _showRecoveryKeyDialog(recoveryKey);

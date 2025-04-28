@@ -45,7 +45,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
   void _saveNote() {
     if (!_formKey.currentState!.validate()) return;
 
-    final provider = Provider.of<CredentialProvider>(context, listen: false);
+    final provider = Provider.of<DatabaseProvider>(context, listen: false);
     final deltaJson = jsonEncode(_quillController.document.toDelta().toJson());
     final newNote = Note(
       id: widget.note?.id,

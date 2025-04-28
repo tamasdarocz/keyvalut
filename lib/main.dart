@@ -13,13 +13,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final initialDatabaseName = await getInitialDatabaseName();
-  print('main - Initial database name: $initialDatabaseName'); // Debug log
+  // Debug log
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(
-          create: (_) => CredentialProvider(initialDatabaseName: initialDatabaseName),
+          create: (_) => DatabaseProvider(initialDatabaseName: initialDatabaseName),
         ),
       ],
       child: const MyApp(),
@@ -31,7 +31,7 @@ Future<String?> getInitialDatabaseName() async {
   final databases = await fetchDatabaseNames();
   final prefs = await SharedPreferences.getInstance();
   final currentDatabase = prefs.getString('currentDatabase');
-  print('getInitialDatabaseName - Databases: $databases, currentDatabase: $currentDatabase'); // Debug log
+  // Debug log
 
   // Filter out 'default' if it has no credentials set
   final validDatabases = <String>[];
@@ -153,7 +153,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 );
               }
               _needsRefresh = false;
-              print('MyApp - FutureBuilder databaseName: ${snapshot.data}'); // Debug log
+              // Debug log
               return const LoginScreen(); // Always start on LoginScreen
             },
           ),

@@ -56,8 +56,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       setState(() {
         _currentDatabase = databaseName;
         _dbHelper = DatabaseHelper(databaseName);
-        // Ensure CredentialProvider uses the same database
-        Provider.of<CredentialProvider>(context, listen: false).setDatabaseName(databaseName);
+        // Ensure DatabaseProvider uses the same database
+        Provider.of<DatabaseProvider>(context, listen: false).setDatabaseName(databaseName);
       });
     } else {
       // If no database is set, redirect to login screen
@@ -101,8 +101,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   void _logout(BuildContext context) {
-    final credentialProvider = Provider.of<CredentialProvider>(context, listen: false);
-    credentialProvider.clearCredentials();
+    final databaseProvider = Provider.of<DatabaseProvider>(context, listen: false);
+    databaseProvider.clearLogins();
 
     Navigator.pushAndRemoveUntil(
       context,

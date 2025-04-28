@@ -2,10 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:keyvalut/data/database_model.dart';
 import 'package:keyvalut/data/database_helper.dart';
 
-class CredentialProvider with ChangeNotifier {
-  List<Logins> _credentials = [];
-  List<Logins> _archivedCredentials = [];
-  List<Logins> _deletedCredentials = [];
+class DatabaseProvider with ChangeNotifier {
+  List<Logins> _logins = [];
+  List<Logins> _archivedLogins = [];
+  List<Logins> _deletedLogins = [];
   List<CreditCard> _creditCards = [];
   List<CreditCard> _archivedCreditCards = [];
   List<CreditCard> _deletedCreditCards = [];
@@ -13,9 +13,9 @@ class CredentialProvider with ChangeNotifier {
   List<Note> _archivedNotes = [];
   List<Note> _deletedNotes = [];
 
-  List<Logins> get credentials => _credentials;
-  List<Logins> get archivedCredentials => _archivedCredentials;
-  List<Logins> get deletedCredentials => _deletedCredentials;
+  List<Logins> get logins => _logins;
+  List<Logins> get archivedLogins => _archivedLogins;
+  List<Logins> get deletedLogins => _deletedLogins;
   List<CreditCard> get creditCards => _creditCards;
   List<CreditCard> get archivedCreditCards => _archivedCreditCards;
   List<CreditCard> get deletedCreditCards => _deletedCreditCards;
@@ -25,28 +25,26 @@ class CredentialProvider with ChangeNotifier {
 
   DatabaseHelper? _dbHelper;
 
-  CredentialProvider({String? initialDatabaseName}) {
-    print('CredentialProvider - Initializing with databaseName: $initialDatabaseName');
+  DatabaseProvider({String? initialDatabaseName}) {
     if (initialDatabaseName != null && initialDatabaseName.isNotEmpty) {
       _dbHelper = DatabaseHelper(initialDatabaseName);
-      loadCredentials();
+      loadLogins();
       loadCreditCards();
       loadNotes();
     }
   }
 
   void setDatabaseName(String databaseName) {
-    print('CredentialProvider - Setting databaseName: $databaseName');
     if (databaseName.isNotEmpty) {
       _dbHelper = DatabaseHelper(databaseName);
-      loadCredentials();
+      loadLogins();
       loadCreditCards();
       loadNotes();
     } else {
       _dbHelper = null;
-      _credentials = [];
-      _archivedCredentials = [];
-      _deletedCredentials = [];
+      _logins = [];
+      _archivedLogins = [];
+      _deletedLogins = [];
       _creditCards = [];
       _archivedCreditCards = [];
       _deletedCreditCards = [];
@@ -57,25 +55,23 @@ class CredentialProvider with ChangeNotifier {
     }
   }
 
-  Future<void> loadCredentials() async {
+  Future<void> loadLogins() async {
     if (_dbHelper == null) {
-      print('CredentialProvider - loadCredentials: _dbHelper is null');
-      _credentials = [];
-      _archivedCredentials = [];
-      _deletedCredentials = [];
+      _logins = [];
+      _archivedLogins = [];
+      _deletedLogins = [];
       notifyListeners();
       return;
     }
-    final allCredentials = await _dbHelper!.getCredentials(includeArchived: true, includeDeleted: true);
-    _credentials = allCredentials.where((c) => !c.isArchived && !c.isDeleted).toList();
-    _archivedCredentials = allCredentials.where((c) => c.isArchived && !c.isDeleted).toList();
-    _deletedCredentials = allCredentials.where((c) => c.isDeleted).toList();
+    final allLogins = await _dbHelper!.getLogins(includeArchived: true, includeDeleted: true);
+    _logins = allLogins.where((c) => !c.isArchived && !c.isDeleted).toList();
+    _archivedLogins = allLogins.where((c) => c.isArchived && !c.isDeleted).toList();
+    _deletedLogins = allLogins.where((c) => c.isDeleted).toList();
     notifyListeners();
   }
 
   Future<void> loadCreditCards() async {
     if (_dbHelper == null) {
-      print('CredentialProvider - loadCreditCards: _dbHelper is null');
       _creditCards = [];
       _archivedCreditCards = [];
       _deletedCreditCards = [];
@@ -92,7 +88,6 @@ class CredentialProvider with ChangeNotifier {
 
   Future<void> loadNotes() async {
     if (_dbHelper == null) {
-      print('CredentialProvider - loadNotes: _dbHelper is null');
       _notes = [];
       _archivedNotes = [];
       _deletedNotes = [];
@@ -107,30 +102,28 @@ class CredentialProvider with ChangeNotifier {
   }
 
   Future<void> loadArchivedItems() async {
-    await loadCredentials();
+    await loadLogins();
     await loadCreditCards();
     await loadNotes();
   }
 
   Future<void> loadDeletedItems() async {
-    await loadCredentials();
+    await loadLogins();
     await loadCreditCards();
     await loadNotes();
   }
 
-  Future<void> clearCredentials() async {
+  Future<void> clearLogins() async {
     if (_dbHelper == null) {
-      print('CredentialProvider - clearCredentials: _dbHelper is null');
       return;
     }
     final db = await _dbHelper!.database;
-    await db.delete('credentials');
-    await loadCredentials();
+    await db.delete('logins');
+    await loadLogins();
   }
 
   Future<void> clearCreditCards() async {
     if (_dbHelper == null) {
-      print('CredentialProvider - clearCreditCards: _dbHelper is null');
       return;
     }
     final db = await _dbHelper!.database;
@@ -140,7 +133,6 @@ class CredentialProvider with ChangeNotifier {
 
   Future<void> clearNotes() async {
     if (_dbHelper == null) {
-      print('CredentialProvider - clearNotes: _dbHelper is null');
       return;
     }
     final db = await _dbHelper!.database;
@@ -149,23 +141,21 @@ class CredentialProvider with ChangeNotifier {
   }
 
   Future<void> clearAllData() async {
-    await clearCredentials();
+    await clearLogins();
     await clearCreditCards();
     await clearNotes();
   }
 
-  Future<void> addCredential(Logins credential) async {
+  Future<void> addLogin(Logins login) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - addCredential: _dbHelper is null');
       return;
     }
-    await _dbHelper!.insertCredential(credential);
-    await loadCredentials();
+    await _dbHelper!.insertLogins(login);
+    await loadLogins();
   }
 
   Future<void> addCreditCard(CreditCard card) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - addCreditCard: _dbHelper is null');
       return;
     }
     await _dbHelper!.insertCreditCard(card);
@@ -174,40 +164,37 @@ class CredentialProvider with ChangeNotifier {
 
   Future<void> addNote(Note note) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - addNote: _dbHelper is null');
       return;
     }
     await _dbHelper!.insertNote(note);
     await loadNotes();
   }
 
-  Future<void> updateCredential(Logins credential) async {
+  Future<void> updateLogin(Logins login) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - updateCredential: _dbHelper is null');
       return;
     }
-    final updatedCredential = Logins(
-      id: credential.id,
-      title: credential.title,
-      website: credential.website,
-      email: credential.email,
-      username: credential.username,
-      password: credential.password,
-      totpSecret: credential.totpSecret,
-      isArchived: credential.isArchived,
-      isDeleted: credential.isDeleted,
-      archivedAt: credential.archivedAt,
-      deletedAt: credential.deletedAt,
-      createdAt: credential.createdAt,
+    final updatedLogin = Logins(
+      id: login.id,
+      title: login.title,
+      website: login.website,
+      email: login.email,
+      username: login.username,
+      password: login.password,
+      totpSecret: login.totpSecret,
+      isArchived: login.isArchived,
+      isDeleted: login.isDeleted,
+      archivedAt: login.archivedAt,
+      deletedAt: login.deletedAt,
+      createdAt: login.createdAt,
       updatedAt: DateTime.now().toIso8601String(), // Update updatedAt
     );
-    await _dbHelper!.updateCredential(updatedCredential);
-    await loadCredentials();
+    await _dbHelper!.updateLogins(updatedLogin);
+    await loadLogins();
   }
 
   Future<void> updateCreditCard(CreditCard card) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - updateCreditCard: _dbHelper is null');
       return;
     }
     final updatedCard = CreditCard(
@@ -234,7 +221,6 @@ class CredentialProvider with ChangeNotifier {
 
   Future<void> updateNote(Note note) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - updateNote: _dbHelper is null');
       return;
     }
     final updatedNote = Note(
@@ -252,18 +238,16 @@ class CredentialProvider with ChangeNotifier {
     await loadNotes();
   }
 
-  Future<void> archiveCredential(int id) async {
+  Future<void> archiveLogins(int id) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - archiveCredential: _dbHelper is null');
       return;
     }
-    await _dbHelper!.archiveCredential(id);
-    await loadCredentials();
+    await _dbHelper!.archiveLogins(id);
+    await loadLogins();
   }
 
   Future<void> archiveCreditCard(int id) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - archiveCreditCard: _dbHelper is null');
       return;
     }
     await _dbHelper!.archiveCreditCard(id);
@@ -272,7 +256,6 @@ class CredentialProvider with ChangeNotifier {
 
   Future<void> moveCreditCardToArchive(int id) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - moveCreditCardToArchive: _dbHelper is null');
       return;
     }
     await _dbHelper!.archiveCreditCard(id);
@@ -281,25 +264,22 @@ class CredentialProvider with ChangeNotifier {
 
   Future<void> archiveNote(int id) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - archiveNote: _dbHelper is null');
       return;
     }
     await _dbHelper!.archiveNote(id);
     await loadNotes();
   }
 
-  Future<void> deleteCredential(int id) async {
+  Future<void> deleteLogins(int id) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - deleteCredential: _dbHelper is null');
       return;
     }
-    await _dbHelper!.deleteCredential(id);
-    await loadCredentials();
+    await _dbHelper!.deleteLogins(id);
+    await loadLogins();
   }
 
   Future<void> deleteCreditCard(int id) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - deleteCreditCard: _dbHelper is null');
       return;
     }
     await _dbHelper!.deleteCreditCard(id);
@@ -308,25 +288,22 @@ class CredentialProvider with ChangeNotifier {
 
   Future<void> moveToTrash(int id) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - moveToTrash: _dbHelper is null');
       return;
     }
     await _dbHelper!.deleteNote(id);
     await loadNotes();
   }
 
-  Future<void> restoreCredential(int id) async {
+  Future<void> restoreLogins(int id) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - restoreCredential: _dbHelper is null');
       return;
     }
-    await _dbHelper!.restoreCredential(id);
-    await loadCredentials();
+    await _dbHelper!.restoreLogins(id);
+    await loadLogins();
   }
 
   Future<void> restoreCreditCard(int id) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - restoreCreditCard: _dbHelper is null');
       return;
     }
     await _dbHelper!.restoreCreditCard(id);
@@ -335,25 +312,22 @@ class CredentialProvider with ChangeNotifier {
 
   Future<void> restoreNote(int id) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - restoreNote: _dbHelper is null');
       return;
     }
     await _dbHelper!.restoreNote(id);
     await loadNotes();
   }
 
-  Future<void> permanentlyDeleteCredential(int id) async {
+  Future<void> permanentlyDeleteLogin(int id) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - permanentlyDeleteCredential: _dbHelper is null');
       return;
     }
-    await _dbHelper!.permanentlyDeleteCredential(id);
-    await loadCredentials();
+    await _dbHelper!.permanentlyDeleteLogins(id);
+    await loadLogins();
   }
 
   Future<void> permanentlyDeleteCreditCard(int id) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - permanentlyDeleteCreditCard: _dbHelper is null');
       return;
     }
     await _dbHelper!.permanentlyDeleteCreditCard(id);
@@ -362,7 +336,6 @@ class CredentialProvider with ChangeNotifier {
 
   Future<void> permanentlyDeleteNote(int id) async {
     if (_dbHelper == null) {
-      print('CredentialProvider - permanentlyDeleteNote: _dbHelper is null');
       return;
     }
     await _dbHelper!.permanentlyDeleteNote(id);

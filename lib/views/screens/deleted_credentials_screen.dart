@@ -28,14 +28,14 @@ class DeletedItemsView extends StatelessWidget {
         false;
   }
 
-  Future<void> _deleteAllItems(BuildContext context, CredentialProvider provider) async {
-    if (provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty && provider.deletedNotes.isEmpty) return;
+  Future<void> _deleteAllItems(BuildContext context, DatabaseProvider provider) async {
+    if (provider.deletedLogins.isEmpty && provider.deletedCreditCards.isEmpty && provider.deletedNotes.isEmpty) return;
 
     final confirmed = await _confirmBulkAction(context, 'Permanently Delete', 'Deleted');
     if (!confirmed) return;
 
-    for (var credential in provider.deletedCredentials) {
-      await provider.permanentlyDeleteCredential(credential.id!);
+    for (var login in provider.deletedLogins) {
+      await provider.permanentlyDeleteLogin(login.id!);
     }
     for (var card in provider.deletedCreditCards) {
       await provider.permanentlyDeleteCreditCard(card.id!);
@@ -53,14 +53,14 @@ class DeletedItemsView extends StatelessWidget {
     );
   }
 
-  Future<void> _restoreAllItems(BuildContext context, CredentialProvider provider) async {
-    if (provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty && provider.deletedNotes.isEmpty) return;
+  Future<void> _restoreAllItems(BuildContext context, DatabaseProvider provider) async {
+    if (provider.deletedLogins.isEmpty && provider.deletedCreditCards.isEmpty && provider.deletedNotes.isEmpty) return;
 
     final confirmed = await _confirmBulkAction(context, 'Restore', 'Deleted');
     if (!confirmed) return;
 
-    for (var credential in provider.deletedCredentials) {
-      await provider.restoreCredential(credential.id!);
+    for (var login in provider.deletedLogins) {
+      await provider.restoreLogins(login.id!);
     }
     for (var card in provider.deletedCreditCards) {
       await provider.restoreCreditCard(card.id!);
@@ -80,7 +80,7 @@ class DeletedItemsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<CredentialProvider>(context);
+    final provider = Provider.of<DatabaseProvider>(context);
     final theme = Theme.of(context);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -102,22 +102,22 @@ class DeletedItemsView extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.restore),
             tooltip: 'Restore All',
-            onPressed: provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty && provider.deletedNotes.isEmpty
+            onPressed: provider.deletedLogins.isEmpty && provider.deletedCreditCards.isEmpty && provider.deletedNotes.isEmpty
                 ? null
                 : () => _restoreAllItems(context, provider),
           ),
           IconButton(
             icon: const Icon(Icons.delete_forever),
             tooltip: 'Delete All',
-            onPressed: provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty && provider.deletedNotes.isEmpty
+            onPressed: provider.deletedLogins.isEmpty && provider.deletedCreditCards.isEmpty && provider.deletedNotes.isEmpty
                 ? null
                 : () => _deleteAllItems(context, provider),
           ),
         ],
       ),
-      body: Consumer<CredentialProvider>(
+      body: Consumer<DatabaseProvider>(
         builder: (context, provider, child) {
-          if (provider.deletedCredentials.isEmpty && provider.deletedCreditCards.isEmpty && provider.deletedNotes.isEmpty) {
+          if (provider.deletedLogins.isEmpty && provider.deletedCreditCards.isEmpty && provider.deletedNotes.isEmpty) {
             return Center(
               child: Text(
                 'No deleted items found',
@@ -129,12 +129,12 @@ class DeletedItemsView extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(8),
             children: [
-              // Deleted Credentials
-              if (provider.deletedCredentials.isNotEmpty) ...[
+              // Deleted Logins
+              if (provider.deletedLogins.isNotEmpty) ...[
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Text(
-                    'Credentials',
+                    'Logins',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -142,16 +142,16 @@ class DeletedItemsView extends StatelessWidget {
                     ),
                   ),
                 ),
-                ...provider.deletedCredentials.map((credential) => Slidable(
-                  key: ValueKey(credential.id),
+                ...provider.deletedLogins.map((login) => Slidable(
+                  key: ValueKey(login.id),
                   endActionPane: ActionPane(
                     motion: const ScrollMotion(),
                     children: [
                       SlidableAction(
                         onPressed: (context) async {
-                          await provider.restoreCredential(credential.id!);
+                          await provider.restoreLogins(login.id!);
                           Fluttertoast.showToast(
-                            msg: 'Credential Restored',
+                            msg: 'Login Restored',
                             toastLength: Toast.LENGTH_SHORT,
                             gravity: ToastGravity.CENTER,
                             backgroundColor: theme.colorScheme.primary,
@@ -168,8 +168,8 @@ class DeletedItemsView extends StatelessWidget {
                           final confirmed = await showDialog<bool>(
                             context: context,
                             builder: (context) => AlertDialog(
-                              title: const Text('Permanently Delete Credential'),
-                              content: const Text('Are you sure you want to permanently delete this credential? This action cannot be undone.'),
+                              title: const Text('Permanently Delete Login'),
+                              content: const Text('Are you sure you want to permanently delete this login? This action cannot be undone.'),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(context, false),
@@ -183,9 +183,9 @@ class DeletedItemsView extends StatelessWidget {
                             ),
                           );
                           if (confirmed == true) {
-                            await provider.permanentlyDeleteCredential(credential.id!);
+                            await provider.permanentlyDeleteLogin(login.id!);
                             Fluttertoast.showToast(
-                              msg: 'Credential Permanently Deleted',
+                              msg: 'Login Permanently Deleted',
                               toastLength: Toast.LENGTH_SHORT,
                               gravity: ToastGravity.CENTER,
                               backgroundColor: theme.colorScheme.primary,
@@ -201,8 +201,8 @@ class DeletedItemsView extends StatelessWidget {
                     ],
                   ),
                   child: ListTile(
-                    title: Text(credential.title),
-                    subtitle: Text('Deleted at: ${credential.deletedAt}'),
+                    title: Text(login.title),
+                    subtitle: Text('Deleted at: ${login.deletedAt}'),
                   ),
                 )),
               ],

@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:keyvalut/views/Widgets/custom_divider.dart';
-import 'package:keyvalut/views/textforms/card_input_form.dart';
 import 'package:keyvalut/views/textforms/email_input_field.dart';
 import 'package:keyvalut/views/textforms/password_text_field.dart';
 import 'package:keyvalut/views/textforms/title_input_field.dart';
-import 'package:keyvalut/views/textforms/totp_secret_input_field.dart'; // Add this import
+import 'package:keyvalut/views/textforms/totp_secret_input_field.dart';
 import 'package:keyvalut/views/textforms/username_input_field.dart';
 import 'package:keyvalut/views/textforms/website_input_field.dart';
 import 'package:provider/provider.dart';
-
-import '../../data/database_provider.dart';
 import '../../data/database_model.dart';
 import '../../data/database_helper.dart';
+import '../../data/database_provider.dart';
 
 class CreateElementForm extends StatefulWidget {
   final DatabaseHelper dbHelper;
-  final Logins? credential;
-  const CreateElementForm({super.key, this.credential, required this.dbHelper});
+  final Logins? login;
+  const CreateElementForm({super.key, this.login, required this.dbHelper});
 
   @override
   State<CreateElementForm> createState() => _CreateElementFormState();
@@ -34,19 +32,19 @@ class _CreateElementFormState extends State<CreateElementForm> {
   @override
   void initState() {
     super.initState();
-    if (widget.credential != null) {
-      titleController.text = widget.credential!.title;
-      usernameController.text = widget.credential!.username;
-      passwordController.text = widget.credential!.password;
+    if (widget.login != null) {
+      titleController.text = widget.login!.title;
+      usernameController.text = widget.login!.username;
+      passwordController.text = widget.login!.password;
       // Initialize other fields if they exist
-      if (widget.credential!.email != null) {
-        emailController.text = widget.credential!.email!;
+      if (widget.login!.email != null) {
+        emailController.text = widget.login!.email!;
       }
-      if (widget.credential!.website != null) {
-        websiteController.text = widget.credential!.website!;
+      if (widget.login!.website != null) {
+        websiteController.text = widget.login!.website!;
       }
-      if (widget.credential!.totpSecret != null) {
-        totpSecretController.text = widget.credential!.totpSecret!;
+      if (widget.login!.totpSecret != null) {
+        totpSecretController.text = widget.login!.totpSecret!;
       }
     }
   }
@@ -73,7 +71,7 @@ class _CreateElementFormState extends State<CreateElementForm> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text(widget.credential != null ? 'Edit Credential' : 'Create Credential'),
+        title: Text(widget.login != null ? 'Edit login' : 'Create login'),
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: ListView(
@@ -105,8 +103,8 @@ class _CreateElementFormState extends State<CreateElementForm> {
                 return;
               }
 
-              final credential = Logins(
-                id: widget.credential?.id,
+              final login = Logins(
+                id: widget.login?.id,
                 title: titleController.text,
                 username: usernameController.text,
                 password: passwordController.text,
@@ -115,13 +113,13 @@ class _CreateElementFormState extends State<CreateElementForm> {
                 totpSecret: totpSecretController.text.isNotEmpty ? totpSecretController.text : null, // Add TOTP secret
               );
 
-              final provider = Provider.of<CredentialProvider>(context, listen: false);
+              final provider = Provider.of<DatabaseProvider>(context, listen: false);
 
               try {
-                if (widget.credential != null) {
-                  await provider.updateCredential(credential);
+                if (widget.login != null) {
+                  await provider.updateLogin(login);
                 } else {
-                  await provider.addCredential(credential);
+                  await provider.addLogin(login);
                 }
                 Navigator.pop(context);
               } catch (e) {
@@ -133,7 +131,7 @@ class _CreateElementFormState extends State<CreateElementForm> {
               foregroundColor: Colors.black,
               minimumSize: const Size(double.infinity, 50),
             ),
-            child: Text(widget.credential != null ? 'Update' : 'Create'),
+            child: Text(widget.login != null ? 'Update' : 'Create'),
           )
 
         ],

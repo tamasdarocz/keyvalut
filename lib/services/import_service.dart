@@ -177,13 +177,13 @@ class ImportService {
       }
       final dbHelper = DatabaseHelper(databaseName);
 
-      // Import credentials
-      final List<Logins> credentials = [];
-      if (jsonData.containsKey('credentials')) {
-        final credentialsJson = jsonData['credentials'] as List<dynamic>;
-        credentials.addAll(credentialsJson.map((json) {
+      // Import logins
+      final List<Logins> logins = [];
+      if (jsonData.containsKey('loginss')) {
+        final loginsJson = jsonData['logins'] as List<dynamic>;
+        logins.addAll(loginsJson.map((json) {
           if (json is! Map<String, dynamic>) {
-            throw Exception('Invalid credential format in file');
+            throw Exception('Invalid login format in file');
           }
           return Logins.fromJson(json);
         }).toList());
@@ -214,12 +214,12 @@ class ImportService {
       }
 
       // Show confirmation dialog
-      final totalItems = credentials.length + creditCards.length + notes.length;
+      final totalItems = logins.length + creditCards.length + notes.length;
       final confirm = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Import Data'),
-          content: Text('The file contains $totalItems items (${credentials.length} credentials, ${creditCards.length} credit cards, ${notes.length} notes). Do you want to import them?'),
+          content: Text('The file contains $totalItems items (${logins.length} logins, ${creditCards.length} credit cards, ${notes.length} notes). Do you want to import them?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -239,8 +239,8 @@ class ImportService {
       }
 
       // Insert all items into the database
-      for (var credential in credentials) {
-        await dbHelper.insertCredential(credential);
+      for (var login in logins) {
+        await dbHelper.insertLogins(login);
       }
       for (var creditCard in creditCards) {
         await dbHelper.insertCreditCard(creditCard);

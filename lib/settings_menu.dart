@@ -3,7 +3,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:keyvalut/theme/theme_provider.dart';
 import 'package:keyvalut/views/dialogs/recovery_key_dialog.dart';
 import 'package:keyvalut/views/dialogs/reset_credential_dialog.dart';
-import 'package:keyvalut/views/screens/archived_credentials_screen.dart';
+import 'package:keyvalut/views/screens/archived_logins_screen.dart';
 import 'package:keyvalut/views/screens/change_login_screen.dart';
 import 'package:keyvalut/views/screens/deleted_credentials_screen.dart';
 import 'package:provider/provider.dart';
@@ -11,8 +11,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/services/auth_service.dart';
 import 'package:keyvalut/services/export_services.dart';
 import 'package:keyvalut/services/import_service.dart';
-import 'package:keyvalut/data/database_provider.dart';
 import 'package:keyvalut/views/dialogs/delete_confirmation_dialog.dart';
+
+import 'data/database_provider.dart';
 
 /// A settings menu widget that allows users to manage app settings, including theme, authentication, and database operations.
 class SettingsMenu extends StatefulWidget {
@@ -547,8 +548,8 @@ class _SettingsMenuState extends State<SettingsMenu> {
                               try {
                                 await ImportService.importData(context);
                                 if (mounted) {
-                                  final provider = Provider.of<CredentialProvider>(context, listen: false);
-                                  await provider.loadCredentials();
+                                  final provider = Provider.of<DatabaseProvider>(context, listen: false);
+                                  await provider.loadLogins();
                                   await provider.loadCreditCards();
                                   await provider.loadArchivedItems();
                                   await provider.loadDeletedItems();

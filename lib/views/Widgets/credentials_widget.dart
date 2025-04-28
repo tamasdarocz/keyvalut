@@ -10,14 +10,14 @@ import '../textforms/create_element_form.dart';
 import '../../data/database_helper.dart';
 import '../../services/url_service.dart';
 
-class CredentialsWidget extends StatefulWidget {
-  const CredentialsWidget({super.key});
+class LoginsWidget extends StatefulWidget {
+  const LoginsWidget({super.key});
 
   @override
-  State<CredentialsWidget> createState() => _CredentialsWidgetState();
+  State<LoginsWidget> createState() => _LoginsWidgetState();
 }
 
-class _CredentialsWidgetState extends State<CredentialsWidget> {
+class _LoginsWidgetState extends State<LoginsWidget> {
   DatabaseHelper? _dbHelper;
 
   @override
@@ -41,24 +41,21 @@ class _CredentialsWidgetState extends State<CredentialsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final credentialProvider = Provider.of<CredentialProvider>(context);
+    final databaseProvider = Provider.of<DatabaseProvider>(context);
     final theme = Theme.of(context);
 
-    // Load credentials on first build
+    // Load logins on first build
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      credentialProvider.loadCredentials();
+     databaseProvider.loadLogins();
     });
 
     if (_dbHelper == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return Consumer<CredentialProvider>(
+    return Consumer<DatabaseProvider>(
       builder: (context, provider, child) {
-        if (provider.credentials == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (provider.credentials.isEmpty) {
+        if (provider.logins.isEmpty) {
           return Center(
             child: Text(
               'No credentials found',
@@ -68,10 +65,10 @@ class _CredentialsWidgetState extends State<CredentialsWidget> {
         }
 
         return ListView.builder(
-          itemCount: provider.credentials.length,
+          itemCount: provider.logins.length,
           itemBuilder: (context, index) {
-            final credential = provider.credentials[index];
-            final hasTotpSecret = credential.totpSecret != null && credential.totpSecret!.isNotEmpty;
+            final login = provider.logins[index];
+            final hasTotpSecret = login.totpSecret != null && login.totpSecret!.isNotEmpty;
 
             return Slidable(
               startActionPane: ActionPane(
@@ -79,10 +76,10 @@ class _CredentialsWidgetState extends State<CredentialsWidget> {
                 children: [
                   SlidableAction(
                     onPressed: (context) async {
-                      if (credential.id != null) {
-                        await provider.archiveCredential(credential.id!);
+                      if (login.id != null) {
+                        await provider.archiveLogins(login.id!);
                         Fluttertoast.showToast(
-                          msg: 'Credential Archived',
+                          msg: 'Login Archived',
                           toastLength: Toast.LENGTH_SHORT,
                           gravity: ToastGravity.CENTER,
                           backgroundColor: theme.colorScheme.primary,
@@ -100,7 +97,7 @@ class _CredentialsWidgetState extends State<CredentialsWidget> {
                       final confirmed = await showDialog<bool>(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: const Text('Delete Credential'),
+                          title: const Text('Delete Login'),
                           content: const Text('Are you sure you want to delete?'),
                           actions: [
                             TextButton(
@@ -114,10 +111,10 @@ class _CredentialsWidgetState extends State<CredentialsWidget> {
                           ],
                         ),
                       );
-                      if (confirmed == true && credential.id != null) {
-                        await provider.deleteCredential(credential.id!);
+                      if (confirmed == true && login.id != null) {
+                        await provider.deleteLogins(login.id!);
                         Fluttertoast.showToast(
-                          msg: 'Credential Deleted',
+                          msg: 'Login Deleted',
                           toastLength: Toast.LENGTH_SHORT,
                           gravity: ToastGravity.CENTER,
                           backgroundColor: theme.colorScheme.primary,
@@ -142,7 +139,7 @@ class _CredentialsWidgetState extends State<CredentialsWidget> {
                         MaterialPageRoute(
                           builder: (context) => CreateElementForm(
                             dbHelper: _dbHelper!,
-                            credential: credential,
+                            login: login,
                           ),
                         ),
                       );
@@ -169,7 +166,7 @@ class _CredentialsWidgetState extends State<CredentialsWidget> {
                     children: [
                       Flexible(
                         child: Text(
-                          credential.title,
+                          login.title,
                           overflow: TextOverflow.ellipsis,
                           maxLines: 2,
                           style: TextStyle(
@@ -178,7 +175,7 @@ class _CredentialsWidgetState extends State<CredentialsWidget> {
                           ),
                         ),
                       ),
-                      if (hasTotpSecret) TotpDisplay(totpSecret: credential.totpSecret),
+                      if (hasTotpSecret) TotpDisplay(totpSecret: login.totpSecret),
                     ],
                   ),
                   children: [
@@ -190,12 +187,12 @@ class _CredentialsWidgetState extends State<CredentialsWidget> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (credential.website != null && credential.website!.isNotEmpty)
-                                _buildDetailRow(context, 'Website', credential.website!),
-                              if (credential.email != null && credential.email!.isNotEmpty)
-                                _buildDetailRow(context, 'Email', credential.email!),
-                              _buildDetailRow(context, 'Username', credential.username),
-                              _PasswordRow(password: credential.password),
+                              if (login.website != null && login.website!.isNotEmpty)
+                                _buildDetailRow(context, 'Website', login.website!),
+                              if (login.email != null && login.email!.isNotEmpty)
+                                _buildDetailRow(context, 'Email', login.email!),
+                              _buildDetailRow(context, 'Username', login.username),
+                              _PasswordRow(password: login.password),
                             ],
                           ),
                         ),

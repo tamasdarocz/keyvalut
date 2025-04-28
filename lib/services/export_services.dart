@@ -41,7 +41,7 @@ class ExportService {
       final dbHelper = DatabaseHelper(databaseName);
 
       // Fetch all data, including archived and deleted items
-      final allCredentials = await dbHelper.getCredentials(includeArchived: true, includeDeleted: true);
+      final allLogins = await dbHelper.getLogins(includeArchived: true, includeDeleted: true);
       final allCreditCardsMaps = await dbHelper.queryAllCreditCards(includeArchived: true, includeDeleted: true);
       final allCreditCards = allCreditCardsMaps.map((map) => CreditCard.fromMap(map)).toList();
       final allNotes = await dbHelper.getNotes(includeArchived: true, includeDeleted: true);
@@ -86,7 +86,7 @@ class ExportService {
       // Structure JSON data without id fields
       final jsonData = {
         'exportDate': DateTime.now().toIso8601String(),
-        'credentials': allCredentials.map((c) => c.toExportJson()).toList(),
+        'logins': allLogins.map((c) => c.toExportJson()).toList(),
         'creditCards': allCreditCards.map((c) => c.toExportJson()).toList(),
         'notes': allNotes.map((n) => n.toExportJson()).toList(),
       };

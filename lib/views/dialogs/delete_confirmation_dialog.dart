@@ -108,7 +108,7 @@ class _DeleteConfirmationDialogState extends State<DeleteConfirmationDialog> {
             try {
               // Delete the database
               final dbHelper = DatabaseHelper(widget.currentDatabase);
-              final provider = Provider.of<CredentialProvider>(context, listen: false);
+              final provider = Provider.of<DatabaseProvider>(context, listen: false);
               await provider.clearAllData(); // Clear in-memory data
               await (await dbHelper.database).close(); // Close the database
               await dbHelper.deleteDatabase(); // Delete the database file

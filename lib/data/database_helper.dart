@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -26,7 +25,7 @@ class DatabaseHelper {
     final path = join(directory.path, '$databaseName.db');
     return await openDatabase(
       path,
-      version: 4, // Incremented version to 4
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -47,7 +46,7 @@ class DatabaseHelper {
 
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE credentials (
+      CREATE TABLE logins (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         website TEXT,
@@ -101,110 +100,31 @@ class DatabaseHelper {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      await db.execute('''
-        CREATE TABLE credit_cards (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          title TEXT NOT NULL,
-          bank_name TEXT,
-          ch_name TEXT NOT NULL,
-          card_number TEXT NOT NULL,
-          expiry_date TEXT NOT NULL,
-          cvv TEXT NOT NULL,
-          card_type TEXT,
-          billing_address TEXT,
-          notes TEXT,
-          is_archived INTEGER NOT NULL DEFAULT 0,
-          archived_at TEXT,
-          is_deleted INTEGER NOT NULL DEFAULT 0,
-          deleted_at TEXT,
-          created_at TEXT NOT NULL,
-          updated_at TEXT NOT NULL
-        )
-      ''');
+    // Drop all existing tables
+    await db.execute('DROP TABLE IF EXISTS logins');
+    await db.execute('DROP TABLE IF EXISTS credit_cards');
+    await db.execute('DROP TABLE IF EXISTS notes');
 
-      await db.execute('''
-        CREATE TABLE notes (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          title TEXT NOT NULL,
-          content TEXT NOT NULL,
-          is_archived INTEGER NOT NULL DEFAULT 0,
-          archived_at TEXT,
-          is_deleted INTEGER NOT NULL DEFAULT 0,
-          deleted_at TEXT,
-          created_at TEXT NOT NULL,
-          updated_at TEXT NOT NULL
-        )
-      ''');
-    }
-
-    if (oldVersion < 3) {
-      // Previous migration (potentially problematic)
-      // We'll replace this in the next step
-    }
-
-    if (oldVersion < 4) {
-      // Migrate the credentials table using a temporary table
-      await db.execute('''
-        CREATE TABLE credentials_temp (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          title TEXT NOT NULL DEFAULT 'Untitled',
-          website TEXT,
-          email TEXT,
-          username TEXT NOT NULL,
-          password TEXT NOT NULL,
-          totpSecret TEXT,
-          is_archived INTEGER NOT NULL DEFAULT 0,
-          is_deleted INTEGER NOT NULL DEFAULT 0,
-          archived_at TEXT,
-          deleted_at TEXT,
-          created_at TEXT NOT NULL,
-          updated_at TEXT NOT NULL
-        )
-      ''');
-
-      // Copy data from the old table to the new table
-      // Only include columns that exist in the old table, mapping them to the new schema
-      await db.execute('''
-        INSERT INTO credentials_temp (
-          id, username, password, is_archived, is_deleted, created_at, updated_at,
-          title, website, email, totpSecret, archived_at, deleted_at
-        )
-        SELECT 
-          id, username, password, is_archived, is_deleted, created_at, updated_at,
-          COALESCE(NULL, 'Untitled') AS title, -- title might not exist
-          website, -- website might exist, will be NULL if not
-          NULL AS email, -- email might not exist
-          NULL AS totpSecret, -- totpSecret might not exist
-          NULL AS archived_at, -- archived_at might not exist
-          NULL AS deleted_at -- deleted_at might not exist
-        FROM credentials
-      ''');
-
-      // Drop the old table
-      await db.execute('DROP TABLE credentials');
-
-      // Rename the temporary table to credentials
-      await db.execute('ALTER TABLE credentials_temp RENAME TO credentials');
-    }
+    // Recreate the latest schema
+    await _onCreate(db, newVersion);
   }
 
-  Future<void> insertCredential(Logins credential) async {
+  Future<void> insertLogins(Logins login) async {
     final db = await database;
     await db.insert(
-      'credentials',
-      credential.toMap(),
+      'logins',
+      login.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
-  Future<List<Logins>> getCredentials({
+  Future<List<Logins>> getLogins({
     bool includeArchived = false,
     bool includeDeleted = false,
   }) async {
     final db = await database;
     final maps = await db.query(
-      'credentials',
+      'logins',
       where: includeArchived && includeDeleted
           ? null
           : includeArchived
@@ -223,20 +143,20 @@ class DatabaseHelper {
     return maps.map((map) => Logins.fromMap(map)).toList();
   }
 
-  Future<void> updateCredential(Logins credential) async {
+  Future<void> updateLogins(Logins login) async {
     final db = await database;
     await db.update(
-      'credentials',
-      credential.toMap(),
+      'logins',
+      login.toMap(),
       where: 'id = ?',
-      whereArgs: [credential.id],
+      whereArgs: [login.id],
     );
   }
 
-  Future<void> archiveCredential(int id) async {
+  Future<void> archiveLogins(int id) async {
     final db = await database;
     await db.update(
-      'credentials',
+      'logins',
       {
         'is_archived': 1,
         'archived_at': DateTime.now().toIso8601String(),
@@ -247,10 +167,10 @@ class DatabaseHelper {
     );
   }
 
-  Future<void> deleteCredential(int id) async {
+  Future<void> deleteLogins(int id) async {
     final db = await database;
     await db.update(
-      'credentials',
+      'logins',
       {
         'is_deleted': 1,
         'deleted_at': DateTime.now().toIso8601String(),
@@ -261,10 +181,10 @@ class DatabaseHelper {
     );
   }
 
-  Future<void> restoreCredential(int id) async {
+  Future<void> restoreLogins(int id) async {
     final db = await database;
     await db.update(
-      'credentials',
+      'logins',
       {
         'is_deleted': 0,
         'is_archived': 0,
@@ -277,10 +197,10 @@ class DatabaseHelper {
     );
   }
 
-  Future<void> permanentlyDeleteCredential(int id) async {
+  Future<void> permanentlyDeleteLogins(int id) async {
     final db = await database;
     await db.delete(
-      'credentials',
+      'logins',
       where: 'id = ?',
       whereArgs: [id],
     );

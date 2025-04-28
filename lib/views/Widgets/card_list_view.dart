@@ -15,14 +15,14 @@ class CardListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<CredentialProvider>(context);
+    final provider = Provider.of<DatabaseProvider>(context);
     final theme = Theme.of(context);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       provider.loadCreditCards();
     });
 
-    return Consumer<CredentialProvider>(
+    return Consumer<DatabaseProvider>(
       builder: (context, provider, child) {
         if (provider.creditCards.isEmpty) {
           return Center(
@@ -81,7 +81,7 @@ class _CreditCardItemState extends State<CreditCardItem> {
     }
 
     final theme = Theme.of(context);
-    final provider = Provider.of<CredentialProvider>(context, listen: false);
+    final provider = Provider.of<DatabaseProvider>(context, listen: false);
     final maskedNumber = _isSensitiveVisible
         ? widget.card.card_number
         : '**** **** **** ${widget.card.card_number.substring(widget.card.card_number.length - 4)}';

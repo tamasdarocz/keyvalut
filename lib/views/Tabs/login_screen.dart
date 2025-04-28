@@ -63,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _state.isLoading = true);
       final databases = await fetchDatabaseNames();
       final lastUsedDatabase = await _getLastUsedDatabase();
-      print('LoginScreen - Loaded databases: $databases, lastUsed: $lastUsedDatabase'); // Debug log
+      // Debug log
 
       // Filter out 'default' if it has no credentials set
       final validDatabases = <String>[];
@@ -120,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<String?> _getLastUsedDatabase() async {
     final prefs = await SharedPreferences.getInstance();
     final currentDatabase = prefs.getString('currentDatabase');
-    print('LoginScreen - getLastUsedDatabase: $currentDatabase'); // Debug log
+    // Debug log
     return currentDatabase;
   }
 
@@ -131,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
         : databases.isNotEmpty
         ? databases.first
         : null;
-    print('LoginScreen - Selected database: $selected'); // Debug log
+    // Debug log
     return selected;
   }
 
@@ -186,8 +186,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (isAuthenticated) {
         await _authService!.resetBruteForceState();
         await _saveCurrentDatabase(_state.selectedDatabase!);
-        // Update CredentialProvider with the selected database
-        final provider = Provider.of<CredentialProvider>(context, listen: false);
+        // Update DatabaseProvider with the selected database
+        final provider = Provider.of<DatabaseProvider>(context, listen: false);
         provider.setDatabaseName(_state.selectedDatabase!);
         if (mounted) {
           Navigator.pushReplacement(
@@ -220,7 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _saveCurrentDatabase(String databaseName) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('currentDatabase', databaseName);
-    print('LoginScreen - Saved currentDatabase: $databaseName'); // Debug log
+    // Debug log
   }
 
   Future<void> _unlockWithBiometrics() async {
@@ -252,8 +252,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (isAuthenticated) {
         await _authService!.resetBruteForceState();
         await _saveCurrentDatabase(_state.selectedDatabase!);
-        // Update CredentialProvider with the selected database
-        final provider = Provider.of<CredentialProvider>(context, listen: false);
+        // Update DatabaseProvider with the selected database
+        final provider = Provider.of<DatabaseProvider>(context, listen: false);
         provider.setDatabaseName(_state.selectedDatabase!);
         if (mounted) {
           Navigator.pushReplacement(

@@ -57,7 +57,7 @@ class _CredentialsTabState extends State<CredentialsTab> {
         backgroundColor: Theme.of(context).colorScheme.primary,
         child: const Icon(Icons.add),
       ),
-      body: const CredentialsWidget(),
+      body: const LoginsWidget(),
     );
   }
 }

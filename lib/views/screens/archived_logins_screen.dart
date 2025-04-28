@@ -28,14 +28,14 @@ class ArchivedItemsView extends StatelessWidget {
         false;
   }
 
-  Future<void> _deleteAllItems(BuildContext context, CredentialProvider provider) async {
-    if (provider.archivedCredentials.isEmpty && provider.archivedCreditCards.isEmpty && provider.archivedNotes.isEmpty) return;
+  Future<void> _deleteAllItems(BuildContext context,DatabaseProvider provider) async {
+    if (provider.archivedLogins.isEmpty && provider.archivedCreditCards.isEmpty && provider.archivedNotes.isEmpty) return;
 
     final confirmed = await _confirmBulkAction(context, 'Permanently Delete', 'Archived');
     if (!confirmed) return;
 
-    for (var credential in provider.archivedCredentials) {
-      await provider.permanentlyDeleteCredential(credential.id!);
+    for (var login in provider.archivedLogins) {
+      await provider.permanentlyDeleteLogin(login.id!);
     }
     for (var card in provider.archivedCreditCards) {
       await provider.permanentlyDeleteCreditCard(card.id!);
@@ -51,14 +51,14 @@ class ArchivedItemsView extends StatelessWidget {
     );
   }
 
-  Future<void> _restoreAllItems(BuildContext context, CredentialProvider provider) async {
-    if (provider.archivedCredentials.isEmpty && provider.archivedCreditCards.isEmpty && provider.archivedNotes.isEmpty) return;
+  Future<void> _restoreAllItems(BuildContext context, DatabaseProvider provider) async {
+    if (provider.archivedLogins.isEmpty && provider.archivedCreditCards.isEmpty && provider.archivedNotes.isEmpty) return;
 
     final confirmed = await _confirmBulkAction(context, 'Restore', 'Archived');
     if (!confirmed) return;
 
-    for (var credential in provider.archivedCredentials) {
-      await provider.restoreCredential(credential.id!);
+    for (var login in provider.archivedLogins) {
+      await provider.restoreLogins(login.id!);
     }
     for (var card in provider.archivedCreditCards) {
       await provider.restoreCreditCard(card.id!);
@@ -76,7 +76,7 @@ class ArchivedItemsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<CredentialProvider>(context);
+    final provider = Provider.of<DatabaseProvider>(context);
     final theme = Theme.of(context);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -98,22 +98,22 @@ class ArchivedItemsView extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.restore),
             tooltip: 'Restore All',
-            onPressed: provider.archivedCredentials.isEmpty && provider.archivedCreditCards.isEmpty && provider.archivedNotes.isEmpty
+            onPressed: provider.archivedLogins.isEmpty && provider.archivedCreditCards.isEmpty && provider.archivedNotes.isEmpty
                 ? null
                 : () => _restoreAllItems(context, provider),
           ),
           IconButton(
             icon: const Icon(Icons.delete_forever),
             tooltip: 'Delete All',
-            onPressed: provider.archivedCredentials.isEmpty && provider.archivedCreditCards.isEmpty && provider.archivedNotes.isEmpty
+            onPressed: provider.archivedLogins.isEmpty && provider.archivedCreditCards.isEmpty && provider.archivedNotes.isEmpty
                 ? null
                 : () => _deleteAllItems(context, provider),
           ),
         ],
       ),
-      body: Consumer<CredentialProvider>(
+      body: Consumer<DatabaseProvider>(
         builder: (context, provider, child) {
-          if (provider.archivedCredentials.isEmpty &&
+          if (provider.archivedLogins.isEmpty &&
               provider.archivedCreditCards.isEmpty &&
               provider.archivedNotes.isEmpty) {
             return Center(
@@ -127,12 +127,12 @@ class ArchivedItemsView extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(8),
             children: [
-              // Archived Credentials
-              if (provider.archivedCredentials.isNotEmpty) ...[
+              // Archived Logins
+              if (provider.archivedLogins.isNotEmpty) ...[
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Text(
-                    'Credentials',
+                    'Logins',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -140,16 +140,16 @@ class ArchivedItemsView extends StatelessWidget {
                     ),
                   ),
                 ),
-                ...provider.archivedCredentials.map((credential) => Slidable(
-                  key: ValueKey(credential.id),
+                ...provider.archivedLogins.map((login) => Slidable(
+                  key: ValueKey(login.id),
                   endActionPane: ActionPane(
                     motion: const ScrollMotion(),
                     children: [
                       SlidableAction(
                         onPressed: (context) async {
-                          await provider.restoreCredential(credential.id!);
+                          await provider.restoreLogins(login.id!);
                           Fluttertoast.showToast(
-                            msg: 'Credential Restored',
+                            msg: 'Login Restored',
                             toastLength: Toast.LENGTH_SHORT,
                             gravity: ToastGravity.CENTER,
                             backgroundColor: theme.colorScheme.primary,
@@ -166,8 +166,8 @@ class ArchivedItemsView extends StatelessWidget {
                           final confirmed = await showDialog<bool>(
                             context: context,
                             builder: (context) => AlertDialog(
-                              title: const Text('Permanently Delete Credential'),
-                              content: const Text('Are you sure you want to permanently delete this credential? This action cannot be undone.'),
+                              title: const Text('Permanently Delete Login'),
+                              content: const Text('Are you sure you want to permanently delete this login? This action cannot be undone.'),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(context, false),
@@ -181,9 +181,9 @@ class ArchivedItemsView extends StatelessWidget {
                             ),
                           );
                           if (confirmed == true) {
-                            await provider.permanentlyDeleteCredential(credential.id!);
+                            await provider.permanentlyDeleteLogin(login.id!);
                             Fluttertoast.showToast(
-                              msg: 'Credential Permanently Deleted',
+                              msg: 'Login Permanently Deleted',
                               toastLength: Toast.LENGTH_SHORT,
                               gravity: ToastGravity.CENTER,
                               backgroundColor: theme.colorScheme.primary,
@@ -200,8 +200,8 @@ class ArchivedItemsView extends StatelessWidget {
                   ),
                   child: Card(
                     child: ListTile(
-                      title: Text(credential.title),
-                      subtitle: Text('Archived at: ${credential.archivedAt}'),
+                      title: Text(login.title),
+                      subtitle: Text('Archived at: ${login.archivedAt}'),
                     ),
                   ),
                 )),
