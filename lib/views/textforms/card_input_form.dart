@@ -108,7 +108,7 @@ class _CardInputFormState extends State<CardInputForm> {
         foregroundColor: theme.colorScheme.onPrimary,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(8),
         child: Form(
           key: _formKey,
           child: ListView(

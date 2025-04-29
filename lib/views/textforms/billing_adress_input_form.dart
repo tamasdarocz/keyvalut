@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:keyvalut/views/Widgets/custom_divider.dart';
 
 class BillingAddressInput extends StatefulWidget {
   final String? initialAddress;
@@ -65,20 +65,29 @@ class _BillingAddressInputState extends State<BillingAddressInput> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildField('Street Address', streetController, fill),
-        const SizedBox(height: 12),
+        Text('Billing address'),
+        Divider(),
+        const SizedBox(height: 4),
         Row(
           children: [
             Expanded(
-              flex: 3,
-              child: _buildField('City', cityController, fill),
-            ),
-            const SizedBox(width: 12),
+                flex:2,
+                child: _buildField('Country', countryController, fill)),
+            SizedBox(width: 12),
             Expanded(
               flex: 2,
               child: _buildField('State', stateController, fill),
             ),
-            const SizedBox(width: 12),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: _buildField('City', cityController, fill),
+            ),
+            SizedBox(width: 12),
             Expanded(
               flex: 2,
               child: _buildField('Postal Code', postalCodeController, fill),
@@ -86,7 +95,9 @@ class _BillingAddressInputState extends State<BillingAddressInput> {
           ],
         ),
         const SizedBox(height: 12),
-        _buildField('Country', countryController, fill),
+        _buildField('Street Address', streetController, fill),
+        SizedBox(height: 4),
+        Divider()
       ],
     );
   }
@@ -99,11 +110,11 @@ class _BillingAddressInputState extends State<BillingAddressInput> {
         labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.black, width: 1),
+          borderSide: const BorderSide(color: Colors.white, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.black, width: 1),
+          borderSide: const BorderSide(color: Colors.white, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),

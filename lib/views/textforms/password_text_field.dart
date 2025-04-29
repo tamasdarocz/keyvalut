@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:keyvalut/services/password_generator.dart'; // Ensure this path matches your project
@@ -46,28 +45,26 @@ class _PasswordManagerState extends State<PasswordManager> {
         children: [
           TextField(
             controller: widget.controller,
-            style: const TextStyle(fontSize: 20),
             obscureText: !_showPassword,
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.key),
               hintText: 'Required',
               label: const Text('Password (Required)'),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                    color: Theme.of(context).colorScheme.primary, width: 4),
+                    color: Theme.of(context).colorScheme.primary, width: 1),
               ),
               suffixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
                     icon: Icon(
-                      Icons.remove_red_eye,
+                      _showPassword
+                          ? Icons.visibility : Icons.visibility_off,
                       color: _showPassword
                           ? Theme.of(context).colorScheme.primary
                           : Colors.grey,
                     ),
-                    iconSize: 20,
                     onPressed: () {
                       setState(() => _showPassword = !_showPassword);
                     },
@@ -75,7 +72,6 @@ class _PasswordManagerState extends State<PasswordManager> {
                   IconButton(
                     icon: Icon(Icons.copy,
                         color: Theme.of(context).colorScheme.primary),
-                    iconSize: 20,
                     onPressed: () {
                       if (widget.controller.text.isNotEmpty) {
                         Clipboard.setData(
@@ -169,7 +165,6 @@ class _PasswordManagerState extends State<PasswordManager> {
             ],
           ),
 
-          const SizedBox(height: 8),
           Slider(
             value: passwordLength.toDouble(),
             thumbColor: Theme.of(context).colorScheme.primary,
@@ -185,11 +180,11 @@ class _PasswordManagerState extends State<PasswordManager> {
               });
             },
           ),
-          Text('Password Length: $passwordLength'),
-          const SizedBox(height: 16),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
+              Text('Password Length: $passwordLength'),
               ElevatedButton(
                 onPressed: () {
                   generator.includeUppercase = includeUppercase;

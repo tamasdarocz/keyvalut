@@ -9,15 +9,13 @@ class EmailInputField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
-      style: TextStyle(fontSize: 20),
       keyboardType: TextInputType.emailAddress,
 
       decoration: InputDecoration(
         prefixIcon: Icon(Icons.email),
         label: Text('Email:'),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color:Theme.of(context).colorScheme.primary, width: 1.5),
+          borderSide: BorderSide(color:Theme.of(context).colorScheme.primary, width: 1),
         ),
       ),
     );

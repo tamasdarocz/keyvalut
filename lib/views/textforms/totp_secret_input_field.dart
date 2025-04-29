@@ -25,6 +25,8 @@ class _TotpSecretInputFieldState extends State<TotpSecretInputField> {
       controller: widget.controller,
       obscureText: _obscureText,
       decoration: InputDecoration(
+        border: OutlineInputBorder( borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.primary, width: 1),),
         labelText: 'TOTP Secret',
         hintText: 'Enter TOTP secret key for authenticator',
         prefixIcon: const Icon(Icons.security),

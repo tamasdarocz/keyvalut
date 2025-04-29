@@ -88,18 +88,12 @@ class _CreateElementFormState extends State<CreateElementForm> {
           CustomDivider(),
           PasswordManager(controller: passwordController),
           CustomDivider(),
-          // Add the TOTP Secret field
           TotpSecretInputField(controller: totpSecretController),
-          const SizedBox(height: 16),
+          CustomDivider(),
           ElevatedButton(
             onPressed: () async {
               if (!_isValid) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please fill in all required fields'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
+                Fluttertoast.showToast(msg: 'Please fill in all required fields', backgroundColor: Colors.red);
                 return;
               }
 
@@ -130,6 +124,7 @@ class _CreateElementFormState extends State<CreateElementForm> {
               backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.black,
               minimumSize: const Size(double.infinity, 50),
+
             ),
             child: Text(widget.login != null ? 'Update' : 'Create'),
           )
