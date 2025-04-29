@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:keyvalut/views/textforms/billing_adress_input_form.dart';
 import '../../data/database_helper.dart';
 import '../../data/database_model.dart';
 import '../Widgets/top_message.dart';
@@ -164,69 +165,76 @@ class _CardInputFormState extends State<CardInputForm> {
                 },
               ),
               const SizedBox(height: 12),
-              TextFormField(
-                controller: _expiryDateController,
-                decoration: InputDecoration(
-                  labelText: 'Expiry Date (MM/YY)',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: theme.cardColor,
-                ),
-                keyboardType: TextInputType.datetime,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[\d/]')),
-                  LengthLimitingTextInputFormatter(5),
-                  _ExpiryDateFormatter(),
+              Row(
+                children: [
+                  Flexible(
+                    flex: 2,
+                    child: TextFormField(
+                      textAlign: TextAlign.center,
+                      controller: _expiryDateController,
+                      decoration: InputDecoration(
+                        labelText: 'Expiry (MM/YY)',
+                        border: OutlineInputBorder(),
+                        filled: true,
+                        fillColor: theme.cardColor,
+                      ),
+                      keyboardType: TextInputType.datetime,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[\d/]')),
+                        LengthLimitingTextInputFormatter(5),
+                        _ExpiryDateFormatter(),
+                      ],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return 'Enter expiry';
+                        if (!RegExp(r'^(0[1-9]|1[0-2])\/\d{2}$').hasMatch(value)) {
+                          return 'Use MM/YY';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Flexible(
+                    flex: 1,
+                    child: TextFormField(
+                      textAlign: TextAlign.center,
+                      controller: _cvvController,
+                      decoration: InputDecoration(
+                        labelText: 'CVV',
+                        border: OutlineInputBorder(),
+                        filled: true,
+                        fillColor: theme.cardColor,
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(3),
+                      ],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return 'Enter CVV';
+                        if (value.length != 3) return 'Must be 3 digits';
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Flexible(
+                    flex: 2,
+                    child: TextFormField(
+                      textAlign: TextAlign.center,
+                      controller: _cardTypeController,
+                      decoration: InputDecoration(
+                        labelText: 'Type (optional)',
+                        border: OutlineInputBorder(),
+                        filled: true,
+                        fillColor: theme.cardColor,
+                      ),
+                    ),
+                  ),
                 ],
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter expiry date';
-                  if (!RegExp(r'^(0[1-9]|1[0-2])\/\d{2}$').hasMatch(value)) {
-                    return 'Use MM/YY format';
-                  }
-                  return null;
-                },
               ),
               const SizedBox(height: 12),
-              TextFormField(
-                controller: _cvvController,
-                decoration: InputDecoration(
-                  labelText: 'CVV',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: theme.cardColor,
-                ),
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(3),
-                ],
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter CVV';
-                  if (value.length != 3) return 'Must be 3 digits';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _cardTypeController,
-                decoration: InputDecoration(
-                  labelText: 'Card Type (optional)',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: theme.cardColor,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _billingAddressController,
-                decoration: InputDecoration(
-                  labelText: 'Billing Address (optional)',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: theme.cardColor,
-                ),
-                maxLines: 3,
-              ),
+              BillingAddressInput(),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _notesController,
