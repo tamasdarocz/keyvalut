@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+
 class BillingAddressInput extends StatefulWidget {
   final String? initialAddress;
   final Color? fillColor;
@@ -98,15 +99,15 @@ class _BillingAddressInputState extends State<BillingAddressInput> {
         labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.grey, width: 1),
+          borderSide: const BorderSide(color: Colors.black, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.grey, width: 1),
+          borderSide: const BorderSide(color: Colors.black, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.blue, width: 1.5),
+          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1),
         ),
         filled: true,
         fillColor: fill,

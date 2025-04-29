@@ -17,7 +17,7 @@ class EmailInputField extends StatelessWidget {
         label: Text('Email:'),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color:Theme.of(context).colorScheme.primary, width: 4),
+          borderSide: BorderSide(color:Theme.of(context).colorScheme.primary, width: 1.5),
         ),
       ),
     );
