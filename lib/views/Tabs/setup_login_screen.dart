@@ -79,7 +79,7 @@ class _SetupLoginScreenState extends State<SetupLoginScreen> {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => RecoveryKeyDialog(
-        recoveryKey: recoveryKey,
+        recoveryKey: recoveryKey, databaseName: _databaseNameController.text.trim(),
       ),
     );
   }

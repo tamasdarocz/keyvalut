@@ -245,7 +245,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
     await showDialog(
       context: context,
       builder: (dialogContext) => RecoveryKeyDialog(
-        recoveryKey: recoveryKey,
+        recoveryKey: recoveryKey, databaseName: '${_currentDatabase}',
       ),
     );
   }
