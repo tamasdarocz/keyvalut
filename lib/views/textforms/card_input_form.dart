@@ -113,10 +113,12 @@ class _CardInputFormState extends State<CardInputForm> {
           key: _formKey,
           child: ListView(
             children: [
+              SizedBox(height: 12,),
               TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(
                   labelText: 'Title',
+                  hintText: 'Required',
                   border: OutlineInputBorder(),
                   filled: true,
                   fillColor: theme.cardColor,
@@ -125,19 +127,10 @@ class _CardInputFormState extends State<CardInputForm> {
               ),
               const SizedBox(height: 12),
               TextFormField(
-                controller: _bankNameController,
-                decoration: InputDecoration(
-                  labelText: 'Bank Name (optional)',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: theme.cardColor,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
                 controller: _chNameController,
                 decoration: InputDecoration(
                   labelText: 'Cardholder Name',
+                  hintText: 'Required',
                   border: OutlineInputBorder(),
                   filled: true,
                   fillColor: theme.cardColor,
@@ -149,6 +142,7 @@ class _CardInputFormState extends State<CardInputForm> {
                 controller: _cardNumberController,
                 decoration: InputDecoration(
                   labelText: 'Card Number',
+                  hintText: 'Required',
                   border: OutlineInputBorder(),
                   filled: true,
                   fillColor: theme.cardColor,
@@ -170,67 +164,87 @@ class _CardInputFormState extends State<CardInputForm> {
                   Flexible(
                     flex: 2,
                     child: TextFormField(
-                      textAlign: TextAlign.center,
-                      controller: _expiryDateController,
-                      decoration: InputDecoration(
-                        labelText: 'Expiry (MM/YY)',
-                        border: OutlineInputBorder(),
-                        filled: true,
-                        fillColor: theme.cardColor,
+                        textAlign: TextAlign.center,
+                        controller: _expiryDateController,
+                        decoration: InputDecoration(
+                          labelText: 'Expiry (MM/YY)',
+                          hintText: 'Required',
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: theme.cardColor,
+                        ),
+                        keyboardType: TextInputType.datetime,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[\d/]')),
+                          LengthLimitingTextInputFormatter(5),
+                          _ExpiryDateFormatter(),
+                        ],
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return 'Enter expiry';
+                          if (!RegExp(r'^(0[1-9]|1[0-2])\/\d{2}$').hasMatch(value)) {
+                            return 'Use MM/YY';
+                          }
+                          return null;
+                        },
                       ),
-                      keyboardType: TextInputType.datetime,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[\d/]')),
-                        LengthLimitingTextInputFormatter(5),
-                        _ExpiryDateFormatter(),
-                      ],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) return 'Enter expiry';
-                        if (!RegExp(r'^(0[1-9]|1[0-2])\/\d{2}$').hasMatch(value)) {
-                          return 'Use MM/YY';
-                        }
-                        return null;
-                      },
-                    ),
                   ),
                   const SizedBox(width: 12),
-                  Flexible(
-                    flex: 1,
-                    child: TextFormField(
-                      textAlign: TextAlign.center,
-                      controller: _cvvController,
-                      decoration: InputDecoration(
-                        labelText: 'CVV',
-                        border: OutlineInputBorder(),
-                        filled: true,
-                        fillColor: theme.cardColor,
+                   Flexible(
+                     flex: 2,
+                     child: TextFormField(
+                        textAlign: TextAlign.center,
+                        controller: _cvvController,
+                        decoration: InputDecoration(
+                          labelText: 'CVV',
+                          hintText: 'Required',
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: theme.cardColor,
+                        ),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(3),
+                        ],
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return 'Enter CVV';
+                          if (value.length != 3) return 'Must be 3 digits';
+                          return null;
+                        },
                       ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(3),
-                      ],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) return 'Enter CVV';
-                        if (value.length != 3) return 'Must be 3 digits';
-                        return null;
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
+                   ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
                   Flexible(
                     flex: 2,
                     child: TextFormField(
-                      textAlign: TextAlign.center,
-                      controller: _cardTypeController,
-                      decoration: InputDecoration(
-                        labelText: 'Type (optional)',
-                        border: OutlineInputBorder(),
-                        filled: true,
-                        fillColor: theme.cardColor,
+                        controller: _bankNameController,
+                        decoration: InputDecoration(
+                          labelText: 'Bank Name',
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: theme.cardColor,
+                        ),
                       ),
-                    ),
                   ),
+                 SizedBox(width: 12),
+                 Flexible(
+                   flex: 1,
+                   child: TextFormField(
+                        textAlign: TextAlign.center,
+                        controller: _cardTypeController,
+                        decoration: InputDecoration(
+                          labelText: 'Type',
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: theme.cardColor,
+                        ),
+                      ),
+                 ),
+
                 ],
               ),
               const SizedBox(height: 12),
@@ -252,7 +266,7 @@ class _CardInputFormState extends State<CardInputForm> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primary,
                   foregroundColor: theme.colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                 ),
                 child: Text(widget.card == null ? 'Save' : 'Update'),
               ),
