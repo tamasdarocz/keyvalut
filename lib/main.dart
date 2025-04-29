@@ -9,11 +9,14 @@ import 'data/database_provider.dart';
 import 'services/utils.dart';
 import 'data/database_helper.dart';
 
+/// The entry point of the KeyVault app.
+///
+/// Initializes the app, sets up providers for theme and database management,
+/// and determines the initial database to use.
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final initialDatabaseName = await getInitialDatabaseName();
-  // Debug log
   runApp(
     MultiProvider(
       providers: [
@@ -27,11 +30,15 @@ void main() async {
   );
 }
 
+/// Retrieves the initial database name to use when the app starts.
+///
+/// Checks for existing databases, validates them, and returns the current
+/// database name from [SharedPreferences]. If no valid database exists,
+/// returns null.
 Future<String?> getInitialDatabaseName() async {
   final databases = await fetchDatabaseNames();
   final prefs = await SharedPreferences.getInstance();
   final currentDatabase = prefs.getString('currentDatabase');
-  // Debug log
 
   // Filter out 'default' if it has no credentials set
   final validDatabases = <String>[];
@@ -59,6 +66,9 @@ Future<String?> getInitialDatabaseName() async {
   return validDatabases.isNotEmpty ? currentDatabase : null;
 }
 
+/// The root widget of the KeyVault app.
+///
+/// Manages the app's lifecycle and navigates to the login screen on startup.
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -153,7 +163,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 );
               }
               _needsRefresh = false;
-              // Debug log
               return const LoginScreen(); // Always start on LoginScreen
             },
           ),

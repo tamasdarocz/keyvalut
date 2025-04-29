@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:keyvalut/data/database_model.dart';
+import 'package:flutter/foundation.dart'; // For debugPrint
 
 class DatabaseHelper {
   final String databaseName;
@@ -10,7 +11,7 @@ class DatabaseHelper {
 
   DatabaseHelper(this.databaseName) {
     if (databaseName == 'default') {
-      print('DatabaseHelper instantiated with "default" at: ${StackTrace.current}');
+      debugPrint('DatabaseHelper instantiated with "default" at: ${StackTrace.current}');
     }
   }
 
@@ -26,18 +27,31 @@ class DatabaseHelper {
     }
     final directory = await getApplicationDocumentsDirectory();
     final path = join(directory.path, '$databaseName.db');
-    return await openDatabase(
+    debugPrint('Opening database at path: $path'); // Debug log to confirm path
+
+    Database db = await openDatabase(
       path,
       version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
+
+    // Verify the file exists after opening
+    if (await File(path).exists()) {
+      debugPrint('Database file confirmed at $path');
+    } else {
+      debugPrint('Database file not found at $path after opening');
+    }
+
+    return db;
   }
 
   Future<bool> databaseExists() async {
     final directory = await getApplicationDocumentsDirectory();
     final path = join(directory.path, '$databaseName.db');
-    return await File(path).exists();
+    bool exists = await File(path).exists();
+    debugPrint('Checking if database exists at $path: $exists');
+    return exists;
   }
 
   Future<void> deleteDatabase() async {
@@ -45,6 +59,15 @@ class DatabaseHelper {
     final path = join(directory.path, '$databaseName.db');
     await File(path).delete();
     _database = null;
+    debugPrint('Deleted database at $path');
+  }
+
+  Future<void> close() async {
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+      debugPrint('Database connection closed for $databaseName');
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {

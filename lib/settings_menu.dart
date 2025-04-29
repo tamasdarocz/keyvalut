@@ -12,8 +12,10 @@ import 'package:keyvalut/services/auth_service.dart';
 import 'package:keyvalut/services/export_services.dart';
 import 'package:keyvalut/services/import_service.dart';
 import 'package:keyvalut/views/dialogs/delete_confirmation_dialog.dart';
+import 'package:keyvalut/views/dialogs/rename_database_dialog.dart';
 
 import 'data/database_provider.dart';
+import 'data/database_helper.dart';
 
 /// A settings menu widget that allows users to manage app settings, including theme, authentication, and database operations.
 class SettingsMenu extends StatefulWidget {
@@ -69,6 +71,9 @@ class _SettingsMenuState extends State<SettingsMenu> {
   }
 
   /// Loads the current database name and initializes authentication settings.
+  ///
+  /// Retrieves the current database name from [SharedPreferences] and sets up
+  /// the [AuthService]. If no database is set, redirects to the login screen.
   Future<void> _loadDatabase() async {
     final prefs = await SharedPreferences.getInstance();
     final databaseName = prefs.getString('currentDatabase');
@@ -86,10 +91,14 @@ class _SettingsMenuState extends State<SettingsMenu> {
   }
 
   /// Loads biometric authentication settings for the database.
+  ///
+  /// Checks if biometric authentication is available and enabled using the
+  /// [AuthService], and updates the state accordingly.
   Future<void> _loadBiometricSettings() async {
     if (_authService == null) return;
     final available = await _authService!.isBiometricAvailable();
     final enabled = await _authService!.isBiometricEnabled();
+    print('Biometric settings - available: $available, enabled: $enabled'); // Debug log
     if (mounted) {
       setState(() {
         _biometricAvailable = available;
@@ -98,7 +107,10 @@ class _SettingsMenuState extends State<SettingsMenu> {
     }
   }
 
-  /// Loads timeout settings from SharedPreferences.
+  /// Loads timeout settings from [SharedPreferences].
+  ///
+  /// Retrieves the timeout duration, immediate lock setting, and biometrics on
+  /// resume setting, and updates the state.
   Future<void> _loadTimeoutSettings() async {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
@@ -111,6 +123,8 @@ class _SettingsMenuState extends State<SettingsMenu> {
   }
 
   /// Toggles biometric authentication and updates the settings.
+  ///
+  /// - [value]: The new state of biometric authentication (enabled or disabled).
   Future<void> _toggleBiometric(bool value) async {
     if (_authService == null) return;
     await _authService!.setBiometricEnabled(value);
@@ -121,6 +135,8 @@ class _SettingsMenuState extends State<SettingsMenu> {
   }
 
   /// Sets the timeout duration for automatic logout.
+  ///
+  /// - [value]: The new timeout duration in minutes.
   Future<void> _setTimeoutDuration(int value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('timeoutDuration', value);
@@ -131,6 +147,8 @@ class _SettingsMenuState extends State<SettingsMenu> {
   }
 
   /// Toggles immediate locking when the app is sent to the background.
+  ///
+  /// - [value]: The new state of immediate locking (enabled or disabled).
   Future<void> _toggleLockImmediately(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('lockImmediately', value);
@@ -141,6 +159,8 @@ class _SettingsMenuState extends State<SettingsMenu> {
   }
 
   /// Toggles requiring biometrics on app resume.
+  ///
+  /// - [value]: The new state of requiring biometrics on resume (enabled or disabled).
   Future<void> _toggleRequireBiometricsOnResume(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('requireBiometricsOnResume', value);
@@ -151,6 +171,8 @@ class _SettingsMenuState extends State<SettingsMenu> {
   }
 
   /// Shows a confirmation dialog for logging out.
+  ///
+  /// If the user confirms, calls the [onLogout] callback and closes the settings menu.
   void _confirmLogout() {
     showDialog(
       context: context,
@@ -180,9 +202,10 @@ class _SettingsMenuState extends State<SettingsMenu> {
   /// Returns the exported file name if successful, null otherwise.
   Future<String?> _showExportDialog() async {
     _fileNameController.text = 'keyvault_backup_${_currentDatabase ?? "backup"}';
+    final dialogContext = context;
     final fileName = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
+      context: dialogContext,
+      builder: (context) => AlertDialog(
         title: const Text('Export Data'),
         content: TextField(
           controller: _fileNameController,
@@ -194,19 +217,19 @@ class _SettingsMenuState extends State<SettingsMenu> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext, null),
+            onPressed: () => Navigator.pop(context, null),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
               final name = _fileNameController.text.trim();
               if (name.isEmpty) {
-                ScaffoldMessenger.of(dialogContext).showSnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('File name cannot be empty')),
                 );
                 return;
               }
-              Navigator.pop(dialogContext, name);
+              Navigator.pop(context, name);
             },
             child: const Text('Export'),
           ),
@@ -217,16 +240,16 @@ class _SettingsMenuState extends State<SettingsMenu> {
     if (fileName == null || !mounted) return null;
 
     try {
-      await ExportService.exportData(context, fileName);
+      await ExportService.exportData(dialogContext, fileName);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(dialogContext).showSnackBar(
           const SnackBar(content: Text('Data exported successfully')),
         );
       }
       return fileName;
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(dialogContext).showSnackBar(
           SnackBar(content: Text('Error exporting data: $e')),
         );
       }
@@ -235,6 +258,9 @@ class _SettingsMenuState extends State<SettingsMenu> {
   }
 
   /// Shows a dialog to display the recovery key for the database.
+  ///
+  /// Retrieves the recovery key using [AuthService] and displays it in a
+  /// [RecoveryKeyDialog]. Shows a toast message if the recovery key is not set.
   Future<void> _showRecoveryKeyDialog() async {
     if (_authService == null) return;
     final recoveryKey = await _authService!.getRecoveryKey();
@@ -245,12 +271,17 @@ class _SettingsMenuState extends State<SettingsMenu> {
     await showDialog(
       context: context,
       builder: (dialogContext) => RecoveryKeyDialog(
-        recoveryKey: recoveryKey, databaseName: '$_currentDatabase',
+        recoveryKey: recoveryKey,
+        databaseName: _currentDatabase!,
       ),
     );
   }
 
   /// Shows a dialog to reset the master credential (PIN or password).
+  ///
+  /// Displays a [ResetCredentialDialog] to allow the user to reset their
+  /// master credential. On successful reset, updates the credential mode
+  /// and logs the user out.
   Future<void> _showResetMasterCredentialDialog() async {
     if (_authService == null) return;
 
@@ -274,6 +305,22 @@ class _SettingsMenuState extends State<SettingsMenu> {
     );
   }
 
+  /// Updates the current database name and AuthService after a successful rename.
+  ///
+  /// - [newDatabaseName]: The new name of the database.
+  Future<void> _onDatabaseRenamed(String newDatabaseName) async {
+    if (mounted) {
+      setState(() {
+        _currentDatabase = newDatabaseName;
+        _authService = AuthService(newDatabaseName);
+      });
+      // Reload settings to reflect the new database name
+      await _loadBiometricSettings();
+      await _loadCredentialMode();
+      await _loadTimeoutSettings();
+    }
+  }
+
   /// Shows a dialog to confirm database deletion, with an option to export data first.
   ///
   /// The user is first prompted to export their data. If they proceed, they must
@@ -283,42 +330,41 @@ class _SettingsMenuState extends State<SettingsMenu> {
     if (_authService == null || _currentDatabase == null) return;
 
     // Step 1: Show the export prompt dialog
+    final dialogContext = context;
     final shouldProceed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
+      context: dialogContext,
+      builder: (context) => AlertDialog(
         title: const Text('Export Data Before Deletion'),
         content: const Text('Would you like to export your data before deleting the database? This action cannot be undone.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false), // Cancel deletion
+            onPressed: () => Navigator.pop(context, false), // Cancel deletion
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true), // Skip export, proceed to deletion
+            onPressed: () => Navigator.pop(context, true), // Skip export, proceed to deletion
             child: const Text('Skip'),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(dialogContext); // Close this dialog
+              Navigator.pop(context); // Close this dialog
               final exportResult = await _showExportDialog();
-              if (exportResult != null) {
+              if (exportResult != null && mounted) {
                 // Export successful, proceed to deletion confirmation
-                if (mounted) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DeleteConfirmationDialog(
-                        authService: _authService!,
-                        isPinMode: _isPinMode,
-                        currentDatabase: _currentDatabase!,
-                        onDeleteSuccess: () {
-                          Navigator.pop(context); // Close settings menu
-                          widget.onLogout(); // Log out the user
-                        },
-                      ),
+                Navigator.push(
+                  dialogContext,
+                  MaterialPageRoute(
+                    builder: (context) => DeleteConfirmationDialog(
+                      authService: _authService!,
+                      isPinMode: _isPinMode,
+                      currentDatabase: _currentDatabase!,
+                      onDeleteSuccess: () {
+                        Navigator.pop(dialogContext); // Close settings menu
+                        widget.onLogout(); // Log out the user
+                      },
                     ),
-                  );
-                }
+                  ),
+                );
               }
             },
             child: const Text('Export'),
@@ -331,14 +377,14 @@ class _SettingsMenuState extends State<SettingsMenu> {
 
     // Step 2: Show the deletion confirmation dialog if the user skipped export
     await Navigator.push(
-      context,
+      dialogContext,
       MaterialPageRoute(
         builder: (context) => DeleteConfirmationDialog(
           authService: _authService!,
           isPinMode: _isPinMode,
           currentDatabase: _currentDatabase!,
           onDeleteSuccess: () {
-            Navigator.pop(context); // Close settings menu
+            Navigator.pop(dialogContext); // Close settings menu
             widget.onLogout(); // Log out the user
           },
         ),
@@ -533,6 +579,26 @@ class _SettingsMenuState extends State<SettingsMenu> {
                           title: Text('Database Management'),
                         ),
                         ListTile(
+                          leading: const Icon(Icons.edit, color: Colors.blue),
+                          title: const Text('Rename Database', style: TextStyle(color: Colors.blue)),
+                          onTap: () async {
+                            if (_authService == null || _currentDatabase == null) return;
+                            final newDatabaseName = await showDialog<String>(
+                              context: context,
+                              builder: (dialogContext) => RenameDatabaseDialog(
+                                currentDatabase: _currentDatabase!,
+                                authService: _authService!,
+                                onRenameSuccess: () {
+                                  // Optional: Add side effects here if needed
+                                },
+                              ),
+                            );
+                            if (newDatabaseName != null) {
+                              _onDatabaseRenamed(newDatabaseName);
+                            }
+                          },
+                        ),
+                        ListTile(
                           leading: const Icon(Icons.delete_forever, color: Colors.red),
                           title: const Text('Delete Database', style: TextStyle(color: Colors.red)),
                           onTap: _showDeleteDatabaseDialog,
@@ -549,10 +615,11 @@ class _SettingsMenuState extends State<SettingsMenu> {
                           padding: const EdgeInsets.symmetric(horizontal: 4.0),
                           child: ElevatedButton(
                             onPressed: () async {
+                              final localContext = context;
                               try {
-                                await ImportService.importData(context);
+                                await ImportService.importData(localContext);
                                 if (mounted) {
-                                  final provider = Provider.of<DatabaseProvider>(context, listen: false);
+                                  final provider = Provider.of<DatabaseProvider>(localContext, listen: false);
                                   await provider.loadLogins();
                                   await provider.loadCreditCards();
                                   await provider.loadArchivedItems();

@@ -65,13 +65,26 @@ class _BillingAddressInputState extends State<BillingAddressInput> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildField('Street Address', streetController, fill),
-        const SizedBox(height: 8),
-        _buildField('City', cityController, fill),
-        const SizedBox(height: 8),
-        _buildField('State/Province', stateController, fill),
-        const SizedBox(height: 8),
-        _buildField('Postal Code', postalCodeController, fill),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: _buildField('City', cityController, fill),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: _buildField('State', stateController, fill),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: _buildField('Postal Code', postalCodeController, fill),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
         _buildField('Country', countryController, fill),
       ],
     );
@@ -82,10 +95,24 @@ class _BillingAddressInputState extends State<BillingAddressInput> {
       controller: controller,
       decoration: InputDecoration(
         labelText: label,
-        border: const OutlineInputBorder(),
+        labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.grey, width: 1),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.grey, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.blue, width: 1.5),
+        ),
         filled: true,
         fillColor: fill,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       ),
+      style: const TextStyle(fontSize: 14),
     );
   }
 }

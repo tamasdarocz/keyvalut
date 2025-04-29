@@ -10,6 +10,11 @@ import '../textforms/create_element_form.dart';
 import 'login_screen.dart';
 import '../../data/database_helper.dart';
 
+/// The main home page of the app, displaying tabs for credentials, payments, and notes.
+///
+/// This page includes a bottom navigation bar to switch between tabs and a drawer
+/// for accessing the settings menu. It also handles app lifecycle events to manage
+/// locking behavior based on user settings.
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -49,6 +54,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     super.dispose();
   }
 
+  /// Loads the current database name and initializes the [DatabaseHelper].
+  ///
+  /// Retrieves the current database name from [SharedPreferences] and sets up
+  /// the [DatabaseHelper]. Updates the [DatabaseProvider] with the same database
+  /// name. If no database is set, redirects to the login screen.
   Future<void> _loadDatabase() async {
     final prefs = await SharedPreferences.getInstance();
     final databaseName = prefs.getString('currentDatabase');
@@ -68,6 +78,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
+  /// Loads app settings from [SharedPreferences].
+  ///
+  /// Retrieves the timeout duration, immediate lock setting, and biometrics on
+  /// resume setting, and updates the state.
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -100,6 +114,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
+  /// Logs the user out and navigates to the login screen.
+  ///
+  /// - [context]: The build context for navigation.
   void _logout(BuildContext context) {
     final databaseProvider = Provider.of<DatabaseProvider>(context, listen: false);
 
@@ -110,6 +127,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     );
   }
 
+  /// Updates the current tab index in the bottom navigation bar.
+  ///
+  /// - [index]: The index of the tab to navigate to.
   void _navigateBottomBar(int index) => setState(() => _currentPageIndex = index);
 
   @override
@@ -123,19 +143,28 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              _dbHelper!.databaseName,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              _tabTitles[_currentPageIndex],
-              style: const TextStyle(fontSize: 14),
-            ),
-          ],
+        title: Consumer<DatabaseProvider>(
+          builder: (context, provider, child) {
+            // Update _dbHelper if the database name has changed
+            if (_dbHelper!.databaseName != provider.databaseName) {
+              _dbHelper = DatabaseHelper(provider.databaseName);
+              _currentDatabase = provider.databaseName;
+            }
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  provider.databaseName.isNotEmpty ? provider.databaseName : 'KeyVault',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  _tabTitles[_currentPageIndex],
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ],
+            );
+          },
         ),
         leading: Builder(
           builder: (context) => IconButton(
