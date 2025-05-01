@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:keyvalut/views/Widgets/custom_divider.dart';
 
 class BillingAddressInput extends StatefulWidget {
   final String? initialAddress;
-  final Color? fillColor;
 
   const BillingAddressInput({
     super.key,
     this.initialAddress,
-    this.fillColor,
   });
 
   @override
-  State<BillingAddressInput> createState() => _BillingAddressInputState();
+  State<BillingAddressInput> createState() => BillingAddressInputState();
 }
 
-class _BillingAddressInputState extends State<BillingAddressInput> {
+class BillingAddressInputState extends State<BillingAddressInput> {
   final streetController = TextEditingController();
   final cityController = TextEditingController();
   final stateController = TextEditingController();
@@ -26,9 +23,8 @@ class _BillingAddressInputState extends State<BillingAddressInput> {
   void initState() {
     super.initState();
     if (widget.initialAddress != null) {
-      // Basic parsing assuming a simple multi-line format
       final lines = widget.initialAddress!.split('\n');
-      if (lines.length > 0) streetController.text = lines[0];
+      if (lines.isNotEmpty) streetController.text = lines[0];
       if (lines.length > 1) cityController.text = lines[1];
       if (lines.length > 2) stateController.text = lines[2];
       if (lines.length > 3) postalCodeController.text = lines[3];
@@ -57,26 +53,47 @@ class _BillingAddressInputState extends State<BillingAddressInput> {
     ].where((part) => part.isNotEmpty).join('\n');
   }
 
+  /// Validates the form and returns true if valid.
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final fill = widget.fillColor ?? theme.cardColor;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Billing address'),
-        Divider(),
+        const Text(
+          'Billing address',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const Divider(),
         const SizedBox(height: 4),
         Row(
           children: [
             Expanded(
-                flex:2,
-                child: _buildField('Country', countryController, fill)),
-            SizedBox(width: 12),
+              flex: 2,
+              child: TextFormField(
+                controller: countryController,
+                decoration: InputDecoration(
+                  labelText: 'Country',
+                  labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 1)
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
             Expanded(
               flex: 2,
-              child: _buildField('State', stateController, fill),
+              child: TextFormField(
+                controller: stateController,
+                decoration: InputDecoration(
+                  labelText: 'State',
+                  border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 1)
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -85,46 +102,44 @@ class _BillingAddressInputState extends State<BillingAddressInput> {
           children: [
             Expanded(
               flex: 2,
-              child: _buildField('City', cityController, fill),
+              child: TextFormField(
+                controller: cityController,
+                decoration: InputDecoration(
+                  labelText: 'City',
+                  border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 1)
+                  ),
+                ),
+              ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               flex: 2,
-              child: _buildField('Postal Code', postalCodeController, fill),
+              child: TextFormField(
+                controller: postalCodeController,
+                decoration: InputDecoration(
+                  labelText: 'Postal Code',
+                  border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 1)
+                  ),
+                ),
+              ),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        _buildField('Street Address', streetController, fill),
-        SizedBox(height: 4),
-        Divider()
+        TextFormField(
+          controller: streetController,
+          decoration: InputDecoration(
+            labelText: 'Street Address',
+            border: OutlineInputBorder(
+                borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 1)
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Divider(),
       ],
-    );
-  }
-
-  Widget _buildField(String label, TextEditingController controller, Color fill) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.white, width: 1),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.white, width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1),
-        ),
-        filled: true,
-        fillColor: fill,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      ),
-      style: const TextStyle(fontSize: 14),
     );
   }
 }

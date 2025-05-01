@@ -8,7 +8,6 @@ class UsernameInputField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
-      style: TextStyle(fontSize: 14),
       decoration: InputDecoration(
         prefixIcon: Icon(Icons.person),
         hintText: 'Required',

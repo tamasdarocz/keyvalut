@@ -34,7 +34,6 @@ class _LoginsWidgetState extends State<LoginsWidget> {
         _dbHelper = DatabaseHelper(databaseName);
       });
     } else {
-      // Redirect to login if no database is set
       Navigator.pushReplacementNamed(context, '/login');
     }
   }

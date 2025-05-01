@@ -6,12 +6,14 @@ class Logins {
   final String username;
   final String password;
   final String? totpSecret;
+  final String? billingAddress; // New field
+  final String? phoneNumber; // New field
   final bool isArchived;
   final bool isDeleted;
   final String? archivedAt;
   final String? deletedAt;
-  final String createdAt; // Added created_at
-  final String updatedAt; // Added updated_at
+  final String createdAt;
+  final String updatedAt;
 
   Logins({
     this.id,
@@ -21,12 +23,14 @@ class Logins {
     required this.username,
     required this.password,
     this.totpSecret,
+    this.billingAddress,
+    this.phoneNumber,
     this.isArchived = false,
     this.isDeleted = false,
     this.archivedAt,
     this.deletedAt,
-    String? createdAt, // Allow createdAt to be passed in (e.g., from database)
-    String? updatedAt, // Allow updatedAt to be passed in (e.g., from database)
+    String? createdAt,
+    String? updatedAt,
   })  : createdAt = createdAt ?? DateTime.now().toIso8601String(),
         updatedAt = updatedAt ?? DateTime.now().toIso8601String();
 
@@ -39,12 +43,14 @@ class Logins {
       'username': username,
       'password': password,
       'totpSecret': totpSecret,
+      'billing_address': billingAddress, // Add new field
+      'phone_number': phoneNumber, // Add new field
       'is_archived': isArchived ? 1 : 0,
       'is_deleted': isDeleted ? 1 : 0,
       'archived_at': archivedAt,
       'deleted_at': deletedAt,
-      'created_at': createdAt, // Include created_at
-      'updated_at': updatedAt, // Include updated_at
+      'created_at': createdAt,
+      'updated_at': updatedAt,
     };
   }
 
@@ -57,12 +63,14 @@ class Logins {
       username: map['username'],
       password: map['password'],
       totpSecret: map['totpSecret'],
+      billingAddress: map['billing_address'], // Add new field
+      phoneNumber: map['phone_number'], // Add new field
       isArchived: map['is_archived'] == 1,
       isDeleted: map['is_deleted'] == 1,
       archivedAt: map['archived_at'],
       deletedAt: map['deleted_at'],
-      createdAt: map['created_at'], // Read created_at
-      updatedAt: map['updated_at'], // Read updated_at
+      createdAt: map['created_at'],
+      updatedAt: map['updated_at'],
     );
   }
 
@@ -75,12 +83,14 @@ class Logins {
       'username': username,
       'password': password,
       'totpSecret': totpSecret,
+      'billingAddress': billingAddress, // Add new field
+      'phoneNumber': phoneNumber, // Add new field
       'isArchived': isArchived,
       'isDeleted': isDeleted,
       'archivedAt': archivedAt,
       'deletedAt': deletedAt,
-      'createdAt': createdAt, // Include createdAt
-      'updatedAt': updatedAt, // Include updatedAt
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
     };
   }
 
@@ -93,12 +103,14 @@ class Logins {
       username: json['username'] as String,
       password: json['password'] as String,
       totpSecret: json['totpSecret'] as String?,
+      billingAddress: json['billingAddress'] as String?, // Add new field
+      phoneNumber: json['phoneNumber'] as String?, // Add new field
       isArchived: json['isArchived'] as bool? ?? false,
       isDeleted: json['isDeleted'] as bool? ?? false,
       archivedAt: json['archivedAt'] as String?,
       deletedAt: json['deletedAt'] as String?,
-      createdAt: json['createdAt'] as String?, // Read createdAt
-      updatedAt: json['updatedAt'] as String?, // Read updatedAt
+      createdAt: json['createdAt'] as String?,
+      updatedAt: json['updatedAt'] as String?,
     );
   }
 
@@ -110,12 +122,14 @@ class Logins {
       'username': username,
       'password': password,
       'totpSecret': totpSecret,
+      'billingAddress': billingAddress, // Add new field
+      'phoneNumber': phoneNumber, // Add new field
       'isArchived': isArchived,
       'isDeleted': isDeleted,
       'archivedAt': archivedAt,
       'deletedAt': deletedAt,
-      'createdAt': createdAt, // Include createdAt
-      'updatedAt': updatedAt, // Include updatedAt
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
     };
   }
 }
@@ -130,13 +144,14 @@ class CreditCard {
   final String cvv;
   final String? card_type;
   final String? billing_address;
+  final String? phoneNumber;
   final String? notes;
   final bool isArchived;
   final String? archivedAt;
   final bool isDeleted;
   final String? deletedAt;
-  final String createdAt; // Added created_at
-  final String updatedAt; // Added updated_at
+  final String createdAt;
+  final String updatedAt;
 
   CreditCard({
     this.id,
@@ -148,13 +163,14 @@ class CreditCard {
     required this.cvv,
     this.card_type,
     this.billing_address,
+    this.phoneNumber,
     this.notes,
     this.isArchived = false,
     this.archivedAt,
     this.isDeleted = false,
     this.deletedAt,
-    String? createdAt, // Allow createdAt to be passed in
-    String? updatedAt, // Allow updatedAt to be passed in
+    String? createdAt,
+    String? updatedAt,
   })  : createdAt = createdAt ?? DateTime.now().toIso8601String(),
         updatedAt = updatedAt ?? DateTime.now().toIso8601String();
 
@@ -175,13 +191,14 @@ class CreditCard {
       'cvv': cvv,
       'card_type': card_type,
       'billing_address': billing_address,
+      'phone_number': phoneNumber, // Add new field
       'notes': notes,
       'is_archived': isArchived ? 1 : 0,
       'archived_at': archivedAt,
       'is_deleted': isDeleted ? 1 : 0,
       'deleted_at': deletedAt,
-      'created_at': createdAt, // Include created_at
-      'updated_at': updatedAt, // Include updated_at
+      'created_at': createdAt,
+      'updated_at': updatedAt,
     };
   }
 
@@ -196,13 +213,14 @@ class CreditCard {
       cvv: map['cvv'],
       card_type: map['card_type'],
       billing_address: map['billing_address'],
+      phoneNumber: map['phone_number'], // Add new field
       notes: map['notes'],
       isArchived: map['is_archived'] == 1,
       archivedAt: map['archived_at'],
       isDeleted: map['is_deleted'] == 1,
       deletedAt: map['deleted_at'],
-      createdAt: map['created_at'], // Read created_at
-      updatedAt: map['updated_at'], // Read updated_at
+      createdAt: map['created_at'],
+      updatedAt: map['updated_at'],
     );
   }
 
@@ -217,13 +235,14 @@ class CreditCard {
       'cvv': cvv,
       'card_type': card_type,
       'billing_address': billing_address,
+      'phoneNumber': phoneNumber, // Add new field
       'notes': notes,
       'isArchived': isArchived,
       'archivedAt': archivedAt,
       'isDeleted': isDeleted,
       'deletedAt': deletedAt,
-      'createdAt': createdAt, // Include createdAt
-      'updatedAt': updatedAt, // Include updatedAt
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
     };
   }
 
@@ -238,13 +257,14 @@ class CreditCard {
       cvv: json['cvv'] as String,
       card_type: json['card_type'] as String?,
       billing_address: json['billing_address'] as String?,
+      phoneNumber: json['phoneNumber'] as String?, // Add new field
       notes: json['notes'] as String?,
       isArchived: json['isArchived'] as bool? ?? false,
       archivedAt: json['archivedAt'] as String?,
       isDeleted: json['isDeleted'] as bool? ?? false,
       deletedAt: json['deletedAt'] as String?,
-      createdAt: json['createdAt'] as String?, // Read createdAt
-      updatedAt: json['updatedAt'] as String?, // Read updatedAt
+      createdAt: json['createdAt'] as String?,
+      updatedAt: json['updatedAt'] as String?,
     );
   }
 
@@ -258,13 +278,14 @@ class CreditCard {
       'cvv': cvv,
       'card_type': card_type,
       'billing_address': billing_address,
+      'phoneNumber': phoneNumber, // Add new field
       'notes': notes,
       'isArchived': isArchived,
       'archivedAt': archivedAt,
       'isDeleted': isDeleted,
       'deletedAt': deletedAt,
-      'createdAt': createdAt, // Include createdAt
-      'updatedAt': updatedAt, // Include updatedAt
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
     };
   }
 }
@@ -277,8 +298,8 @@ class Note {
   final String? archivedAt;
   final bool isDeleted;
   final String? deletedAt;
-  final String createdAt; // Added created_at
-  final String updatedAt; // Added updated_at
+  final String createdAt;
+  final String updatedAt;
 
   Note({
     this.id,
@@ -288,8 +309,8 @@ class Note {
     this.archivedAt,
     this.isDeleted = false,
     this.deletedAt,
-    String? createdAt, // Allow createdAt to be passed in
-    String? updatedAt, // Allow updatedAt to be passed in
+    String? createdAt,
+    String? updatedAt,
   })  : createdAt = createdAt ?? DateTime.now().toIso8601String(),
         updatedAt = updatedAt ?? DateTime.now().toIso8601String();
 
@@ -302,8 +323,8 @@ class Note {
       'archived_at': archivedAt,
       'is_deleted': isDeleted ? 1 : 0,
       'deleted_at': deletedAt,
-      'created_at': createdAt, // Include created_at
-      'updated_at': updatedAt, // Include updated_at
+      'created_at': createdAt,
+      'updated_at': updatedAt,
     };
   }
 
@@ -316,8 +337,8 @@ class Note {
       archivedAt: map['archived_at'],
       isDeleted: map['is_deleted'] == 1,
       deletedAt: map['deleted_at'],
-      createdAt: map['created_at'], // Read created_at
-      updatedAt: map['updated_at'], // Read updated_at
+      createdAt: map['created_at'],
+      updatedAt: map['updated_at'],
     );
   }
 
@@ -330,8 +351,8 @@ class Note {
       'archivedAt': archivedAt,
       'isDeleted': isDeleted,
       'deletedAt': deletedAt,
-      'createdAt': createdAt, // Include createdAt
-      'updatedAt': updatedAt, // Include updatedAt
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
     };
   }
 
@@ -344,8 +365,8 @@ class Note {
       archivedAt: json['archivedAt'] as String?,
       isDeleted: json['isDeleted'] as bool? ?? false,
       deletedAt: json['deletedAt'] as String?,
-      createdAt: json['createdAt'] as String?, // Read createdAt
-      updatedAt: json['updatedAt'] as String?, // Read updatedAt
+      createdAt: json['createdAt'] as String?,
+      updatedAt: json['updatedAt'] as String?,
     );
   }
 
@@ -357,8 +378,8 @@ class Note {
       'archivedAt': archivedAt,
       'isDeleted': isDeleted,
       'deletedAt': deletedAt,
-      'createdAt': createdAt, // Include createdAt
-      'updatedAt': updatedAt, // Include updatedAt
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
     };
   }
 }

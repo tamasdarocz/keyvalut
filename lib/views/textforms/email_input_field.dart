@@ -13,7 +13,7 @@ class EmailInputField extends StatelessWidget {
 
       decoration: InputDecoration(
         prefixIcon: Icon(Icons.email),
-        label: Text('Email:'),
+        label: Text('Email'),
         border: OutlineInputBorder(
           borderSide: BorderSide(color:Theme.of(context).colorScheme.primary, width: 1),
         ),

@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/views/Widgets/card_list_view.dart';
 import 'package:keyvalut/views/textforms/card_input_form.dart';
 import '../../data/database_helper.dart';
-import '../Widgets/credentials_widget.dart';
 
 class PaymentsTab extends StatefulWidget {
   const PaymentsTab({super.key});
@@ -13,7 +12,6 @@ class PaymentsTab extends StatefulWidget {
 }
 
 class _PaymentsTabState extends State<PaymentsTab> {
-  String? _currentDatabase;
   DatabaseHelper? _dbHelper;
 
   @override
@@ -27,7 +25,6 @@ class _PaymentsTabState extends State<PaymentsTab> {
     final databaseName = prefs.getString('currentDatabase');
     if (databaseName != null) {
       setState(() {
-        _currentDatabase = databaseName;
         _dbHelper = DatabaseHelper(databaseName);
       });
     } else {

@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-
 import '../../services/qr_scanner.dart';
 
 class TotpSecretInputField extends StatefulWidget {
   final TextEditingController controller;
 
   const TotpSecretInputField({
-    Key? key,
+    super.key,
     required this.controller,
-  }) : super(key: key);
+  });
 
   @override
   State<TotpSecretInputField> createState() => _TotpSecretInputFieldState();
@@ -25,8 +24,7 @@ class _TotpSecretInputFieldState extends State<TotpSecretInputField> {
       controller: widget.controller,
       obscureText: _obscureText,
       decoration: InputDecoration(
-        border: OutlineInputBorder( borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.primary, width: 1),),
+        border: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1)),
         labelText: 'TOTP Secret',
         hintText: 'Enter TOTP secret key for authenticator',
         prefixIcon: const Icon(Icons.security),

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:keyvalut/views/textforms/billing_adress_input_form.dart';
 import '../../data/database_helper.dart';
 import '../../data/database_model.dart';
 import '../Widgets/top_message.dart';
+import 'billing_adress_input_form.dart';
 
 class CardInputForm extends StatefulWidget {
   final DatabaseHelper dbHelper;
@@ -28,8 +28,10 @@ class _CardInputFormState extends State<CardInputForm> {
   final _expiryDateController = TextEditingController();
   final _cvvController = TextEditingController();
   final _cardTypeController = TextEditingController();
-  final _billingAddressController = TextEditingController();
   final _notesController = TextEditingController();
+
+  // Key to access the BillingAddressInput state
+  final _billingAddressKey = GlobalKey<BillingAddressInputState>();
 
   @override
   void initState() {
@@ -42,7 +44,6 @@ class _CardInputFormState extends State<CardInputForm> {
       _expiryDateController.text = widget.card!.expiry_date;
       _cvvController.text = widget.card!.cvv;
       _cardTypeController.text = widget.card!.card_type ?? '';
-      _billingAddressController.text = widget.card!.billing_address ?? '';
       _notesController.text = widget.card!.notes ?? '';
     }
   }
@@ -56,12 +57,12 @@ class _CardInputFormState extends State<CardInputForm> {
     _expiryDateController.dispose();
     _cvvController.dispose();
     _cardTypeController.dispose();
-    _billingAddressController.dispose();
     _notesController.dispose();
     super.dispose();
   }
 
   Future<void> _saveCard() async {
+    // Validate the form and the billing address
     if (_formKey.currentState!.validate()) {
       final card = CreditCard(
         id: widget.card?.id,
@@ -72,7 +73,9 @@ class _CardInputFormState extends State<CardInputForm> {
         expiry_date: _expiryDateController.text,
         cvv: _cvvController.text,
         card_type: _cardTypeController.text.isNotEmpty ? _cardTypeController.text : null,
-        billing_address: _billingAddressController.text.isNotEmpty ? _billingAddressController.text : null,
+        billing_address: _billingAddressKey.currentState!.getFormattedAddress().isNotEmpty
+            ? _billingAddressKey.currentState!.getFormattedAddress()
+            : null,
         notes: _notesController.text.isNotEmpty ? _notesController.text : null,
         isArchived: widget.card?.isArchived ?? false,
         archivedAt: widget.card?.archivedAt,
@@ -113,15 +116,13 @@ class _CardInputFormState extends State<CardInputForm> {
           key: _formKey,
           child: ListView(
             children: [
-              SizedBox(height: 12,),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(
                   labelText: 'Title',
                   hintText: 'Required',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: theme.cardColor,
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (value) => value == null || value.isEmpty ? 'Enter a title' : null,
               ),
@@ -131,9 +132,7 @@ class _CardInputFormState extends State<CardInputForm> {
                 decoration: InputDecoration(
                   labelText: 'Cardholder Name',
                   hintText: 'Required',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: theme.cardColor,
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (value) => value == null || value.isEmpty ? 'Enter cardholder name' : null,
               ),
@@ -143,9 +142,7 @@ class _CardInputFormState extends State<CardInputForm> {
                 decoration: InputDecoration(
                   labelText: 'Card Number',
                   hintText: 'Required',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: theme.cardColor,
+                  border: const OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.number,
                 inputFormatters: [
@@ -164,55 +161,51 @@ class _CardInputFormState extends State<CardInputForm> {
                   Flexible(
                     flex: 2,
                     child: TextFormField(
-                        textAlign: TextAlign.center,
-                        controller: _expiryDateController,
-                        decoration: InputDecoration(
-                          labelText: 'Expiry (MM/YY)',
-                          hintText: 'Required',
-                          border: OutlineInputBorder(),
-                          filled: true,
-                          fillColor: theme.cardColor,
-                        ),
-                        keyboardType: TextInputType.datetime,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[\d/]')),
-                          LengthLimitingTextInputFormatter(5),
-                          _ExpiryDateFormatter(),
-                        ],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Enter expiry';
-                          if (!RegExp(r'^(0[1-9]|1[0-2])\/\d{2}$').hasMatch(value)) {
-                            return 'Use MM/YY';
-                          }
-                          return null;
-                        },
+                      textAlign: TextAlign.center,
+                      controller: _expiryDateController,
+                      decoration: InputDecoration(
+                        labelText: 'Expiry (MM/YY)',
+                        hintText: 'Required',
+                        border: const OutlineInputBorder(),
                       ),
+                      keyboardType: TextInputType.datetime,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[\d/]')),
+                        LengthLimitingTextInputFormatter(5),
+                        _ExpiryDateFormatter(),
+                      ],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return 'Enter expiry';
+                        if (!RegExp(r'^(0[1-9]|1[0-2])/\d{2}$').hasMatch(value)) {
+                          return 'Use MM/YY';
+                        }
+                        return null;
+                      },
+                    ),
                   ),
                   const SizedBox(width: 12),
-                   Flexible(
-                     flex: 2,
-                     child: TextFormField(
-                        textAlign: TextAlign.center,
-                        controller: _cvvController,
-                        decoration: InputDecoration(
-                          labelText: 'CVV',
-                          hintText: 'Required',
-                          border: OutlineInputBorder(),
-                          filled: true,
-                          fillColor: theme.cardColor,
-                        ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(3),
-                        ],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Enter CVV';
-                          if (value.length != 3) return 'Must be 3 digits';
-                          return null;
-                        },
+                  Flexible(
+                    flex: 2,
+                    child: TextFormField(
+                      textAlign: TextAlign.center,
+                      controller: _cvvController,
+                      decoration: InputDecoration(
+                        labelText: 'CVV',
+                        hintText: 'Required',
+                        border: const OutlineInputBorder(),
                       ),
-                   ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(3),
+                      ],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return 'Enter CVV';
+                        if (value.length != 3) return 'Must be 3 digits';
+                        return null;
+                      },
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -221,42 +214,38 @@ class _CardInputFormState extends State<CardInputForm> {
                   Flexible(
                     flex: 2,
                     child: TextFormField(
-                        controller: _bankNameController,
-                        decoration: InputDecoration(
-                          labelText: 'Bank Name',
-                          border: OutlineInputBorder(),
-                          filled: true,
-                          fillColor: theme.cardColor,
-                        ),
+                      controller: _bankNameController,
+                      decoration: InputDecoration(
+                        labelText: 'Bank Name',
+                        border: const OutlineInputBorder(),
                       ),
+                    ),
                   ),
-                 SizedBox(width: 12),
-                 Flexible(
-                   flex: 1,
-                   child: TextFormField(
-                        textAlign: TextAlign.center,
-                        controller: _cardTypeController,
-                        decoration: InputDecoration(
-                          labelText: 'Type',
-                          border: OutlineInputBorder(),
-                          filled: true,
-                          fillColor: theme.cardColor,
-                        ),
+                  const SizedBox(width: 12),
+                  Flexible(
+                    flex: 1,
+                    child: TextFormField(
+                      textAlign: TextAlign.center,
+                      controller: _cardTypeController,
+                      decoration: InputDecoration(
+                        labelText: 'Type',
+                        border: const OutlineInputBorder(),
                       ),
-                 ),
-
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
-              BillingAddressInput(),
+              BillingAddressInput(
+                key: _billingAddressKey,
+                initialAddress: widget.card?.billing_address,
+              ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _notesController,
                 decoration: InputDecoration(
                   labelText: 'Notes (optional)',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: theme.cardColor,
+                  border: const OutlineInputBorder(),
                 ),
                 maxLines: 3,
               ),

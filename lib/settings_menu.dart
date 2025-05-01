@@ -15,7 +15,6 @@ import 'package:keyvalut/views/dialogs/delete_confirmation_dialog.dart';
 import 'package:keyvalut/views/dialogs/rename_database_dialog.dart';
 
 import 'data/database_provider.dart';
-import 'data/database_helper.dart';
 
 /// A settings menu widget that allows users to manage app settings, including theme, authentication, and database operations.
 class SettingsMenu extends StatefulWidget {
@@ -98,7 +97,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
     if (_authService == null) return;
     final available = await _authService!.isBiometricAvailable();
     final enabled = await _authService!.isBiometricEnabled();
-    print('Biometric settings - available: $available, enabled: $enabled'); // Debug log
+    // Debug log
     if (mounted) {
       setState(() {
         _biometricAvailable = available;

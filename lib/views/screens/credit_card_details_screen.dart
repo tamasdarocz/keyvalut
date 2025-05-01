@@ -7,10 +7,10 @@ class CreditCardDetailsPage extends StatefulWidget {
   const CreditCardDetailsPage({super.key, required this.card});
 
   @override
-  _CreditCardDetailsPageState createState() => _CreditCardDetailsPageState();
+  CreditCardDetailsPageState createState() => CreditCardDetailsPageState();
 }
 
-class _CreditCardDetailsPageState extends State<CreditCardDetailsPage> {
+class CreditCardDetailsPageState extends State<CreditCardDetailsPage> {
   bool _isSensitiveVisible = false;
 
   @override

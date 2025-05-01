@@ -36,14 +36,13 @@ class _ChangeLoginScreenState extends State<ChangeLoginScreen> {
   Future<void> _initializeAuthService() async {
     final prefs = await SharedPreferences.getInstance();
     final databaseName = prefs.getString('currentDatabase') ?? 'default';
-    print('ChangeLoginScreen using databaseName: $databaseName'); // Debug log
+    // Debug log
     _authService = AuthService(databaseName);
     await _determineCredentialMode();
   }
 
   Future<void> _determineCredentialMode() async {
     final isPin = await _authService!.isPinMode();
-    print('Database mode (isPin): $isPin');
     setState(() {
       _isCurrentPinMode = isPin;
       _selectedCredentialType = isPin ? CredentialType.pin : CredentialType.password;
