@@ -22,9 +22,7 @@ class AuthService {
   static const int _fourthLockoutDurationSeconds = 120;
   static const int _fifthLockoutDurationSeconds = 300;
 
-  AuthService(String databaseName) : _databaseName = databaseName {
-    print('AuthService - Initializing with databaseName: $databaseName'); // Debug log
-  }
+  AuthService(String databaseName) : _databaseName = databaseName;
 
   /// Updates the database name used by this [AuthService] instance.
   ///

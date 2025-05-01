@@ -3,10 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/data/database_provider.dart';
 import '../../settings_menu.dart';
-import 'credentials_tab.dart';
+import 'logins_widget_tab.dart';
 import 'notes_page.dart';
 import 'payments_tab.dart';
-import '../textforms/create_element_form.dart';
+import 'create_element_form.dart';
 import 'login_screen.dart';
 import '../../data/database_helper.dart';
 

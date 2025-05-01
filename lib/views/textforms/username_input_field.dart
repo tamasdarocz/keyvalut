@@ -10,7 +10,7 @@ class UsernameInputField extends StatelessWidget {
       controller: controller,
       decoration: InputDecoration(
         prefixIcon: Icon(Icons.person),
-        hintText: 'Required',
+        suffixText: 'Required',
         label: Text('Username (Required)'),
         border: OutlineInputBorder(
           borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1),

@@ -10,8 +10,8 @@ class TitleInputField extends StatelessWidget {
       controller: controller,
       decoration: InputDecoration(
         prefixIcon: Icon(Icons.devices),
-        label: Text('Title: (Required)'),
-        hintText: 'Required',
+        label: Text('Title Required'),
+        suffixText: 'Required',
         border: OutlineInputBorder(
           //borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1),

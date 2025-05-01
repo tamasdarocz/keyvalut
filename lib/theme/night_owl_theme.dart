@@ -8,7 +8,6 @@ ThemeData buildNightOwlTheme() {
       primary: Color(0xFFc792ea),   // Purple accent
       secondary: Color(0xFF7fdbca), // Teal accent
       surface: Color(0xFF1d3b53),
-      background: Color(0xFF011627),
     ),
     cardColor: const Color(0xFF1d3b53),
     textTheme: const TextTheme(

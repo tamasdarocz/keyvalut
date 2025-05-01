@@ -7,8 +7,7 @@ ThemeData buildSkyBlueTheme() {
     colorScheme: const ColorScheme.light(
       primary: Color(0xFF4fc1e9),   // Sky blue for app bars, FAB
       secondary: Color(0xFFa0d468), // Soft teal accent
-      surface: Color(0xFFf5faff),   // Near-white panels
-      background: Color(0xFFe6f0fa),
+      surface: Color(0xFFf5faff),
     ),
     cardColor: const Color(0xFFf5faff), // Cards match surface
     textTheme: const TextTheme(

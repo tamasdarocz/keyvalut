@@ -10,7 +10,6 @@ import 'dart:io' show File;
 import 'package:cryptography/cryptography.dart';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:typed_data';
 
 /// A dialog that displays the recovery key and allows the user to download, copy, or share it.
 

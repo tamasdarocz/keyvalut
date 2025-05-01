@@ -6,8 +6,10 @@ class Logins {
   final String username;
   final String password;
   final String? totpSecret;
-  final String? billingAddress; // New field
-  final String? phoneNumber; // New field
+  final String? billingAddress;
+  final String? phoneNumber;
+  final String? billingDate; // New field
+  final int? creditCardId; // New field to link to a credit card
   final bool isArchived;
   final bool isDeleted;
   final String? archivedAt;
@@ -25,6 +27,8 @@ class Logins {
     this.totpSecret,
     this.billingAddress,
     this.phoneNumber,
+    this.billingDate,
+    this.creditCardId,
     this.isArchived = false,
     this.isDeleted = false,
     this.archivedAt,
@@ -43,8 +47,10 @@ class Logins {
       'username': username,
       'password': password,
       'totpSecret': totpSecret,
-      'billing_address': billingAddress, // Add new field
-      'phone_number': phoneNumber, // Add new field
+      'billing_address': billingAddress,
+      'phone_number': phoneNumber,
+      'billing_date': billingDate, // Add new field
+      'credit_card_id': creditCardId, // Add new field
       'is_archived': isArchived ? 1 : 0,
       'is_deleted': isDeleted ? 1 : 0,
       'archived_at': archivedAt,
@@ -63,8 +69,10 @@ class Logins {
       username: map['username'],
       password: map['password'],
       totpSecret: map['totpSecret'],
-      billingAddress: map['billing_address'], // Add new field
-      phoneNumber: map['phone_number'], // Add new field
+      billingAddress: map['billing_address'],
+      phoneNumber: map['phone_number'],
+      billingDate: map['billing_date'], // Add new field
+      creditCardId: map['credit_card_id'], // Add new field
       isArchived: map['is_archived'] == 1,
       isDeleted: map['is_deleted'] == 1,
       archivedAt: map['archived_at'],
@@ -83,8 +91,10 @@ class Logins {
       'username': username,
       'password': password,
       'totpSecret': totpSecret,
-      'billingAddress': billingAddress, // Add new field
-      'phoneNumber': phoneNumber, // Add new field
+      'billingAddress': billingAddress,
+      'phoneNumber': phoneNumber,
+      'billingDate': billingDate, // Add new field
+      'creditCardId': creditCardId, // Add new field
       'isArchived': isArchived,
       'isDeleted': isDeleted,
       'archivedAt': archivedAt,
@@ -103,8 +113,10 @@ class Logins {
       username: json['username'] as String,
       password: json['password'] as String,
       totpSecret: json['totpSecret'] as String?,
-      billingAddress: json['billingAddress'] as String?, // Add new field
-      phoneNumber: json['phoneNumber'] as String?, // Add new field
+      billingAddress: json['billingAddress'] as String?,
+      phoneNumber: json['phoneNumber'] as String?,
+      billingDate: json['billingDate'] as String?, // Add new field
+      creditCardId: json['creditCardId'] as int?, // Add new field
       isArchived: json['isArchived'] as bool? ?? false,
       isDeleted: json['isDeleted'] as bool? ?? false,
       archivedAt: json['archivedAt'] as String?,
@@ -122,8 +134,10 @@ class Logins {
       'username': username,
       'password': password,
       'totpSecret': totpSecret,
-      'billingAddress': billingAddress, // Add new field
-      'phoneNumber': phoneNumber, // Add new field
+      'billingAddress': billingAddress,
+      'phoneNumber': phoneNumber,
+      'billingDate': billingDate, // Add new field
+      'creditCardId': creditCardId, // Add new field
       'isArchived': isArchived,
       'isDeleted': isDeleted,
       'archivedAt': archivedAt,
@@ -191,7 +205,7 @@ class CreditCard {
       'cvv': cvv,
       'card_type': card_type,
       'billing_address': billing_address,
-      'phone_number': phoneNumber, // Add new field
+      'phone_number': phoneNumber,
       'notes': notes,
       'is_archived': isArchived ? 1 : 0,
       'archived_at': archivedAt,
@@ -213,7 +227,7 @@ class CreditCard {
       cvv: map['cvv'],
       card_type: map['card_type'],
       billing_address: map['billing_address'],
-      phoneNumber: map['phone_number'], // Add new field
+      phoneNumber: map['phone_number'],
       notes: map['notes'],
       isArchived: map['is_archived'] == 1,
       archivedAt: map['archived_at'],
@@ -235,7 +249,7 @@ class CreditCard {
       'cvv': cvv,
       'card_type': card_type,
       'billing_address': billing_address,
-      'phoneNumber': phoneNumber, // Add new field
+      'phoneNumber': phoneNumber,
       'notes': notes,
       'isArchived': isArchived,
       'archivedAt': archivedAt,
@@ -257,7 +271,7 @@ class CreditCard {
       cvv: json['cvv'] as String,
       card_type: json['card_type'] as String?,
       billing_address: json['billing_address'] as String?,
-      phoneNumber: json['phoneNumber'] as String?, // Add new field
+      phoneNumber: json['phoneNumber'] as String?,
       notes: json['notes'] as String?,
       isArchived: json['isArchived'] as bool? ?? false,
       archivedAt: json['archivedAt'] as String?,
@@ -278,7 +292,7 @@ class CreditCard {
       'cvv': cvv,
       'card_type': card_type,
       'billing_address': billing_address,
-      'phoneNumber': phoneNumber, // Add new field
+      'phoneNumber': phoneNumber,
       'notes': notes,
       'isArchived': isArchived,
       'archivedAt': archivedAt,

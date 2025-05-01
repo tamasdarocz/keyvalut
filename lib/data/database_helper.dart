@@ -31,7 +31,7 @@ class DatabaseHelper {
 
     Database db = await openDatabase(
       path,
-      version: 4,
+      version: 5, // Increment version to trigger upgrade
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -80,6 +80,10 @@ class DatabaseHelper {
         username TEXT NOT NULL,
         password TEXT NOT NULL,
         totpSecret TEXT,
+        billing_address TEXT,
+        phone_number TEXT,
+        billing_date TEXT, -- New column
+        credit_card_id INTEGER, -- New column (foreign key to credit_cards)
         is_archived INTEGER NOT NULL DEFAULT 0,
         is_deleted INTEGER NOT NULL DEFAULT 0,
         archived_at TEXT,
@@ -100,6 +104,7 @@ class DatabaseHelper {
         cvv TEXT NOT NULL,
         card_type TEXT,
         billing_address TEXT,
+        phone_number TEXT,
         notes TEXT,
         is_archived INTEGER NOT NULL DEFAULT 0,
         archived_at TEXT,
@@ -126,6 +131,8 @@ class DatabaseHelper {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // Since we're adding new columns, we can either drop and recreate or alter the table
+    // For simplicity, we'll drop and recreate (as per existing logic)
     await db.execute('DROP TABLE IF EXISTS logins');
     await db.execute('DROP TABLE IF EXISTS credit_cards');
     await db.execute('DROP TABLE IF EXISTS notes');

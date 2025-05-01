@@ -12,8 +12,10 @@ import 'package:provider/provider.dart';
 import '../../data/database_model.dart';
 import '../../data/database_helper.dart';
 import '../../data/database_provider.dart';
-import 'billing_adress_input_form.dart';
-import 'date_picker.dart';
+import '../textforms/billing_address_input_form.dart';
+
+import '../textforms/date_picker.dart';
+import 'package:intl/intl.dart';
 
 class CreateElementForm extends StatefulWidget {
   final DatabaseHelper dbHelper;
@@ -32,7 +34,10 @@ class _CreateElementFormState extends State<CreateElementForm> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController totpSecretController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
-  DateTime? _selectedBillingDate;
+  final ValueNotifier<DateTime?> _selectedBillingDate = ValueNotifier<DateTime?>(null);
+  final ValueNotifier<int?> _selectedCreditCardId = ValueNotifier<int?>(null);
+  final ValueNotifier<bool> _isPaidService = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _enableNotifications = ValueNotifier<bool>(false);
 
   final _billingAddressKey = GlobalKey<BillingAddressInputState>();
 
@@ -55,11 +60,13 @@ class _CreateElementFormState extends State<CreateElementForm> {
       if (widget.login!.phoneNumber != null) {
         phoneController.text = widget.login!.phoneNumber!;
       }
-      if (widget.login!.billingAddress != null) {
-        // BillingAddressInput will handle its own initialization
+      if (widget.login!.billingDate != null) {
+        _selectedBillingDate.value = DateFormat('dd/MM/yyyy').parse(widget.login!.billingDate!);
+        _isPaidService.value = true; // Show DatePickerInput if billingDate exists
       }
-      // Parse the billing date if it exists (assumed to be stored in a separate field or derived)
-      // For now, we'll assume billing date is not stored in the model yet; we'll add it later if needed
+      if (widget.login!.creditCardId != null) {
+        _selectedCreditCardId.value = widget.login!.creditCardId;
+      }
     }
   }
 
@@ -72,19 +79,22 @@ class _CreateElementFormState extends State<CreateElementForm> {
     passwordController.dispose();
     totpSecretController.dispose();
     phoneController.dispose();
+    _selectedBillingDate.dispose();
+    _selectedCreditCardId.dispose();
+    _isPaidService.dispose();
+    _enableNotifications.dispose();
     super.dispose();
   }
 
   bool get _isValid {
-    return titleController.text.isNotEmpty &&
-        usernameController.text.isNotEmpty &&
-        passwordController.text.isNotEmpty &&
-        phoneController.text.isNotEmpty &&
-        _selectedBillingDate != null;
+    return titleController.text.isNotEmpty && usernameController.text.isNotEmpty && passwordController.text.isNotEmpty;
   }
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<DatabaseProvider>(context);
+    final creditCards = provider.creditCards;
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -109,6 +119,7 @@ class _CreateElementFormState extends State<CreateElementForm> {
             },
           ),
           const CustomDivider(),
+          const CustomDivider(),
           UsernameInputField(controller: usernameController),
           const CustomDivider(),
           PasswordManager(controller: passwordController),
@@ -117,19 +128,88 @@ class _CreateElementFormState extends State<CreateElementForm> {
           const CustomDivider(),
           DatePickerInput(
             labelText: 'Billing Date',
-            initialDate: _selectedBillingDate,
-            firstDate: DateTime.now().subtract(const Duration(days: 365)), // 1 year ago
-            lastDate: DateTime.now().add(const Duration(days: 365 * 10)), // 10 years from now
+            initialDate: _selectedBillingDate.value,
+            firstDate: DateTime.now().subtract(const Duration(days: 365)),
+            lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
             onDateChanged: (date) {
-              setState(() {
-                _selectedBillingDate = date;
-              });
+              _selectedBillingDate.value = date;
             },
           ),
           const CustomDivider(),
           BillingAddressInput(
             key: _billingAddressKey,
             initialAddress: widget.login?.billingAddress,
+          ),
+          const CustomDivider(),
+          creditCards.isNotEmpty
+              ? ValueListenableBuilder<int?>(
+                  valueListenable: _selectedCreditCardId,
+                  builder: (context, creditCardId, child) {
+                    return DropdownButtonFormField<int>(
+                      decoration: InputDecoration(
+                        labelText: 'Link Credit Card',
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      value: creditCardId,
+                      items: [
+                        const DropdownMenuItem<int>(
+                          value: null,
+                          child: Text('None'),
+                        ),
+                        ...creditCards.map((card) {
+                          return DropdownMenuItem<int>(
+                            value: card.id,
+                            child:
+                                Text('${card.title} - Ending ${card.cardNumber.substring(card.cardNumber.length - 4)}'),
+                          );
+                        }),
+                      ],
+                      onChanged: (value) {
+                        _selectedCreditCardId.value = value;
+                      },
+                    );
+                  },
+                )
+              : const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(
+                    'No credit cards available. Please add a credit card first.',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+          const CustomDivider(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Row(
+              children: [
+                const Text(
+                  'Enable Notifications: ',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                ValueListenableBuilder<bool>(
+                  valueListenable: _enableNotifications,
+                  builder: (context, enabled, child) {
+                    return ChoiceChip(
+                      label: const Text('Yes'),
+                      selected: enabled,
+                      onSelected: (selected) {
+                        _enableNotifications.value = selected;
+                      },
+                      selectedColor: Colors.teal,
+                      labelStyle: TextStyle(
+                        color: enabled ? Colors.white : Colors.black,
+                      ),
+                      checkmarkColor: Colors.white,
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
           const CustomDivider(),
           ElevatedButton(
@@ -154,6 +234,10 @@ class _CreateElementFormState extends State<CreateElementForm> {
                     ? _billingAddressKey.currentState!.getFormattedAddress()
                     : null,
                 phoneNumber: phoneController.text.isNotEmpty ? phoneController.text : null,
+                billingDate: _selectedBillingDate.value != null
+                    ? DateFormat('dd/MM/yyyy').format(_selectedBillingDate.value!)
+                    : null, // Save billingDate regardless of _isPaidService
+                creditCardId: _selectedCreditCardId.value,
               );
 
               final provider = Provider.of<DatabaseProvider>(context, listen: false);
@@ -171,7 +255,7 @@ class _CreateElementFormState extends State<CreateElementForm> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Colors.black,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
               minimumSize: const Size(double.infinity, 50),
             ),
             child: Text(widget.login != null ? 'Update' : 'Create'),

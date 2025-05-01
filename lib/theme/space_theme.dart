@@ -7,8 +7,7 @@ ThemeData buildSpaceTheme() {
     colorScheme: const ColorScheme.dark(
       primary: Color(0xFF6b5b95),   // Purple for app bars, FAB
       secondary: Color(0xFF88bdbc), // Light teal accent
-      surface: Color(0xFF2e4372),   // Slightly lighter panels
-      background: Color(0xFF1a2b4f),
+      surface: Color(0xFF2e4372),
     ),
     cardColor: const Color(0xFF2e4372), // Cards match surface
     textTheme: const TextTheme(

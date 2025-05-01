@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keyvalut/views/Widgets/card_list_view.dart';
-import 'package:keyvalut/views/textforms/card_input_form.dart';
+import 'package:keyvalut/views/Tabs/card_input_form.dart';
 import '../../data/database_helper.dart';
 
 class PaymentsTab extends StatefulWidget {

@@ -6,7 +6,6 @@ ThemeData buildLightTheme() {
       primary: Colors.amber,
       secondary: Colors.amber[200]!,
       surface: Colors.white,
-      background: Colors.grey[50]!,
     ),
 
   );

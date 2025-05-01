@@ -62,7 +62,7 @@ class BillingAddressInputState extends State<BillingAddressInput> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Billing address',
+          'Address',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const Divider(),

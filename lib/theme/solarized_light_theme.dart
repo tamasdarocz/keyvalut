@@ -7,8 +7,7 @@ ThemeData buildSolarizedLightTheme() {
     colorScheme: const ColorScheme.light(
       primary: Color(0xFFb58900),   // Yellow for app bars, FAB
       secondary: Color(0xFF2aa198), // Cyan accent
-      surface: Color(0xFFeee8d5),   // Base2 for panels
-      background: Color(0xFFfdf6e3),
+      surface: Color(0xFFeee8d5),
     ),
     cardColor: const Color(0xFFeee8d5), // Cards match surface
     textTheme: const TextTheme(

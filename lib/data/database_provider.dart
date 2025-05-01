@@ -147,8 +147,10 @@ class DatabaseProvider with ChangeNotifier {
       username: login.username,
       password: login.password,
       totpSecret: login.totpSecret,
-      billingAddress: login.billingAddress, // Include new field
-      phoneNumber: login.phoneNumber, // Include new field
+      billingAddress: login.billingAddress,
+      phoneNumber: login.phoneNumber,
+      billingDate: login.billingDate, // Include new field
+      creditCardId: login.creditCardId, // Include new field
       isArchived: login.isArchived,
       isDeleted: login.isDeleted,
       archivedAt: login.archivedAt,
@@ -171,7 +173,7 @@ class DatabaseProvider with ChangeNotifier {
       cvv: card.cvv,
       card_type: card.card_type,
       billing_address: card.billing_address,
-      phoneNumber: card.phoneNumber, // Include new field
+      phoneNumber: card.phoneNumber,
       notes: card.notes,
       isArchived: card.isArchived,
       archivedAt: card.archivedAt,

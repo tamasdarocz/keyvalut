@@ -48,7 +48,7 @@ class _PasswordManagerState extends State<PasswordManager> {
             obscureText: !_showPassword,
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.key),
-              hintText: 'Required',
+              suffixText: 'Required',
               label: const Text('Password (Required)'),
               border: OutlineInputBorder(
                 borderSide: BorderSide(
