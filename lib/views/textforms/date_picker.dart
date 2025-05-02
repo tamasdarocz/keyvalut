@@ -95,7 +95,7 @@ class _DatePickerInputState extends State<DatePickerInput> {
         focusedBorder: OutlineInputBorder(
           borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1),
         ),
-        suffixIcon: const Icon(Icons.calendar_today),
+        prefixIcon: const Icon(Icons.calendar_today),
       ),
       validator: widget.isRequired
           ? (value) {

@@ -10,7 +10,6 @@ class EmailInputField extends StatelessWidget {
     return TextField(
       controller: controller,
       keyboardType: TextInputType.emailAddress,
-
       decoration: InputDecoration(
         prefixIcon: Icon(Icons.email),
         label: Text('Email'),

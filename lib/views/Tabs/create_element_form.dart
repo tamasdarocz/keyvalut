@@ -9,11 +9,11 @@ import 'package:keyvalut/views/textforms/totp_secret_input_field.dart';
 import 'package:keyvalut/views/textforms/username_input_field.dart';
 import 'package:keyvalut/views/textforms/website_input_field.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart'; // For ValueNotifier
 import '../../data/database_model.dart';
 import '../../data/database_helper.dart';
 import '../../data/database_provider.dart';
 import '../textforms/billing_address_input_form.dart';
-
 import '../textforms/date_picker.dart';
 import 'package:intl/intl.dart';
 
@@ -37,7 +37,7 @@ class _CreateElementFormState extends State<CreateElementForm> {
   final ValueNotifier<DateTime?> _selectedBillingDate = ValueNotifier<DateTime?>(null);
   final ValueNotifier<int?> _selectedCreditCardId = ValueNotifier<int?>(null);
   final ValueNotifier<bool> _isPaidService = ValueNotifier<bool>(false);
-  final ValueNotifier<bool> _enableNotifications = ValueNotifier<bool>(false);
+  final ValueNotifier<String?> _notificationSetting = ValueNotifier<String?>(null);
 
   final _billingAddressKey = GlobalKey<BillingAddressInputState>();
 
@@ -68,6 +68,8 @@ class _CreateElementFormState extends State<CreateElementForm> {
         _selectedCreditCardId.value = widget.login!.creditCardId;
       }
     }
+    // Default to "Disabled" for notifications if not set
+    _notificationSetting.value ??= "Disabled";
   }
 
   @override
@@ -82,12 +84,14 @@ class _CreateElementFormState extends State<CreateElementForm> {
     _selectedBillingDate.dispose();
     _selectedCreditCardId.dispose();
     _isPaidService.dispose();
-    _enableNotifications.dispose();
+    _notificationSetting.dispose();
     super.dispose();
   }
 
   bool get _isValid {
-    return titleController.text.isNotEmpty && usernameController.text.isNotEmpty && passwordController.text.isNotEmpty;
+    return titleController.text.isNotEmpty &&
+        usernameController.text.isNotEmpty &&
+        passwordController.text.isNotEmpty;
   }
 
   @override
@@ -119,12 +123,16 @@ class _CreateElementFormState extends State<CreateElementForm> {
             },
           ),
           const CustomDivider(),
-          const CustomDivider(),
           UsernameInputField(controller: usernameController),
           const CustomDivider(),
           PasswordManager(controller: passwordController),
           const CustomDivider(),
           TotpSecretInputField(controller: totpSecretController),
+          const CustomDivider(),
+          BillingAddressInput(
+            key: _billingAddressKey,
+            initialAddress: widget.login?.billingAddress,
+          ),
           const CustomDivider(),
           DatePickerInput(
             labelText: 'Billing Date',
@@ -134,11 +142,6 @@ class _CreateElementFormState extends State<CreateElementForm> {
             onDateChanged: (date) {
               _selectedBillingDate.value = date;
             },
-          ),
-          const CustomDivider(),
-          BillingAddressInput(
-            key: _billingAddressKey,
-            initialAddress: widget.login?.billingAddress,
           ),
           const CustomDivider(),
           ValueListenableBuilder<int?>(
@@ -164,7 +167,8 @@ class _CreateElementFormState extends State<CreateElementForm> {
                   ...creditCards.map((card) {
                     return DropdownMenuItem<int>(
                       value: card.id,
-                      child: Text('${card.title} - ${card.cardNumber.substring(card.cardNumber.length - 4)}'),
+                      child: Text(
+                          '${card.title} - ${card.cardNumber.substring(card.cardNumber.length - 4)}'),
                     );
                   }),
                 ],
@@ -175,33 +179,40 @@ class _CreateElementFormState extends State<CreateElementForm> {
             },
           ),
           const CustomDivider(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-              children: [
-                const Text(
-                  'Enable Notifications: ',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ValueListenableBuilder<String?>(
+            valueListenable: _notificationSetting,
+            builder: (context, setting, child) {
+              return DropdownButtonFormField<String>(
+                decoration: InputDecoration(
+                  labelText: 'Billing Notification',
+                  prefixIcon: Icon(Icons.notifications),
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 1,
+                    ),
+                  ),
                 ),
-                ValueListenableBuilder<bool>(
-                  valueListenable: _enableNotifications,
-                  builder: (context, enabled, child) {
-                    return ChoiceChip(
-                      label: const Text('Yes'),
-                      selected: enabled,
-                      onSelected: (selected) {
-                        _enableNotifications.value = selected;
-                      },
-                      selectedColor: Colors.teal,
-                      labelStyle: TextStyle(
-                        color: enabled ? Colors.white : Colors.black,
-                      ),
-                      checkmarkColor: Colors.white,
-                    );
-                  },
-                ),
-              ],
-            ),
+                value: setting,
+                items: const [
+                  DropdownMenuItem<String>(
+                    value: "Disabled",
+                    child: Text('Disabled'),
+                  ),
+                  DropdownMenuItem<String>(
+                    value: "1 day before",
+                    child: Text('1 day before'),
+                  ),
+                  DropdownMenuItem<String>(
+                    value: "2 days before",
+                    child: Text('2 days before'),
+                  ),
+                ],
+                onChanged: (value) {
+                  _notificationSetting.value = value;
+                },
+              );
+            },
           ),
           const CustomDivider(),
           ElevatedButton(

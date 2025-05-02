@@ -13,7 +13,6 @@ class TitleInputField extends StatelessWidget {
         label: Text('Title Required'),
         suffixText: 'Required',
         border: OutlineInputBorder(
-          //borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1),
         ),
       ),
