@@ -141,47 +141,39 @@ class _CreateElementFormState extends State<CreateElementForm> {
             initialAddress: widget.login?.billingAddress,
           ),
           const CustomDivider(),
-          creditCards.isNotEmpty
-              ? ValueListenableBuilder<int?>(
-                  valueListenable: _selectedCreditCardId,
-                  builder: (context, creditCardId, child) {
-                    return DropdownButtonFormField<int>(
-                      decoration: InputDecoration(
-                        labelText: 'Link Credit Card',
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.primary,
-                            width: 1,
-                          ),
-                        ),
-                      ),
-                      value: creditCardId,
-                      items: [
-                        const DropdownMenuItem<int>(
-                          value: null,
-                          child: Text('None'),
-                        ),
-                        ...creditCards.map((card) {
-                          return DropdownMenuItem<int>(
-                            value: card.id,
-                            child:
-                                Text('${card.title} - Ending ${card.cardNumber.substring(card.cardNumber.length - 4)}'),
-                          );
-                        }),
-                      ],
-                      onChanged: (value) {
-                        _selectedCreditCardId.value = value;
-                      },
-                    );
-                  },
-                )
-              : const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text(
-                    'No credit cards available. Please add a credit card first.',
-                    style: TextStyle(color: Colors.grey),
+          ValueListenableBuilder<int?>(
+            valueListenable: _selectedCreditCardId,
+            builder: (context, creditCardId, child) {
+              return DropdownButtonFormField<int>(
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.credit_card),
+                  labelText: 'Link Credit Card',
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 1,
+                    ),
                   ),
                 ),
+                value: creditCardId,
+                items: [
+                  const DropdownMenuItem<int>(
+                    value: null,
+                    child: Text('None'),
+                  ),
+                  ...creditCards.map((card) {
+                    return DropdownMenuItem<int>(
+                      value: card.id,
+                      child: Text('${card.title} - ${card.cardNumber.substring(card.cardNumber.length - 4)}'),
+                    );
+                  }),
+                ],
+                onChanged: (value) {
+                  _selectedCreditCardId.value = value;
+                },
+              );
+            },
+          ),
           const CustomDivider(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),

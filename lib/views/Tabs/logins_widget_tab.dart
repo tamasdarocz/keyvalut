@@ -184,23 +184,22 @@ class _CredentialsTabState extends State<CredentialsTab> {
                     title: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Flexible(
-                          child: Text(
-                            login.title,
+                      Text(login.title,
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
                             style: TextStyle(
                               fontSize: 20,
-                              color: Theme.of(context).colorScheme.onSurface,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                           ),
-                        ),
+
                         if (hasTotpSecret) TotpDisplay(totpSecret: login.totpSecret),
                       ],
                     ),
                     children: [
+                      Divider(),
                       ColoredBox(
-                        color: Theme.of(context).cardColor,
+                        color: Theme.of(context).colorScheme.surface,
                         child: Container(
                           padding: const EdgeInsets.all(8.0),
                           child: SingleChildScrollView(

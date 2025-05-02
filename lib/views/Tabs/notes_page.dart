@@ -107,6 +107,11 @@ class NotesPage extends StatelessWidget {
                 child: Card(
                   child: ListTile(
                     title: Text(note.title),
+                    titleTextStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18
+                    ),
                     subtitle: Text(
                       plainContent.length > 50
                           ? '${plainContent.substring(0, 50)}...'
