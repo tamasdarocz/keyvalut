@@ -30,7 +30,16 @@ class _DatePickerInputState extends State<DatePickerInput> {
   @override
   void initState() {
     super.initState();
-    _selectedDate = widget.initialDate;
+    // Clamp the initial date to be within firstDate and lastDate
+    if (widget.initialDate != null) {
+      if (widget.initialDate!.isBefore(widget.firstDate)) {
+        _selectedDate = widget.firstDate;
+      } else if (widget.initialDate!.isAfter(widget.lastDate)) {
+        _selectedDate = widget.lastDate;
+      } else {
+        _selectedDate = widget.initialDate;
+      }
+    }
     _controller = TextEditingController(
       text: _selectedDate != null
           ? DateFormat('dd/MM/yyyy').format(_selectedDate!)
@@ -76,9 +85,18 @@ class _DatePickerInputState extends State<DatePickerInput> {
     }
   }
 
+  void _clearDate() {
+    setState(() {
+      _selectedDate = null;
+      _controller.text = '';
+    });
+    if (widget.onDateChanged != null) {
+      widget.onDateChanged!(null);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-
     return TextFormField(
       controller: _controller,
       readOnly: true, // Prevents manual text input
@@ -87,15 +105,21 @@ class _DatePickerInputState extends State<DatePickerInput> {
         labelText: widget.labelText,
         hintText: 'e.g., 30/04/2025',
         border: OutlineInputBorder(
-          borderSide: BorderSide(color:Theme.of(context).colorScheme.primary, width: 1),
+          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color:Theme.of(context).colorScheme.primary, width: 1),
+          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1),
         ),
         prefixIcon: const Icon(Icons.calendar_today),
+        suffixIcon: _selectedDate != null
+            ? IconButton(
+          icon: const Icon(Icons.clear),
+          onPressed: _clearDate,
+        )
+            : null,
       ),
       validator: widget.isRequired
           ? (value) {

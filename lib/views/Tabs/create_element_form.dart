@@ -9,12 +9,14 @@ import 'package:keyvalut/views/textforms/totp_secret_input_field.dart';
 import 'package:keyvalut/views/textforms/username_input_field.dart';
 import 'package:keyvalut/views/textforms/website_input_field.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/foundation.dart'; // For ValueNotifier
+// For ValueNotifier
 import '../../data/database_model.dart';
 import '../../data/database_helper.dart';
 import '../../data/database_provider.dart';
 import '../textforms/billing_address_input_form.dart';
-import '../textforms/date_picker.dart';
+import '../Widgets/date_picker.dart';
+import '../textforms/period_dropdown.dart';
+import '../textforms/notification_dropdown.dart';
 import 'package:intl/intl.dart';
 
 class CreateElementForm extends StatefulWidget {
@@ -38,38 +40,36 @@ class _CreateElementFormState extends State<CreateElementForm> {
   final ValueNotifier<int?> _selectedCreditCardId = ValueNotifier<int?>(null);
   final ValueNotifier<bool> _isPaidService = ValueNotifier<bool>(false);
   final ValueNotifier<String?> _notificationSetting = ValueNotifier<String?>(null);
+  final ValueNotifier<String?> _selectedPeriod = ValueNotifier<String?>(null);
 
   final _billingAddressKey = GlobalKey<BillingAddressInputState>();
+  late Future<List<CreditCard>> _creditCardsFuture;
 
   @override
   void initState() {
     super.initState();
+    _creditCardsFuture = _loadCreditCards();
     if (widget.login != null) {
       titleController.text = widget.login!.title;
       usernameController.text = widget.login!.username;
       passwordController.text = widget.login!.password;
-      if (widget.login!.email != null) {
-        emailController.text = widget.login!.email!;
-      }
-      if (widget.login!.website != null) {
-        websiteController.text = widget.login!.website!;
-      }
-      if (widget.login!.totpSecret != null) {
-        totpSecretController.text = widget.login!.totpSecret!;
-      }
-      if (widget.login!.phoneNumber != null) {
-        phoneController.text = widget.login!.phoneNumber!;
-      }
+      if (widget.login!.email != null) emailController.text = widget.login!.email!;
+      if (widget.login!.website != null) websiteController.text = widget.login!.website!;
+      if (widget.login!.totpSecret != null) totpSecretController.text = widget.login!.totpSecret!;
+      if (widget.login!.phoneNumber != null) phoneController.text = widget.login!.phoneNumber!;
       if (widget.login!.billingDate != null) {
         _selectedBillingDate.value = DateFormat('dd/MM/yyyy').parse(widget.login!.billingDate!);
-        _isPaidService.value = true; // Show DatePickerInput if billingDate exists
+        _isPaidService.value = true;
       }
-      if (widget.login!.creditCardId != null) {
-        _selectedCreditCardId.value = widget.login!.creditCardId;
-      }
+      if (widget.login!.creditCardId != null) _selectedCreditCardId.value = widget.login!.creditCardId;
     }
-    // Default to "Disabled" for notifications if not set
     _notificationSetting.value ??= "Disabled";
+    _selectedPeriod.value ??= "Monthly";
+  }
+
+  Future<List<CreditCard>> _loadCreditCards() async {
+    final provider = Provider.of<DatabaseProvider>(context, listen: false);
+    return provider.creditCards;
   }
 
   @override
@@ -85,6 +85,7 @@ class _CreateElementFormState extends State<CreateElementForm> {
     _selectedCreditCardId.dispose();
     _isPaidService.dispose();
     _notificationSetting.dispose();
+    _selectedPeriod.dispose();
     super.dispose();
   }
 
@@ -96,9 +97,6 @@ class _CreateElementFormState extends State<CreateElementForm> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<DatabaseProvider>(context);
-    final creditCards = provider.creditCards;
-
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -118,9 +116,7 @@ class _CreateElementFormState extends State<CreateElementForm> {
           PhoneNumberInput(
             labelText: 'Phone Number',
             initialPhone: widget.login?.phoneNumber,
-            onPhoneChanged: (phone) {
-              phoneController.text = phone ?? '';
-            },
+            onPhoneChanged: (phone) => phoneController.text = phone ?? '',
           ),
           const CustomDivider(),
           UsernameInputField(controller: usernameController),
@@ -134,86 +130,71 @@ class _CreateElementFormState extends State<CreateElementForm> {
             initialAddress: widget.login?.billingAddress,
           ),
           const CustomDivider(),
-          DatePickerInput(
-            labelText: 'Billing Date',
-            initialDate: _selectedBillingDate.value,
-            firstDate: DateTime.now().subtract(const Duration(days: 365)),
-            lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
-            onDateChanged: (date) {
-              _selectedBillingDate.value = date;
-            },
+          Row(
+            children: [
+              Flexible(
+                flex: 2,
+                child: DatePickerInput(
+                  labelText: 'Billing Date',
+                  initialDate: _selectedBillingDate.value,
+                  firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                  lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
+                  onDateChanged: (date) => _selectedBillingDate.value = date,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Flexible(
+                flex: 2,
+                child: PeriodDropdown(periodNotifier: _selectedPeriod),
+              ),
+            ],
           ),
           const CustomDivider(),
-          ValueListenableBuilder<int?>(
-            valueListenable: _selectedCreditCardId,
-            builder: (context, creditCardId, child) {
-              return DropdownButtonFormField<int>(
-                decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.credit_card),
-                  labelText: 'Link Credit Card',
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(context).colorScheme.primary,
-                      width: 1,
-                    ),
-                  ),
-                ),
-                value: creditCardId,
-                items: [
-                  const DropdownMenuItem<int>(
-                    value: null,
-                    child: Text('None'),
-                  ),
-                  ...creditCards.map((card) {
-                    return DropdownMenuItem<int>(
-                      value: card.id,
-                      child: Text(
-                          '${card.title} - ${card.cardNumber.substring(card.cardNumber.length - 4)}'),
+          FutureBuilder<List<CreditCard>>(
+            future: _creditCardsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const CircularProgressIndicator();
+              } else if (snapshot.hasError) {
+                return Text('Error loading credit cards: ${snapshot.error}');
+              } else {
+                final creditCards = snapshot.data!;
+                return ValueListenableBuilder<int?>(
+                  valueListenable: _selectedCreditCardId,
+                  builder: (context, creditCardId, child) {
+                    return DropdownButtonFormField<int>(
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.credit_card),
+                        labelText: 'Link Credit Card',
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      value: creditCardId,
+                      items: [
+                        const DropdownMenuItem<int>(
+                          value: null,
+                          child: Text('None'),
+                        ),
+                        ...creditCards.map((card) {
+                          return DropdownMenuItem<int>(
+                            value: card.id,
+                            child: Text('${card.title} - ${card.cardNumber.substring(card.cardNumber.length - 4)}'),
+                          );
+                        }),
+                      ],
+                      onChanged: (value) => _selectedCreditCardId.value = value,
                     );
-                  }),
-                ],
-                onChanged: (value) {
-                  _selectedCreditCardId.value = value;
-                },
-              );
+                  },
+                );
+              }
             },
           ),
           const CustomDivider(),
-          ValueListenableBuilder<String?>(
-            valueListenable: _notificationSetting,
-            builder: (context, setting, child) {
-              return DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                  labelText: 'Billing Notification',
-                  prefixIcon: Icon(Icons.notifications),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(context).colorScheme.primary,
-                      width: 1,
-                    ),
-                  ),
-                ),
-                value: setting,
-                items: const [
-                  DropdownMenuItem<String>(
-                    value: "Disabled",
-                    child: Text('Disabled'),
-                  ),
-                  DropdownMenuItem<String>(
-                    value: "1 day before",
-                    child: Text('1 day before'),
-                  ),
-                  DropdownMenuItem<String>(
-                    value: "2 days before",
-                    child: Text('2 days before'),
-                  ),
-                ],
-                onChanged: (value) {
-                  _notificationSetting.value = value;
-                },
-              );
-            },
-          ),
+          NotificationDropdown(notificationSetting: _notificationSetting),
           const CustomDivider(),
           ElevatedButton(
             onPressed: () async {
@@ -239,12 +220,11 @@ class _CreateElementFormState extends State<CreateElementForm> {
                 phoneNumber: phoneController.text.isNotEmpty ? phoneController.text : null,
                 billingDate: _selectedBillingDate.value != null
                     ? DateFormat('dd/MM/yyyy').format(_selectedBillingDate.value!)
-                    : null, // Save billingDate regardless of _isPaidService
+                    : null,
                 creditCardId: _selectedCreditCardId.value,
               );
 
               final provider = Provider.of<DatabaseProvider>(context, listen: false);
-
               try {
                 if (widget.login != null) {
                   await provider.updateLogin(login);
