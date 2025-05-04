@@ -35,7 +35,7 @@ class CreditCardDetailsPageState extends State<CreditCardDetailsPage> {
             // Card Container
             Container(
               margin: const EdgeInsets.all(8),
-              height: 200,
+              height: 225,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 color: Colors.blueGrey.shade600, // Match the screenshot background color
@@ -125,9 +125,7 @@ class CreditCardDetailsPageState extends State<CreditCardDetailsPage> {
                                 });
                               },
                               icon: Icon(
-                                _isSensitiveVisible
-                                    ? Icons.credit_card_off
-                                    : Icons.credit_card,
+                                _isSensitiveVisible ? Icons.credit_card_off : Icons.credit_card,
                                 color: Colors.white,
                                 size: 30,
                               ),

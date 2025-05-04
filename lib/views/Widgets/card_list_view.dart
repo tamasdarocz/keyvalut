@@ -187,7 +187,7 @@ class _CreditCardItemState extends State<CreditCardItem> {
         ],
       ),
       child: Container(
-        height: 200,
+        height: 225,
         margin: const EdgeInsets.symmetric(vertical: 5),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
