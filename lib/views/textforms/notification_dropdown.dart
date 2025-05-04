@@ -11,6 +11,11 @@ class NotificationDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Set a default value if null to avoid UI issues
+    if (notificationSetting.value == null) {
+      notificationSetting.value = 'Disabled';
+    }
+
     return ValueListenableBuilder<String?>(
       valueListenable: notificationSetting,
       builder: (context, setting, child) {
@@ -40,7 +45,9 @@ class NotificationDropdown extends StatelessWidget {
               child: Text('2 days before'),
             ),
           ],
-          onChanged: (value) => notificationSetting.value = value,
+          onChanged: (value) {
+            notificationSetting.value = value;
+          },
         );
       },
     );

@@ -8,8 +8,10 @@ class Logins {
   final String? totpSecret;
   final String? billingAddress;
   final String? phoneNumber;
-  final String? billingDate; // New field
-  final int? creditCardId; // New field to link to a credit card
+  final String? billingDate;
+  final int? creditCardId;
+  final String? notificationSetting;
+  final String? selectedPeriod;
   final bool isArchived;
   final bool isDeleted;
   final String? archivedAt;
@@ -29,6 +31,8 @@ class Logins {
     this.phoneNumber,
     this.billingDate,
     this.creditCardId,
+    this.notificationSetting,
+    this.selectedPeriod,
     this.isArchived = false,
     this.isDeleted = false,
     this.archivedAt,
@@ -49,8 +53,10 @@ class Logins {
       'totpSecret': totpSecret,
       'billing_address': billingAddress,
       'phone_number': phoneNumber,
-      'billing_date': billingDate, // Add new field
-      'credit_card_id': creditCardId, // Add new field
+      'billing_date': billingDate,
+      'credit_card_id': creditCardId,
+      'notification_setting': notificationSetting,
+      'selected_period': selectedPeriod,
       'is_archived': isArchived ? 1 : 0,
       'is_deleted': isDeleted ? 1 : 0,
       'archived_at': archivedAt,
@@ -71,8 +77,10 @@ class Logins {
       totpSecret: map['totpSecret'],
       billingAddress: map['billing_address'],
       phoneNumber: map['phone_number'],
-      billingDate: map['billing_date'], // Add new field
-      creditCardId: map['credit_card_id'], // Add new field
+      billingDate: map['billing_date'],
+      creditCardId: map['credit_card_id'],
+      notificationSetting: map['notification_setting'],
+      selectedPeriod: map['selected_period'],
       isArchived: map['is_archived'] == 1,
       isDeleted: map['is_deleted'] == 1,
       archivedAt: map['archived_at'],
@@ -93,8 +101,10 @@ class Logins {
       'totpSecret': totpSecret,
       'billingAddress': billingAddress,
       'phoneNumber': phoneNumber,
-      'billingDate': billingDate, // Add new field
-      'creditCardId': creditCardId, // Add new field
+      'billingDate': billingDate,
+      'creditCardId': creditCardId,
+      'notificationSetting': notificationSetting,
+      'selectedPeriod': selectedPeriod,
       'isArchived': isArchived,
       'isDeleted': isDeleted,
       'archivedAt': archivedAt,
@@ -115,8 +125,10 @@ class Logins {
       totpSecret: json['totpSecret'] as String?,
       billingAddress: json['billingAddress'] as String?,
       phoneNumber: json['phoneNumber'] as String?,
-      billingDate: json['billingDate'] as String?, // Add new field
-      creditCardId: json['creditCardId'] as int?, // Add new field
+      billingDate: json['billingDate'] as String?,
+      creditCardId: json['creditCardId'] as int?,
+      notificationSetting: json['notificationSetting'] as String?,
+      selectedPeriod: json['selectedPeriod'] as String?,
       isArchived: json['isArchived'] as bool? ?? false,
       isDeleted: json['isDeleted'] as bool? ?? false,
       archivedAt: json['archivedAt'] as String?,
@@ -136,8 +148,10 @@ class Logins {
       'totpSecret': totpSecret,
       'billingAddress': billingAddress,
       'phoneNumber': phoneNumber,
-      'billingDate': billingDate, // Add new field
-      'creditCardId': creditCardId, // Add new field
+      'billingDate': billingDate,
+      'creditCardId': creditCardId,
+      'notificationSetting': notificationSetting,
+      'selectedPeriod': selectedPeriod,
       'isArchived': isArchived,
       'isDeleted': isDeleted,
       'archivedAt': archivedAt,

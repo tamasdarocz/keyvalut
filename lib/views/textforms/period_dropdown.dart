@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 
 class PeriodDropdown extends StatelessWidget {
   final ValueNotifier<String?> periodNotifier;
@@ -11,6 +10,9 @@ class PeriodDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (periodNotifier.value == null) {
+      periodNotifier.value = 'None';
+  }
     return ValueListenableBuilder<String?>(
       valueListenable: periodNotifier,
       builder: (context, period, child) {
@@ -26,6 +28,10 @@ class PeriodDropdown extends StatelessWidget {
           ),
           value: period,
           items: const [
+            DropdownMenuItem<String>(
+              value: "None",
+              child: Text('None'),
+            ),
             DropdownMenuItem<String>(
               value: "Weekly",
               child: Text('Weekly'),

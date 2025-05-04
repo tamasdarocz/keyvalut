@@ -149,8 +149,10 @@ class DatabaseProvider with ChangeNotifier {
       totpSecret: login.totpSecret,
       billingAddress: login.billingAddress,
       phoneNumber: login.phoneNumber,
-      billingDate: login.billingDate, // Include new field
-      creditCardId: login.creditCardId, // Include new field
+      billingDate: login.billingDate,
+      creditCardId: login.creditCardId,
+      notificationSetting: login.notificationSetting, // Add new field
+      selectedPeriod: login.selectedPeriod, // Add new field
       isArchived: login.isArchived,
       isDeleted: login.isDeleted,
       archivedAt: login.archivedAt,

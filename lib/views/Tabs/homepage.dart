@@ -6,7 +6,7 @@ import '../../settings_menu.dart';
 import 'logins_widget_tab.dart';
 import 'notes_page.dart';
 import 'payments_tab.dart';
-import 'create_element_form.dart';
+import 'create_logins_form.dart';
 import 'login_screen.dart';
 import '../../data/database_helper.dart';
 
@@ -27,7 +27,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   int _currentPageIndex = 0;
   final List<Widget> _pages = const [
-    CredentialsTab(),
+    LoginsWidgetTab(),
     PaymentsTab(),
     NotesPage(),
   ];
@@ -188,7 +188,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => CreateElementForm(dbHelper: _dbHelper!),
+              builder: (context) => CreateLoginsForm(dbHelper: _dbHelper!),
             ),
           );
         },

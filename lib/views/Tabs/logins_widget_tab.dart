@@ -5,20 +5,20 @@ import 'package:keyvalut/views/Widgets/totp_display.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../data/database_model.dart';
 import '../../data/database_provider.dart';
-import 'create_element_form.dart';
+import 'create_logins_form.dart';
 import '../../data/database_helper.dart';
 import '../../services/url_service.dart';
 
-class CredentialsTab extends StatefulWidget {
-  const CredentialsTab({super.key});
+class LoginsWidgetTab extends StatefulWidget {
+  const LoginsWidgetTab({super.key});
 
   @override
-  State<CredentialsTab> createState() => _CredentialsTabState();
+  State<LoginsWidgetTab> createState() => _LoginsWidgetTabState();
 }
 
-class _CredentialsTabState extends State<CredentialsTab> {
-  String? _currentDatabase;
+class _LoginsWidgetTabState extends State<LoginsWidgetTab> {
   DatabaseHelper? _dbHelper;
 
   @override
@@ -32,7 +32,6 @@ class _CredentialsTabState extends State<CredentialsTab> {
     final databaseName = prefs.getString('currentDatabase');
     if (databaseName != null) {
       setState(() {
-        _currentDatabase = databaseName;
         _dbHelper = DatabaseHelper(databaseName);
       });
     } else {
@@ -55,7 +54,7 @@ class _CredentialsTabState extends State<CredentialsTab> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => CreateElementForm(dbHelper: _dbHelper!),
+              builder: (context) => CreateLoginsForm(dbHelper: _dbHelper!),
             ),
           );
         },
@@ -84,11 +83,59 @@ class _CredentialsTabState extends State<CredentialsTab> {
               final login = provider.logins[index];
               final hasTotpSecret = login.totpSecret != null && login.totpSecret!.isNotEmpty;
 
-              // Handle billing address display (support both \n and , delimiters)
+              // Handle billing address display (compact format)
               final billingAddressLines = login.billingAddress?.split(RegExp(r'[\n,]')) ?? [];
               final addressDisplay = billingAddressLines.isNotEmpty
-                  ? billingAddressLines.where((line) => line.trim().isNotEmpty).join('\n')
+                  ? billingAddressLines.where((line) => line.trim().isNotEmpty).join(', ')
                   : 'N/A';
+
+              // Find the linked credit card
+              final creditCard = login.creditCardId != null
+                  ? provider.creditCards.firstWhere(
+                    (card) => card.id == login.creditCardId,
+                orElse: () => CreditCard(
+                  id: null,
+                  title: 'Unknown',
+                  ch_name: '',
+                  card_number: '****',
+                  expiry_date: '',
+                  cvv: '',
+                ),
+              )
+                  : null;
+
+              final creditCardDisplay = creditCard != null
+                  ? '${creditCard.title} - ${creditCard.cardNumber.substring(creditCard.cardNumber.length - 4)}'
+                  : 'N/A';
+
+              // Build the list of detail rows, only including non-empty fields
+              final detailRows = <Widget>[];
+              if (login.website != null && login.website!.isNotEmpty) {
+                detailRows.add(_buildDetailRow(context, 'Website', login.website!));
+              }
+              if (login.email != null && login.email!.isNotEmpty) {
+                detailRows.add(_buildDetailRow(context, 'Email', login.email!));
+              }
+              detailRows.add(_buildDetailRow(context, 'Username', login.username));
+              detailRows.add(_PasswordRow(password: login.password));
+              if (login.phoneNumber != null && login.phoneNumber!.isNotEmpty) {
+                detailRows.add(_buildDetailRow(context, 'Phone', login.phoneNumber!));
+              }
+              if (login.billingDate != null && login.billingDate!.isNotEmpty) {
+                detailRows.add(_buildDetailRow(context, 'Billing Date', login.billingDate!));
+              }
+              if (addressDisplay != 'N/A') {
+                detailRows.add(_buildDetailRow(context, 'Billing Address', addressDisplay));
+              }
+              if (creditCardDisplay != 'N/A') {
+                detailRows.add(_buildDetailRow(context, 'Credit Card', creditCardDisplay));
+              }
+              if (login.notificationSetting != 'Disabled' && login.notificationSetting!.isNotEmpty) {
+                detailRows.add(_buildDetailRow(context, 'Notification', login.notificationSetting!));
+              }
+              if (login.selectedPeriod != 'None' && login.selectedPeriod!.isNotEmpty) {
+                detailRows.add(_buildDetailRow(context, 'Billing Period', login.selectedPeriod!));
+              }
 
               return Slidable(
                 startActionPane: ActionPane(
@@ -157,7 +204,7 @@ class _CredentialsTabState extends State<CredentialsTab> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => CreateElementForm(
+                            builder: (context) => CreateLoginsForm(
                               dbHelper: _dbHelper!,
                               login: login,
                             ),
@@ -184,15 +231,15 @@ class _CredentialsTabState extends State<CredentialsTab> {
                     title: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                      Text(login.title,
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 2,
-                            style: TextStyle(
-                              fontSize: 20,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
+                        Text(
+                          login.title,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
-
+                        ),
                         if (hasTotpSecret) TotpDisplay(totpSecret: login.totpSecret),
                       ],
                     ),
@@ -205,22 +252,7 @@ class _CredentialsTabState extends State<CredentialsTab> {
                           child: SingleChildScrollView(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (login.website != null && login.website!.isNotEmpty)
-                                  _buildDetailRow(context, 'Website', login.website!),
-                                if (login.email != null && login.email!.isNotEmpty)
-                                  _buildDetailRow(context, 'Email', login.email!),
-                                _buildDetailRow(context, 'Username', login.username),
-                                _PasswordRow(password: login.password),
-                                if (login.phoneNumber != null && login.phoneNumber!.isNotEmpty)
-                                  _buildDetailRow(context, 'Phone', login.phoneNumber!),
-                                if (login.billingDate != null && login.billingDate!.isNotEmpty)
-                                  _buildDetailRow(context, 'Billing Date', login.billingDate!),
-                                if (login.billingAddress != null && login.billingAddress!.isNotEmpty)
-                                  _buildDetailRow(context, 'Billing Address', addressDisplay),
-                                if (login.creditCardId != null)
-                                  _buildDetailRow(context, 'Credit Card ID', login.creditCardId.toString()),
-                              ],
+                              children: detailRows,
                             ),
                           ),
                         ),
@@ -262,7 +294,9 @@ class _CredentialsTabState extends State<CredentialsTab> {
             IconButton(
               icon: Icon(Icons.launch, size: 20, color: theme.colorScheme.onSurface),
               onPressed: () {
-                UrlService.launchWebsite(context: context, url: value);
+                UrlService.launchWebsite(context: context, url
+
+                    : value);
               },
             ),
           IconButton(

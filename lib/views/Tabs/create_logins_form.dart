@@ -9,7 +9,6 @@ import 'package:keyvalut/views/textforms/totp_secret_input_field.dart';
 import 'package:keyvalut/views/textforms/username_input_field.dart';
 import 'package:keyvalut/views/textforms/website_input_field.dart';
 import 'package:provider/provider.dart';
-// For ValueNotifier
 import '../../data/database_model.dart';
 import '../../data/database_helper.dart';
 import '../../data/database_provider.dart';
@@ -19,16 +18,16 @@ import '../textforms/period_dropdown.dart';
 import '../textforms/notification_dropdown.dart';
 import 'package:intl/intl.dart';
 
-class CreateElementForm extends StatefulWidget {
+class CreateLoginsForm extends StatefulWidget {
   final DatabaseHelper dbHelper;
   final Logins? login;
-  const CreateElementForm({super.key, this.login, required this.dbHelper});
+  const CreateLoginsForm({super.key, this.login, required this.dbHelper});
 
   @override
-  State<CreateElementForm> createState() => _CreateElementFormState();
+  State<CreateLoginsForm> createState() => _CreateLoginsFormState();
 }
 
-class _CreateElementFormState extends State<CreateElementForm> {
+class _CreateLoginsFormState extends State<CreateLoginsForm> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
@@ -62,9 +61,12 @@ class _CreateElementFormState extends State<CreateElementForm> {
         _isPaidService.value = true;
       }
       if (widget.login!.creditCardId != null) _selectedCreditCardId.value = widget.login!.creditCardId;
+      _notificationSetting.value = widget.login!.notificationSetting ?? 'Disabled'; // Fallback to 'Disabled'
+      _selectedPeriod.value = widget.login!.selectedPeriod ?? 'None'; // Fallback to 'Monthly'
+    } else {
+      _notificationSetting.value = 'Disabled'; // Default value
+      _selectedPeriod.value = 'None'; // Default value
     }
-    _notificationSetting.value ??= "Disabled";
-    _selectedPeriod.value ??= "Monthly";
   }
 
   Future<List<CreditCard>> _loadCreditCards() async {
@@ -222,6 +224,8 @@ class _CreateElementFormState extends State<CreateElementForm> {
                     ? DateFormat('dd/MM/yyyy').format(_selectedBillingDate.value!)
                     : null,
                 creditCardId: _selectedCreditCardId.value,
+                notificationSetting: _notificationSetting.value, // Ensure this is set
+                selectedPeriod: _selectedPeriod.value, // Ensure this is set
               );
 
               final provider = Provider.of<DatabaseProvider>(context, listen: false);

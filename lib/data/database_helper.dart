@@ -16,7 +16,11 @@ class DatabaseHelper {
   }
 
   Future<Database> get database async {
-    if (_database != null) return _database!;
+    if (_database != null && _database!.isOpen) {
+      debugPrint('Returning existing database instance');
+      return _database!;
+    }
+    debugPrint('Initializing new database instance');
     _database = await _initDatabase();
     return _database!;
   }
@@ -27,13 +31,15 @@ class DatabaseHelper {
     }
     final directory = await getApplicationDocumentsDirectory();
     final path = join(directory.path, '$databaseName.db');
-    debugPrint('Opening database at path: $path'); // Debug log to confirm path
+    debugPrint('Opening database at path: $path');
 
     Database db = await openDatabase(
       path,
-      version: 5, // Increment version to trigger upgrade
+      version: 1,
       onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
+      onOpen: (db) {
+        debugPrint('Database opened successfully at $path');
+      },
     );
 
     // Verify the file exists after opening
@@ -63,7 +69,7 @@ class DatabaseHelper {
   }
 
   Future<void> close() async {
-    if (_database != null) {
+    if (_database != null && _database!.isOpen) {
       await _database!.close();
       _database = null;
       debugPrint('Database connection closed for $databaseName');
@@ -71,6 +77,7 @@ class DatabaseHelper {
   }
 
   Future<void> _onCreate(Database db, int version) async {
+    debugPrint('Creating database tables for version $version');
     await db.execute('''
       CREATE TABLE logins (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,8 +89,10 @@ class DatabaseHelper {
         totpSecret TEXT,
         billing_address TEXT,
         phone_number TEXT,
-        billing_date TEXT, -- New column
-        credit_card_id INTEGER, -- New column (foreign key to credit_cards)
+        billing_date TEXT,
+        credit_card_id INTEGER,
+        notification_setting TEXT,
+        selected_period TEXT,
         is_archived INTEGER NOT NULL DEFAULT 0,
         is_deleted INTEGER NOT NULL DEFAULT 0,
         archived_at TEXT,
@@ -128,19 +137,12 @@ class DatabaseHelper {
         updated_at TEXT NOT NULL
       )
     ''');
-  }
-
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Since we're adding new columns, we can either drop and recreate or alter the table
-    // For simplicity, we'll drop and recreate (as per existing logic)
-    await db.execute('DROP TABLE IF EXISTS logins');
-    await db.execute('DROP TABLE IF EXISTS credit_cards');
-    await db.execute('DROP TABLE IF EXISTS notes');
-    await _onCreate(db, newVersion);
+    debugPrint('Database tables created successfully');
   }
 
   Future<void> insertLogins(Logins login) async {
     final db = await database;
+    debugPrint('Inserting login: ${login.toMap()}');
     await db.insert(
       'logins',
       login.toMap(),
@@ -153,6 +155,7 @@ class DatabaseHelper {
     bool includeDeleted = false,
   }) async {
     final db = await database;
+    debugPrint('Querying logins (includeArchived: $includeArchived, includeDeleted: $includeDeleted)');
     final maps = await db.query(
       'logins',
       where: includeArchived && includeDeleted
@@ -175,6 +178,7 @@ class DatabaseHelper {
 
   Future<void> updateLogins(Logins login) async {
     final db = await database;
+    debugPrint('Updating login: ${login.toMap()}');
     await db.update(
       'logins',
       login.toMap(),
