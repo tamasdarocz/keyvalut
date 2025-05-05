@@ -27,11 +27,23 @@ class _CardInputFormState extends State<CardInputForm> {
   final _cardNumberController = TextEditingController();
   final _expiryDateController = TextEditingController();
   final _cvvController = TextEditingController();
-  final _cardTypeController = TextEditingController();
   final _notesController = TextEditingController();
+  String? _selectedCardType; // To store the dropdown value
 
   // Key to access the BillingAddressInput state
   final _billingAddressKey = GlobalKey<BillingAddressInputState>();
+
+  // List of card types for the dropdown
+  final List<String> _cardTypes = [
+    'Mastercard',
+    'Visa',
+    'Virtual',
+    'American Express',
+    'Discover',
+    'Diners Club',
+    'JCB',
+    'UnionPay',
+  ];
 
   @override
   void initState() {
@@ -43,7 +55,7 @@ class _CardInputFormState extends State<CardInputForm> {
       _cardNumberController.text = widget.card!.card_number;
       _expiryDateController.text = widget.card!.expiry_date;
       _cvvController.text = widget.card!.cvv;
-      _cardTypeController.text = widget.card!.card_type ?? '';
+      _selectedCardType = widget.card!.card_type; // Prefill dropdown
       _notesController.text = widget.card!.notes ?? '';
     }
   }
@@ -56,13 +68,11 @@ class _CardInputFormState extends State<CardInputForm> {
     _cardNumberController.dispose();
     _expiryDateController.dispose();
     _cvvController.dispose();
-    _cardTypeController.dispose();
     _notesController.dispose();
     super.dispose();
   }
 
   Future<void> _saveCard() async {
-    // Validate the form and the billing address
     if (_formKey.currentState!.validate()) {
       final card = CreditCard(
         id: widget.card?.id,
@@ -72,7 +82,7 @@ class _CardInputFormState extends State<CardInputForm> {
         card_number: _cardNumberController.text,
         expiry_date: _expiryDateController.text,
         cvv: _cvvController.text,
-        card_type: _cardTypeController.text.isNotEmpty ? _cardTypeController.text : null,
+        card_type: _selectedCardType, // Use dropdown value
         billing_address: _billingAddressKey.currentState!.getFormattedAddress().isNotEmpty
             ? _billingAddressKey.currentState!.getFormattedAddress()
             : null,
@@ -224,13 +234,25 @@ class _CardInputFormState extends State<CardInputForm> {
                   const SizedBox(width: 12),
                   Flexible(
                     flex: 1,
-                    child: TextFormField(
-                      textAlign: TextAlign.center,
-                      controller: _cardTypeController,
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedCardType,
                       decoration: InputDecoration(
                         labelText: 'Type',
                         border: const OutlineInputBorder(),
                       ),
+                      items: _cardTypes.map((String type) {
+                        return DropdownMenuItem<String>(
+                          value: type,
+                          child: Text(type),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedCardType = newValue;
+                        });
+                      },
+                      isExpanded: true, // Ensures the dropdown takes full width
+                      hint: const Text('Select Type'),
                     ),
                   ),
                 ],
