@@ -11,16 +11,13 @@ class DatabaseHelper {
 
   DatabaseHelper(this.databaseName) {
     if (databaseName == 'default') {
-      debugPrint('DatabaseHelper instantiated with "default" at: ${StackTrace.current}');
     }
   }
 
   Future<Database> get database async {
     if (_database != null && _database!.isOpen) {
-      debugPrint('Returning existing database instance');
       return _database!;
     }
-    debugPrint('Initializing new database instance');
     _database = await _initDatabase();
     return _database!;
   }
@@ -31,22 +28,18 @@ class DatabaseHelper {
     }
     final directory = await getApplicationDocumentsDirectory();
     final path = join(directory.path, '$databaseName.db');
-    debugPrint('Opening database at path: $path');
 
     Database db = await openDatabase(
       path,
       version: 1,
       onCreate: _onCreate,
       onOpen: (db) {
-        debugPrint('Database opened successfully at $path');
       },
     );
 
     // Verify the file exists after opening
     if (await File(path).exists()) {
-      debugPrint('Database file confirmed at $path');
     } else {
-      debugPrint('Database file not found at $path after opening');
     }
 
     return db;
@@ -56,7 +49,6 @@ class DatabaseHelper {
     final directory = await getApplicationDocumentsDirectory();
     final path = join(directory.path, '$databaseName.db');
     bool exists = await File(path).exists();
-    debugPrint('Checking if database exists at $path: $exists');
     return exists;
   }
 
@@ -65,19 +57,16 @@ class DatabaseHelper {
     final path = join(directory.path, '$databaseName.db');
     await File(path).delete();
     _database = null;
-    debugPrint('Deleted database at $path');
   }
 
   Future<void> close() async {
     if (_database != null && _database!.isOpen) {
       await _database!.close();
       _database = null;
-      debugPrint('Database connection closed for $databaseName');
     }
   }
 
   Future<void> _onCreate(Database db, int version) async {
-    debugPrint('Creating database tables for version $version');
     await db.execute('''
       CREATE TABLE logins (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -137,12 +126,10 @@ class DatabaseHelper {
         updated_at TEXT NOT NULL
       )
     ''');
-    debugPrint('Database tables created successfully');
   }
 
   Future<void> insertLogins(Logins login) async {
     final db = await database;
-    debugPrint('Inserting login: ${login.toMap()}');
     await db.insert(
       'logins',
       login.toMap(),
@@ -155,7 +142,6 @@ class DatabaseHelper {
     bool includeDeleted = false,
   }) async {
     final db = await database;
-    debugPrint('Querying logins (includeArchived: $includeArchived, includeDeleted: $includeDeleted)');
     final maps = await db.query(
       'logins',
       where: includeArchived && includeDeleted
@@ -178,7 +164,6 @@ class DatabaseHelper {
 
   Future<void> updateLogins(Logins login) async {
     final db = await database;
-    debugPrint('Updating login: ${login.toMap()}');
     await db.update(
       'logins',
       login.toMap(),

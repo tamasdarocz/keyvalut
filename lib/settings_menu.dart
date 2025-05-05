@@ -97,7 +97,6 @@ class _SettingsMenuState extends State<SettingsMenu> {
     if (_authService == null) return;
     final available = await _authService!.isBiometricAvailable();
     final enabled = await _authService!.isBiometricEnabled();
-    // Debug log
     if (mounted) {
       setState(() {
         _biometricAvailable = available;
@@ -290,9 +289,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
         authService: _authService!,
         isPinMode: _isPinMode,
         onResetSuccess: () async {
-          // Perform async work first
           final isPin = await _authService!.isPinMode();
-          // Then update state synchronously
           if (mounted) {
             setState(() {
               _isPinMode = isPin;
@@ -313,7 +310,6 @@ class _SettingsMenuState extends State<SettingsMenu> {
         _currentDatabase = newDatabaseName;
         _authService = AuthService(newDatabaseName);
       });
-      // Reload settings to reflect the new database name
       await _loadBiometricSettings();
       await _loadCredentialMode();
       await _loadTimeoutSettings();
@@ -328,7 +324,6 @@ class _SettingsMenuState extends State<SettingsMenu> {
   Future<void> _showDeleteDatabaseDialog() async {
     if (_authService == null || _currentDatabase == null) return;
 
-    // Step 1: Show the export prompt dialog
     final dialogContext = context;
     final shouldProceed = await showDialog<bool>(
       context: dialogContext,
@@ -337,19 +332,18 @@ class _SettingsMenuState extends State<SettingsMenu> {
         content: const Text('Would you like to export your data before deleting the database? This action cannot be undone.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false), // Cancel deletion
+            onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true), // Skip export, proceed to deletion
+            onPressed: () => Navigator.pop(context, true),
             child: const Text('Skip'),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context); // Close this dialog
+              Navigator.pop(context);
               final exportResult = await _showExportDialog();
               if (exportResult != null && mounted) {
-                // Export successful, proceed to deletion confirmation
                 Navigator.push(
                   dialogContext,
                   MaterialPageRoute(
@@ -358,8 +352,8 @@ class _SettingsMenuState extends State<SettingsMenu> {
                       isPinMode: _isPinMode,
                       currentDatabase: _currentDatabase!,
                       onDeleteSuccess: () {
-                        Navigator.pop(dialogContext); // Close settings menu
-                        widget.onLogout(); // Log out the user
+                        Navigator.pop(dialogContext);
+                        widget.onLogout();
                       },
                     ),
                   ),
@@ -374,7 +368,6 @@ class _SettingsMenuState extends State<SettingsMenu> {
 
     if (shouldProceed != true || !mounted) return;
 
-    // Step 2: Show the deletion confirmation dialog if the user skipped export
     await Navigator.push(
       dialogContext,
       MaterialPageRoute(
@@ -383,8 +376,8 @@ class _SettingsMenuState extends State<SettingsMenu> {
           isPinMode: _isPinMode,
           currentDatabase: _currentDatabase!,
           onDeleteSuccess: () {
-            Navigator.pop(dialogContext); // Close settings menu
-            widget.onLogout(); // Log out the user
+            Navigator.pop(dialogContext);
+            widget.onLogout();
           },
         ),
       ),

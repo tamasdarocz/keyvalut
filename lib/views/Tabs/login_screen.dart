@@ -113,7 +113,6 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       setState(() => _state.isLoading = false);
-      handleError(e);
     }
   }
 
@@ -211,8 +210,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (await _authService!.isForceResetRequired()) {
         showToast('Too many failed attempts. Please reset your ${_state.authMode == AuthMode.pin ? 'PIN' : 'password'} using the recovery key.');
         await _showResetMasterCredentialDialog();
-      } else {
-        handleError(e);
       }
     }
   }
@@ -275,8 +272,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (await _authService!.isForceResetRequired()) {
         showToast('Too many failed attempts. Please reset your ${_state.authMode == AuthMode.pin ? 'PIN' : 'password'} using the recovery key.');
         await _showResetMasterCredentialDialog();
-      } else {
-        handleError(e);
       }
     }
   }
@@ -502,7 +497,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: _padding),
               _buildButton(
                 onPressed: _unlockVault,
-                label: 'Unlock Trezor',
+                label: 'Unlock Vault',
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: theme.colorScheme.onPrimary,
                 enabled: isDatabaseSelected,
