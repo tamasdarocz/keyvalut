@@ -87,6 +87,7 @@ class NotesPage extends StatelessWidget {
                   ],
                 ),
                 endActionPane: ActionPane(
+
                   motion: ScrollMotion(),
                   children: [
                     SlidableAction(
@@ -106,31 +107,34 @@ class NotesPage extends StatelessWidget {
                   ],
                 ),
                 child: Container(
-                  margin: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                  ),
-                  child: ListTile(
-                        title: Text(note.title),
-                        titleTextStyle: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
+                          margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                          ),
+                          child: ListTile(
+                                title: Text(note.title),
+                                titleTextStyle: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                                subtitle: Text(
+                                  plainContent,
+                                  maxLines: 3,
+
+                                ),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => NoteViewPage(note: note),
+                                    ),
+                                  );
+                                },
+                              ),
                         ),
-                        subtitle: Text(
-                          plainContent.length > 100 ? '${plainContent.substring(0, 100)}...' : plainContent,
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => NoteViewPage(note: note),
-                            ),
-                          );
-                        },
-                      ),
-                ),
               );
+
             },
           );
         },
