@@ -7,6 +7,8 @@ import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:keyvalut/data/database_provider.dart';
 import 'package:keyvalut/views/screens/note_edit_page.dart';
 
+import 'note_view_page.dart';
+
 class NotesPage extends StatelessWidget {
   const NotesPage({super.key});
 
@@ -32,7 +34,6 @@ class NotesPage extends StatelessWidget {
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(8),
             itemCount: provider.notes.length,
             itemBuilder: (context, index) {
               final note = provider.notes[index];
@@ -86,7 +87,7 @@ class NotesPage extends StatelessWidget {
                   ],
                 ),
                 endActionPane: ActionPane(
-                  motion: const ScrollMotion(),
+                  motion: ScrollMotion(),
                   children: [
                     SlidableAction(
                       onPressed: (context) {
@@ -104,28 +105,30 @@ class NotesPage extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Card(
-                  child: ListTile(
-                    title: Text(note.title),
-                    titleTextStyle: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18
-                    ),
-                    subtitle: Text(
-                      plainContent.length > 50
-                          ? '${plainContent.substring(0, 50)}...'
-                          : plainContent,
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => NoteEditPage(note: note),
-                        ),
-                      );
-                    },
+                child: Container(
+                  margin: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
                   ),
+                  child: ListTile(
+                        title: Text(note.title),
+                        titleTextStyle: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                        subtitle: Text(
+                          plainContent.length > 100 ? '${plainContent.substring(0, 100)}...' : plainContent,
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => NoteViewPage(note: note),
+                            ),
+                          );
+                        },
+                      ),
                 ),
               );
             },

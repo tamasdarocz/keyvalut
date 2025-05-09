@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:keyvalut/data/database_model.dart';
 import 'package:keyvalut/data/database_provider.dart';
+import '../widgets/horizontal_quill_toolbar.dart';
+import '../widgets/vertical_quill_toolbar.dart';
 
 class NoteEditPage extends StatefulWidget {
   final Note? note;
@@ -29,7 +31,8 @@ class _NoteEditPageState extends State<NoteEditPage> {
         final deltaJson = jsonDecode(widget.note!.content);
         _quillController.document = quill.Document.fromJson(deltaJson);
       } catch (e) {
-        _quillController.document = quill.Document()..insert(0, widget.note!.content);
+        _quillController.document = quill.Document()
+          ..insert(0, widget.note!.content);
       }
     }
   }
@@ -79,14 +82,15 @@ class _NoteEditPageState extends State<NoteEditPage> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(8.0),
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Title',
                   border: OutlineInputBorder(),
                 ),
@@ -97,31 +101,37 @@ class _NoteEditPageState extends State<NoteEditPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-              quill.QuillToolbar.simple(
-                configurations: quill.QuillSimpleToolbarConfigurations(
-                  controller: _quillController,
-                  multiRowsDisplay: false,
-                ),
-              ),
               const SizedBox(height: 8),
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).colorScheme.outline),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: quill.QuillEditor(
-                    controller: _quillController,
-                    scrollController: _scrollController,
-                    focusNode: FocusNode(),
-                    configurations: quill.QuillEditorConfigurations(
-                      placeholder: 'Enter content...',
-                      autoFocus: false,
-                      expands: false,
-                      padding: const EdgeInsets.all(8),
+              HorizontalQuillToolbar(controller: _quillController),
+              const SizedBox(height: 8),
+              Expanded( // Use Expanded to let the Row fill remaining space
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch, // Stretch children vertically
+                  children: [
+                     VerticalQuillToolbar(controller: _quillController),
+                    const SizedBox(width: 8), // Space between toolbar and editor
+                    // Editor
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: Theme.of(context).colorScheme.outline),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: quill.QuillEditor(
+                          controller: _quillController,
+                          scrollController: _scrollController,
+                          focusNode: FocusNode(),
+                          configurations: quill.QuillEditorConfigurations(
+                            placeholder: 'Enter content...',
+                            autoFocus: false,
+                            expands: false, // Expand to fill available space
+                            padding: const EdgeInsets.all(8),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ],

@@ -9,10 +9,7 @@ import 'data/database_provider.dart';
 import 'services/utils.dart';
 import 'data/database_helper.dart';
 
-/// The entry point of the KeyVault app.Fs
-///
-/// Initializes the app, sets up providers for theme and database management,
-/// and determines the initial database to use.
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 

@@ -118,7 +118,6 @@ class ExportService {
         Fluttertoast.showToast(msg: 'Export canceled');
       }
     } catch (e) {
-      debugPrint('Export error: $e');
       Fluttertoast.showToast(msg: 'Error exporting data: $e');
     } finally {
       // Clear the file picker flag after the operation
