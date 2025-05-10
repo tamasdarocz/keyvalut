@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:keyvalut/views/Widgets/horizontal_quill_toolbar.dart';
+import 'package:keyvalut/views/Widgets/vertical_quill_toolbar.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:keyvalut/data/database_model.dart';
 import 'package:keyvalut/data/database_provider.dart';
-import '../widgets/horizontal_quill_toolbar.dart';
-import '../widgets/vertical_quill_toolbar.dart';
 
 class NoteEditPage extends StatefulWidget {
   final Note? note;
