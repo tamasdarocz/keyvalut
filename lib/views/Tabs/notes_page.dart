@@ -1,16 +1,30 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:flutter_swipe_action_cell/flutter_swipe_action_cell.dart';
 import 'package:keyvalut/data/database_provider.dart';
 import 'package:keyvalut/views/screens/note_edit_page.dart';
-
 import 'note_view_page.dart';
 
 class NotesPage extends StatelessWidget {
   const NotesPage({super.key});
+
+  Widget _getIconButton(Color color, IconData icon) {
+    return Container(
+      width: 70,
+      height: 70,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(45),
+        color: color,
+      ),
+      child: Icon(
+        icon,
+        color: Colors.white,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +48,7 @@ class NotesPage extends StatelessWidget {
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 5),
             itemCount: provider.notes.length,
             itemBuilder: (context, index) {
               final note = provider.notes[index];
@@ -44,124 +59,160 @@ class NotesPage extends StatelessWidget {
                 final doc = quill.Document.fromJson(deltaJson);
                 plainContent = doc.toPlainText();
               } catch (e) {
-                // Fallback to raw content if not JSON (backward compatibility)
                 plainContent = note.content;
               }
-              return Slidable(
+
+              return SwipeActionCell(
                 key: ValueKey(note.id),
-                startActionPane: ActionPane(
-                  motion: const ScrollMotion(),
-                  children: [
-                    SlidableAction(
-                      onPressed: (context) async {
-                        await provider.archiveNote(note.id!);
-                        Fluttertoast.showToast(
-                          msg: 'Note Archived',
-                          toastLength: Toast.LENGTH_SHORT,
-                          gravity: ToastGravity.CENTER,
-                          backgroundColor: theme.colorScheme.primary,
-                          textColor: theme.colorScheme.onPrimary,
-                        );
-                      },
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
-                      icon: Icons.archive,
-                      label: 'Archive',
-                    ),
-                    SlidableAction(
-                      onPressed: (context) async {
-                        await provider.moveToTrash(note.id!);
-                        Fluttertoast.showToast(
-                          msg: 'Note Moved to Trash',
-                          toastLength: Toast.LENGTH_SHORT,
-                          gravity: ToastGravity.CENTER,
-                          backgroundColor: Colors.red,
-                          textColor: Colors.white,
-                        );
-                      },
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      icon: Icons.delete,
-                      label: 'Delete',
-                    ),
-                  ],
-                ),
-                endActionPane: ActionPane(
-                  motion: ScrollMotion(),
-                  children: [
-                    SlidableAction(
-                      onPressed: (context) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => NoteEditPage(note: note),
+                trailingActions: <SwipeAction>[
+                  SwipeAction(
+                    color: Colors.transparent,
+                    content: _getIconButton(theme.colorScheme.primary, Icons.edit),
+                    onTap: (CompletionHandler handler) async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => NoteEditPage(note: note),
+                        ),
+                      );
+                      handler(false); // Prevent dismissal
+                    },
+                  ),
+                ],
+                leadingActions: <SwipeAction>[
+                  SwipeAction(
+                    color: Colors.transparent,
+                    content: _getIconButton(Colors.red, Icons.delete),
+                    nestedAction: SwipeNestedAction(
+                      content: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(45),
+                          color: Colors.red,
+                        ),
+                        height: 70,
+                        child: OverflowBox(
+                          maxWidth: double.infinity,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.delete,
+                                color: Colors.white,
+                              ),
+                              Text(
+                                'Confirm',
+                                style: TextStyle(color: Colors.white)
+                              ),
+                            ],
                           ),
-                        );
-                      },
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
-                      icon: Icons.edit,
-                      label: 'Edit',
+                        ),
+                      ),
                     ),
-                  ],
-                ),
+                    onTap: (CompletionHandler handler) async {
+                      await provider.moveToTrash(note.id!);
+                      Fluttertoast.showToast(
+                        msg: 'Note Moved to Trash',
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.CENTER,
+                        backgroundColor: Colors.red,
+                        textColor: Colors.white,
+                      );
+                      handler(false);
+                    },
+                  ),
+                  SwipeAction(
+                    color: Colors.transparent,
+                    content: _getIconButton(theme.colorScheme.secondary, Icons.archive),
+                    nestedAction: SwipeNestedAction(
+                      content: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(45),
+                          color: Colors.red,
+                        ),
+                        height: 70,
+                        child: OverflowBox(
+                          maxWidth: double.infinity,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.archive,
+                                color: Colors.white,
+                              ),
+                              Text(
+                                'Confirm',
+                                style: TextStyle(color: Colors.white)
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    onTap: (CompletionHandler handler) async {
+                      await provider.archiveNote(note.id!);
+                      Fluttertoast.showToast(
+                        msg: 'Archived',
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.CENTER,
+                        backgroundColor: theme.colorScheme.secondary,
+                        textColor: Colors.white,
+                      );
+                      handler(false);
+                    },
+                  ),
+                ],
+
                 child: Container(
                   height: 100,
-                  width: MediaQuery.of(context).size.width,
-                  margin: EdgeInsets.symmetric(vertical: 4),
+                  margin: const EdgeInsets.symmetric(vertical: 5),
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
                   ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.max,
                     children: [
                       Column(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                color: theme.colorScheme.primary,
-                                width: 5,
-                                height: 50,
-                              ),
+                        children: [
+                          Expanded(
+                            child: Container(
+                              color: Colors.red,
+                              width: 5,
                             ),
-                            Expanded(
-                              child: Container(
-                                color: Colors.red,
-                                width: 5,
-                                height: 50,
-                              ),
+                          ),
+                          Expanded(
+                            child: Container(
+                              color: theme.colorScheme.secondary,
+                              width: 5,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
+                      ),
                       SizedBox(
                         width: MediaQuery.of(context).size.width -10,
                         child: ListTile(
-                                title: Text(note.title),
-                                titleTextStyle: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                ),
-                                subtitle: Text(
-                                  plainContent,
-                                  maxLines: 3,
-                                ),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => NoteViewPage(note: note),
-                                    ),
-                                  );
-                                },
+                          title: Text(note.title),
+                          titleTextStyle: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                          subtitle: Text(
+                            plainContent,
+                            maxLines: 3,
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => NoteViewPage(note: note),
                               ),
-                      ),
-                      Expanded(
-                        child: Container(
-                          color: theme.colorScheme.primary,
-                          width: 5,
-                          height: 100,
+                            );
+                          },
                         ),
                       ),
+                      Container(width: 5,
+                      height: 100,
+                      color: theme.colorScheme.primary,)
                     ],
                   ),
                 ),
