@@ -18,7 +18,7 @@ class NoteEditPage extends StatefulWidget {
 
 class _NoteEditPageState extends State<NoteEditPage> {
   final _titleController = TextEditingController();
-  final quillController = quill.QuillController.basic();
+  final _quillController = quill.QuillController.basic();
   final _scrollController = ScrollController();
   final _formKey = GlobalKey<FormState>();
 
@@ -29,9 +29,9 @@ class _NoteEditPageState extends State<NoteEditPage> {
       _titleController.text = widget.note!.title;
       try {
         final deltaJson = jsonDecode(widget.note!.content);
-        quillController.document = quill.Document.fromJson(deltaJson);
+        _quillController.document = quill.Document.fromJson(deltaJson);
       } catch (e) {
-        quillController.document = quill.Document()
+        _quillController.document = quill.Document()
           ..insert(0, widget.note!.content);
       }
     }
@@ -40,7 +40,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
   @override
   void dispose() {
     _titleController.dispose();
-    quillController.dispose();
+    _quillController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -49,7 +49,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
     if (!_formKey.currentState!.validate()) return;
 
     final provider = Provider.of<DatabaseProvider>(context, listen: false);
-    final deltaJson = jsonEncode(quillController.document.toDelta().toJson());
+    final deltaJson = jsonEncode(_quillController.document.toDelta().toJson());
     final newNote = Note(
       id: widget.note?.id,
       title: _titleController.text,
@@ -102,13 +102,13 @@ class _NoteEditPageState extends State<NoteEditPage> {
                 },
               ),
               const SizedBox(height: 8),
-              HorizontalQuillToolbar(controller: quillController),
+              HorizontalQuillToolbar(controller: _quillController),
               const SizedBox(height: 8),
               Expanded( // Use Expanded to let the Row fill remaining space
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch, // Stretch children vertically
                   children: [
-                     VerticalQuillToolbar(controller: quillController),
+                     VerticalQuillToolbar(controller: _quillController),
                     const SizedBox(width: 8), // Space between toolbar and editor
                     // Editor
                     Expanded(
@@ -117,7 +117,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
                           color: Colors.white,
                         ),
                         child: quill.QuillEditor(
-                          controller: quillController,
+                          controller: _quillController,
                           scrollController: _scrollController,
                           focusNode: FocusNode(),
                           configurations: quill.QuillEditorConfigurations(
