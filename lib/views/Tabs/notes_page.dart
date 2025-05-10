@@ -99,10 +99,7 @@ class NotesPage extends StatelessWidget {
                                 Icons.delete,
                                 color: Colors.white,
                               ),
-                              Text(
-                                'Confirm',
-                                style: TextStyle(color: Colors.white)
-                              ),
+                              Text('Confirm', style: TextStyle(color: Colors.white)),
                             ],
                           ),
                         ),
@@ -111,57 +108,29 @@ class NotesPage extends StatelessWidget {
                     onTap: (CompletionHandler handler) async {
                       await provider.moveToTrash(note.id!);
                       Fluttertoast.showToast(
-                        msg: 'Note Moved to Trash',
+                        msg: 'Moved to Trash',
                         toastLength: Toast.LENGTH_SHORT,
                         gravity: ToastGravity.CENTER,
                         backgroundColor: Colors.red,
                         textColor: Colors.white,
                       );
-                      handler(false);
                     },
                   ),
                   SwipeAction(
                     color: Colors.transparent,
                     content: _getIconButton(theme.colorScheme.secondary, Icons.archive),
-                    nestedAction: SwipeNestedAction(
-                      content: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(45),
-                          color: Colors.red,
-                        ),
-                        height: 70,
-                        child: OverflowBox(
-                          maxWidth: double.infinity,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.archive,
-                                color: Colors.white,
-                              ),
-                              Text(
-                                'Confirm',
-                                style: TextStyle(color: Colors.white)
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
                     onTap: (CompletionHandler handler) async {
                       await provider.archiveNote(note.id!);
                       Fluttertoast.showToast(
-                        msg: 'Archived',
+                        msg: 'Note Archived',
                         toastLength: Toast.LENGTH_SHORT,
                         gravity: ToastGravity.CENTER,
-                        backgroundColor: theme.colorScheme.secondary,
-                        textColor: Colors.white,
+                        backgroundColor: theme.colorScheme.primary,
+                        textColor: theme.colorScheme.onPrimary,
                       );
-                      handler(false);
                     },
-                  ),
+                  )
                 ],
-
                 child: Container(
                   height: 100,
                   margin: const EdgeInsets.symmetric(vertical: 5),
@@ -188,7 +157,7 @@ class NotesPage extends StatelessWidget {
                         ],
                       ),
                       SizedBox(
-                        width: MediaQuery.of(context).size.width -10,
+                        width: MediaQuery.of(context).size.width - 10,
                         child: ListTile(
                           title: Text(note.title),
                           titleTextStyle: TextStyle(
@@ -210,9 +179,11 @@ class NotesPage extends StatelessWidget {
                           },
                         ),
                       ),
-                      Container(width: 5,
-                      height: 100,
-                      color: theme.colorScheme.primary,)
+                      Container(
+                        width: 5,
+                        height: 100,
+                        color: theme.colorScheme.primary,
+                      )
                     ],
                   ),
                 ),

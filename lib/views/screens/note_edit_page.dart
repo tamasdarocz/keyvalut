@@ -82,7 +82,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(8),
         child: Form(
           key: _formKey,
           child: Column(
@@ -115,8 +115,6 @@ class _NoteEditPageState extends State<NoteEditPage> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          border: Border.all(color: Theme.of(context).colorScheme.outline),
-                          borderRadius: BorderRadius.circular(4),
                         ),
                         child: quill.QuillEditor(
                           controller: _quillController,
