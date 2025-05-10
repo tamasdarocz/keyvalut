@@ -4,6 +4,7 @@ import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:keyvalut/data/database_model.dart';
 import 'package:keyvalut/views/screens/note_edit_page.dart';
 
+
 class NoteViewPage extends StatefulWidget {
   final Note note;
 
@@ -74,7 +75,7 @@ class _NoteViewPageState extends State<NoteViewPage> {
               widget.note.title,
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             Expanded(
               child: Container(
                 decoration: BoxDecoration(

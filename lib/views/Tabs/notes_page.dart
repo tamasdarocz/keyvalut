@@ -87,7 +87,6 @@ class NotesPage extends StatelessWidget {
                   ],
                 ),
                 endActionPane: ActionPane(
-
                   motion: ScrollMotion(),
                   children: [
                     SlidableAction(
@@ -107,11 +106,35 @@ class NotesPage extends StatelessWidget {
                   ],
                 ),
                 child: Container(
-                          margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
-                          ),
-                          child: ListTile(
+                  height: 100,
+                  width: MediaQuery.of(context).size.width,
+                  margin: EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                  ),
+                  child: Row(
+                    children: [
+                      Column(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                color: theme.colorScheme.primary,
+                                width: 5,
+                                height: 50,
+                              ),
+                            ),
+                            Expanded(
+                              child: Container(
+                                color: Colors.red,
+                                width: 5,
+                                height: 50,
+                              ),
+                            ),
+                          ],
+                        ),
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width -10,
+                        child: ListTile(
                                 title: Text(note.title),
                                 titleTextStyle: TextStyle(
                                   color: Theme.of(context).colorScheme.primary,
@@ -121,7 +144,6 @@ class NotesPage extends StatelessWidget {
                                 subtitle: Text(
                                   plainContent,
                                   maxLines: 3,
-
                                 ),
                                 onTap: () {
                                   Navigator.push(
@@ -132,9 +154,18 @@ class NotesPage extends StatelessWidget {
                                   );
                                 },
                               ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          color: theme.colorScheme.primary,
+                          width: 5,
+                          height: 100,
                         ),
+                      ),
+                    ],
+                  ),
+                ),
               );
-
             },
           );
         },
