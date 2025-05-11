@@ -28,7 +28,7 @@ dependencies:
   collection: ^1.17.2
   path_provider: ^2.1.5
   universal_html: ^2.2.4
-  file_picker: ^10.1.2
+  file_picker: ^8.0.2
   device_info_plus: ^11.4.0
   barcode: ^2.2.9
   mobile_scanner: ^6.0.10
@@ -44,6 +44,7 @@ dependencies:
   file_saver: ^0.2.14
   intl: ^0.19.0
   flutter_swipe_action_cell: ^3.1.5
+  appflowy_editor: ^5.2.0
 
 
   # UI

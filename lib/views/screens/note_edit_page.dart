@@ -124,7 +124,8 @@ class _NoteEditPageState extends State<NoteEditPage> {
                           configurations: quill.QuillEditorConfigurations(
                             placeholder: 'Enter content...',
                             autoFocus: false,
-                            expands: false, // Expand to fill available space
+                            expands: false,
+                            disableClipboard: false,
                             padding: const EdgeInsets.all(8),
                           ),
                         ),

@@ -8,25 +8,26 @@ class VerticalQuillToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 40,
-      child: SingleChildScrollView(
-        child: quill.QuillToolbar.simple(
-          configurations: quill.QuillSimpleToolbarConfigurations(
-            color: Theme.of(context).colorScheme.secondary,
-            controller: controller,
-            toolbarSectionSpacing: 0,
-            showDividers: false,
-            showHeaderStyle: false,
-            showFontFamily: false,
-            showFontSize: false,
-            showColorButton: true,
-            showClipboardCopy: false,
-            showClipboardCut: false,
-            showClipboardPaste: false,
-            showSearchButton: false
+    return SingleChildScrollView(
+      child: Container(
+        color: Theme.of(context).colorScheme.secondary,
+        width: 40,
+          child: quill.QuillToolbar.simple(
+            configurations: quill.QuillSimpleToolbarConfigurations(
+              controller: controller,
+              toolbarSectionSpacing: 0,
+              showDividers: false,
+              showHeaderStyle: false,
+              showFontFamily: false,
+              showFontSize: false,
+              showColorButton: true,
+              showClipboardCopy: false,
+              showClipboardCut: false,
+              showClipboardPaste: false,
+              showSearchButton: false,
+
+            ),
           ),
-        ),
       ),
     );
   }
