@@ -73,11 +73,12 @@ class _NoteViewPageState extends State<NoteViewPage> {
           children: [
             Text(
               widget.note.title,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             Expanded(
               child: Container(
+                width: MediaQuery.of(context).size.width,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   border: Border.all(color: Theme.of(context).colorScheme.outline),

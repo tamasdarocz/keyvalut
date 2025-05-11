@@ -90,6 +90,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
             children: [
               TextFormField(
                 controller: _titleController,
+                style: Theme.of(context).textTheme.titleSmall,
                 decoration: InputDecoration(
                   labelText: 'Title',
                   border: OutlineInputBorder(),
@@ -104,7 +105,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
               const SizedBox(height: 8),
               HorizontalQuillToolbar(controller: _quillController),
               const SizedBox(height: 8),
-              Expanded( // Use Expanded to let the Row fill remaining space
+              Expanded(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch, // Stretch children vertically
                   children: [

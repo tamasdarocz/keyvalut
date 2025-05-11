@@ -12,6 +12,7 @@ class HorizontalQuillToolbar extends StatelessWidget {
       height: 40,
       child: quill.QuillToolbar.simple(
         configurations: quill.QuillSimpleToolbarConfigurations(
+          color: Theme.of(context).colorScheme.secondary,
           controller: controller,
           multiRowsDisplay: false,
           showDividers: false,
@@ -38,9 +39,10 @@ class HorizontalQuillToolbar extends StatelessWidget {
           showIndent: false,
           showLink: false,
           toolbarIconAlignment: WrapAlignment.center,
-          showClipboardCopy: false,
-          showClipboardCut: false,
-          showClipboardPaste: false,
+          showClipboardCopy: true,
+          showClipboardCut: true,
+          showClipboardPaste: true,
+
         ),
       )
     );

@@ -10,10 +10,10 @@ class VerticalQuillToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 40,
-      height: MediaQuery.of(context).size.height - 170, // Adjust height based on app bar and title field
       child: SingleChildScrollView(
         child: quill.QuillToolbar.simple(
           configurations: quill.QuillSimpleToolbarConfigurations(
+            color: Theme.of(context).colorScheme.secondary,
             controller: controller,
             toolbarSectionSpacing: 0,
             showDividers: false,

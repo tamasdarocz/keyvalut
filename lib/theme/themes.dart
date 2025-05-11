@@ -133,9 +133,10 @@ class ThemeBuilder {
       colorScheme: colorScheme,
       cardColor: surface,
       textTheme: TextTheme(
-        bodyLarge: baseTextStyle.copyWith(color: textColor, fontSize: 18),
-        bodyMedium: baseTextStyle.copyWith(color: textColor, fontSize: 16),
+        bodyLarge: baseTextStyle.copyWith(color:Colors.black, fontSize: 18),
+        bodyMedium: baseTextStyle.copyWith(color: Colors.black, fontSize: 16),
         titleLarge: baseTextStyle.copyWith(color: textColor, fontSize: 24, fontWeight: FontWeight.bold),
+        titleSmall: baseTextStyle.copyWith(color: textColor, fontWeight: FontWeight.bold),
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: brightness == Brightness.light ? primary : surface,
