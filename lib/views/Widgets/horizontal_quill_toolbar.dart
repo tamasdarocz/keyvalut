@@ -10,21 +10,24 @@ class HorizontalQuillToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     // Define custom font size options: 0, 2, 4, ..., 36
     final fontSizeOptions = {
-      for (var i = 10; i <= 36; i++) (i).toString(): (i).toString(),
+      for (var i = 5; i <= 18; i++) (i*2).toString(): (i*2).toString(),
     };
 
     return SizedBox(
       height: 40,
         child: quill.QuillToolbar.simple(
+          controller: controller,
           configurations: quill.QuillSimpleToolbarConfigurations(
             color: Theme.of(context).colorScheme.secondary,
             multiRowsDisplay: false,
-            controller: controller,
-            showDividers: false,
-            showHeaderStyle: true,
+            showClipboardCopy: true,
+            showClipboardCut: true,
+            showClipboardPaste: true,
             showFontFamily: true,
             showFontSize: true,// Enable font size dropdown
             fontSizesValues: fontSizeOptions, // Use custom font size map
+            showDividers: false,
+            showHeaderStyle: false,
             showColorButton: false,
             showBoldButton: false,
             showItalicButton: false,
@@ -44,11 +47,9 @@ class HorizontalQuillToolbar extends StatelessWidget {
             showQuote: false,
             showIndent: false,
             showLink: false,
+            showLineHeightButton: false,
             toolbarIconAlignment: WrapAlignment.center,
-            showClipboardCopy: true,
-            showClipboardCut: true,
-            showClipboardPaste: true,
-            showLineHeightButton: true,
+
 
           ),
         ),

@@ -102,8 +102,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 8),
-              HorizontalQuillToolbar(controller: _quillController),
+
               const SizedBox(height: 8),
               Expanded(
                 child: Row(
@@ -126,6 +125,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
                             autoFocus: false,
                             expands: false,
                             disableClipboard: false,
+                            textSelectionThemeData: TextSelectionTheme.of(context),
                             padding: const EdgeInsets.all(8),
                           ),
                         ),
@@ -134,6 +134,8 @@ class _NoteEditPageState extends State<NoteEditPage> {
                   ],
                 ),
               ),
+              const SizedBox(height: 8),
+              HorizontalQuillToolbar(controller: _quillController),
             ],
           ),
         ),

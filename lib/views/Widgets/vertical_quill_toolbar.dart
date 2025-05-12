@@ -25,6 +25,7 @@ class VerticalQuillToolbar extends StatelessWidget {
               showClipboardCut: false,
               showClipboardPaste: false,
               showSearchButton: false,
+              linkStyleType: quill.LinkStyleType.original
 
             ),
           ),
