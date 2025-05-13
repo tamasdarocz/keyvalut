@@ -48,7 +48,8 @@ Recovery: Reset credentials using a .keyfile with recovery_key_dialog.dart or re
 
 Project Structure
 lib/
-├── data/
+├
+── data/
 │   ├── database_model.dart      # Data models (Logins, CreditCard, Note)
 │   ├── database_provider.dart   # State management with Provider
 │   ├── database_helper.dart     # SQLite database operations
