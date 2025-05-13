@@ -22,7 +22,7 @@ jobs:
         run: flutter build apk --profile
 
       - name: Build Release APKs
-        run: flutter build apk --release --split-per-abi --analyze-size
+        run: flutter build apk --release --split-per-abi
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
