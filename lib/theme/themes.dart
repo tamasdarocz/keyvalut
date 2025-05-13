@@ -117,8 +117,9 @@ class ThemeBuilder {
     final secondary = config['secondary'] as Color;
     final surface = config['surface'] as Color;
     final textColor = config['textColor'] as Color;
+    final
 
-    final colorScheme = (brightness == Brightness.light
+    colorScheme = (brightness == Brightness.light
         ? baseColorSchemeLight
         : baseColorSchemeDark).copyWith(
       primary: primary,
@@ -133,6 +134,7 @@ class ThemeBuilder {
       colorScheme: colorScheme,
       cardColor: surface,
       textTheme: TextTheme(
+        displayMedium: baseTextStyle.copyWith(color: textColor),
         bodyLarge: baseTextStyle.copyWith(color:Colors.black, fontSize: 18),
         bodyMedium: baseTextStyle.copyWith(color: Colors.black, fontSize: 16),
         titleLarge: baseTextStyle.copyWith(color: textColor, fontSize: 24, fontWeight: FontWeight.bold),

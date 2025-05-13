@@ -1,3 +1,4 @@
+// Login screen for selecting and authenticating into a database.
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,10 +18,12 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  // Constants for UI spacing and sizing.
   static const double _padding = 16.0;
   static const double _buttonHeight = 48.0;
   static const double _fontSizeTitle = 18.0;
 
+  // State management for login UI.
   final _LoginState _state = _LoginState();
   final TextEditingController _pinController = TextEditingController();
   AuthService? _authService;
@@ -30,16 +33,19 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    // Load available databases and start lockout timer.
     _loadDatabases();
     _startLockoutTimer();
   }
 
   @override
   void dispose() {
+    // Clean up controller.
     _pinController.dispose();
     super.dispose();
   }
 
+  // Periodically updates lockout status and remaining time.
   void _startLockoutTimer() {
     Future.doWhile(() async {
       if (!mounted) return false;
@@ -58,19 +64,19 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
+  // Loads database names and selects the last used one.
   Future<void> _loadDatabases() async {
     try {
       setState(() => _state.isLoading = true);
       final databases = await fetchDatabaseNames();
       final lastUsedDatabase = await _getLastUsedDatabase();
 
-      // Filter out 'default' if it has no credentials set
+      // Filter out invalid 'default' database without credentials.
       final validDatabases = <String>[];
       for (final dbName in databases) {
         if (dbName == 'default') {
           final authService = AuthService(dbName);
           if (!await authService.isMasterCredentialSet()) {
-            // Delete the invalid 'default' database
             final dbHelper = DatabaseHelper(dbName);
             await dbHelper.deleteDatabase();
             continue;
@@ -88,6 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _state.isLoading = false;
       });
 
+      // Initialize auth service and check biometric/reset status.
       if (_state.selectedDatabase != null) {
         await _updateAuthService(_state.selectedDatabase!);
         final isPin = await _authService!.isPinMode();
@@ -115,14 +122,15 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // Retrieves the last used database from shared preferences.
   Future<String?> _getLastUsedDatabase() async {
     final prefs = await SharedPreferences.getInstance();
     final currentDatabase = prefs.getString('currentDatabase');
     return currentDatabase;
   }
 
+  // Selects initial database, prioritizing last used.
   String? _selectInitialDatabase(List<String> databases, String? lastUsed) {
-    // Prioritize the last used database if it exists and is valid
     final selected = lastUsed != null && databases.contains(lastUsed)
         ? lastUsed
         : databases.isNotEmpty
@@ -131,6 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return selected;
   }
 
+  // Updates auth service and UI state for selected database.
   Future<void> _updateAuthService(String databaseName) async {
     _authService = AuthService(databaseName);
     final isPin = await _authService!.isPinMode();
@@ -147,6 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
+  // Authenticates user with PIN/password and navigates to homepage.
   Future<void> _unlockVault() async {
     if (_state.selectedDatabase == null || _authService == null) {
       showToast('Please select a database');
@@ -174,15 +184,13 @@ class _LoginScreenState extends State<LoginScreen> {
           showToast('Too many failed attempts. Please reset your ${_state.authMode == AuthMode.pin ? 'PIN' : 'password'} using the recovery key.');
           await _showResetMasterCredentialDialog();
         }
-        throw AppException(
-            'This database uses ${isPinMode ? "PIN" : "password"} authentication. Please switch to the correct mode.');
+        throw AppException('This database uses ${isPinMode ? "PIN" : "password"} authentication. Please switch to the correct mode.');
       }
 
       final isAuthenticated = await _authService!.verifyMasterCredential(input);
       if (isAuthenticated) {
         await _authService!.resetBruteForceState();
         await _saveCurrentDatabase(_state.selectedDatabase!);
-        // Update DatabaseProvider with the selected database
         final provider = Provider.of<DatabaseProvider>(context, listen: false);
         provider.setDatabaseName(_state.selectedDatabase!);
         if (mounted) {
@@ -211,11 +219,13 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // Saves current database to shared preferences.
   Future<void> _saveCurrentDatabase(String databaseName) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('currentDatabase', databaseName);
   }
 
+  // Authenticates user with biometrics and navigates to homepage.
   Future<void> _unlockWithBiometrics() async {
     if (_state.selectedDatabase == null || _authService == null) {
       showToast('Please select a database');
@@ -245,7 +255,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (isAuthenticated) {
         await _authService!.resetBruteForceState();
         await _saveCurrentDatabase(_state.selectedDatabase!);
-        // Update DatabaseProvider with the selected database
         final provider = Provider.of<DatabaseProvider>(context, listen: false);
         provider.setDatabaseName(_state.selectedDatabase!);
         if (mounted) {
@@ -272,6 +281,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // Navigates to screen for creating a new database.
   void _navigateToCreateNewDatabase() {
     try {
       Navigator.push(
@@ -287,6 +297,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // Shows dialog for resetting master credential.
   Future<void> _showResetMasterCredentialDialog() async {
     if (_state.selectedDatabase == null || _authService == null) {
       showToast('Please select a database');
@@ -309,6 +320,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // Builds UI for selecting a database.
   Widget _buildDatabaseSelector(ThemeData theme) {
     if (_state.databaseNames.isEmpty) {
       return Text(
@@ -354,6 +366,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // Builds a styled button for actions.
   Widget _buildButton({
     required VoidCallback onPressed,
     required String label,
@@ -379,6 +392,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDatabaseSelected = _state.selectedDatabase != null;
+    // Main UI with database selector, auth mode toggle, and input field.
     return Scaffold(
       appBar: AppBar(
         title: const Text('Welcome'),
@@ -526,6 +540,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
+// State class for managing login UI state.
 class _LoginState {
   bool isLoading = true;
   bool isPinVisible = false;

@@ -75,8 +75,8 @@ class _TotpWidgetState extends State<TotpWidget> {
           child: CircularProgressIndicator(
             value: _remainingSeconds / _period,
             backgroundColor: theme.colorScheme.onSurface.withOpacity(0.2),
-            valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
-            strokeWidth: 3,
+            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+            strokeWidth: 2,
           ),
         ),
         TextButton(
