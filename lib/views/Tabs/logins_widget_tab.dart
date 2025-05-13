@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:keyvalut/views/Widgets/totp_display.dart';
+import 'package:keyvalut/views/Widgets/totp_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,6 +10,7 @@ import '../../data/database_provider.dart';
 import 'create_logins_form.dart';
 import '../../data/database_helper.dart';
 import '../../services/url_service.dart';
+
 
 class LoginsWidgetTab extends StatefulWidget {
   const LoginsWidgetTab({super.key});
@@ -240,7 +241,7 @@ class _LoginsWidgetTabState extends State<LoginsWidgetTab> {
                             color: Theme.of(context).colorScheme.secondary,
                           ),
                         ),
-                        if (hasTotpSecret) TotpDisplay(totpSecret: login.totpSecret),
+                        if (hasTotpSecret) TotpWidget(totpSecret: login.totpSecret),
                       ],
                     ),
                     children: [

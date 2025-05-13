@@ -8,18 +8,29 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'data/database_provider.dart';
 import 'services/utils.dart';
 import 'data/database_helper.dart';
+import 'services/lock_service.dart';
 
-
+/// Entry point for the KeyVault app. Initializes dependencies and runs the app.
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final initialDatabaseName = await getInitialDatabaseName();
+  final prefs = await SharedPreferences.getInstance();
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
         ChangeNotifierProvider(
-          create: (_) => DatabaseProvider(initialDatabaseName: initialDatabaseName),
+          create: (context) => DatabaseProvider(initialDatabaseName: initialDatabaseName),
+        ),
+        ChangeNotifierProvider(create: (context) => AppLockState()),
+        Provider(
+          create: (context) {
+            final lockState = Provider.of<AppLockState>(context, listen: false);
+            final lockService = LockService(prefs, lockState);
+            lockState.setLockService(lockService);
+            return lockService;
+          },
         ),
       ],
       child: const MyApp(),
@@ -28,16 +39,12 @@ void main() async {
 }
 
 /// Retrieves the initial database name to use when the app starts.
-///
-/// Checks for existing databases, validates them, and returns the current
-/// database name from [SharedPreferences]. If no valid database exists,
-/// returns null.
+/// Returns null if no valid databases exist.
 Future<String?> getInitialDatabaseName() async {
   final databases = await fetchDatabaseNames();
   final prefs = await SharedPreferences.getInstance();
   final currentDatabase = prefs.getString('currentDatabase');
 
-  // Filter out 'default' if it has no credentials set
   final validDatabases = <String>[];
   for (final dbName in databases) {
     if (dbName == 'default') {
@@ -51,7 +58,6 @@ Future<String?> getInitialDatabaseName() async {
     validDatabases.add(dbName);
   }
 
-  // Update currentDatabase if necessary
   if (validDatabases.isEmpty) {
     await prefs.remove('currentDatabase');
     return null;
@@ -64,8 +70,6 @@ Future<String?> getInitialDatabaseName() async {
 }
 
 /// The root widget of the KeyVault app.
-///
-/// Manages the app's lifecycle and navigates to the login screen on startup.
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -73,47 +77,33 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  bool _needsRefresh = false;
-  bool _shouldLock = false;
+/// Manages app lifecycle and UI for KeyVault.
+class _MyAppState extends State<MyApp> {
+  AppLifecycleListener? _lifecycleListener;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
+    final lockService = Provider.of<LockService>(context, listen: false);
+    _lifecycleListener = AppLifecycleListener(
+      onStateChange: lockService.handleLifecycleState,
+      onResume: () {},
+      onInactive: () {},
+      onPause: () {},
+      onDetach: () {},
+    );
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    _lifecycleListener?.dispose();
     super.dispose();
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) async {
-    super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.paused) {
-      final prefs = await SharedPreferences.getInstance();
-      final lockImmediately = prefs.getBool('lockImmediately') ?? false;
-      if (lockImmediately) {
-        setState(() {
-          _shouldLock = true;
-        });
-      }
-    } else if (state == AppLifecycleState.resumed) {
-      if (_shouldLock) {
-        setState(() {
-          _needsRefresh = true;
-          _shouldLock = false;
-        });
-      }
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer2<ThemeProvider, AppLockState>(
+      builder: (context, themeProvider, lockState, child) {
         if (!themeProvider.isInitialized) {
           return const MaterialApp(
             home: Scaffold(
@@ -126,7 +116,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           theme: themeProvider.themeData,
           themeMode: themeProvider.themeMode,
           home: FutureBuilder<String?>(
-            key: ValueKey(_needsRefresh),
+            key: ValueKey('database_${lockState.needsRefresh.hashCode}'),
             future: SharedPreferences.getInstance().then((prefs) => prefs.getString('currentDatabase')),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -159,8 +149,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   ),
                 );
               }
-              _needsRefresh = false;
-              return const LoginScreen(); // Always start on LoginScreen
+              lockState.resetRefresh();
+              return LoginScreen();
             },
           ),
         );

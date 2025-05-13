@@ -18,15 +18,7 @@ class RecoveryKeyDialog extends StatelessWidget {
 
   final String databaseName;
 
-  Future<void> _getdatabaseName() async{
-    final prefs = await SharedPreferences.getInstance();
-    final databaseName = prefs.getString('currentDatabase');
-
-  }
-
-
   /// Creates a [RecoveryKeyDialog] widget.
-
   const RecoveryKeyDialog({
     super.key,
     required this.recoveryKey,
@@ -103,7 +95,7 @@ class RecoveryKeyDialog extends StatelessWidget {
           [...nonce, ...secretBox.mac.bytes, ...secretBox.cipherText]);
 
       // Prepare file details
-      final baseFileName = 'keyvalut_${databaseName}'; // e.g., "KeyVault_MainDB"
+      final baseFileName = 'keyvalut_$databaseName'; // e.g., "KeyVault_MainDB"
       const extension = 'keyfile';
       final fileBytes = Uint8List.fromList(utf8.encode(encryptedData));
 

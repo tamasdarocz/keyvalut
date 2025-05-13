@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../../data/database_helper.dart';
 import '../../data/database_model.dart';
-import '../Widgets/top_message.dart';
 import '../textforms/billing_address_input_form.dart';
 
 class CardInputForm extends StatefulWidget {
@@ -16,10 +16,12 @@ class CardInputForm extends StatefulWidget {
   });
 
   @override
-  _CardInputFormState createState() => _CardInputFormState();
+  CardInputFormState createState() {
+    return CardInputFormState();
+  }
 }
 
-class _CardInputFormState extends State<CardInputForm> {
+class CardInputFormState extends State<CardInputForm> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _bankNameController = TextEditingController();
@@ -101,12 +103,7 @@ class _CardInputFormState extends State<CardInputForm> {
           Navigator.pop(context);
         }
       } catch (e) {
-        TopMessage.show(
-          context: context,
-          message: 'Failed to save card',
-          backgroundColor: Theme.of(context).colorScheme.error,
-          textColor: Theme.of(context).colorScheme.onError,
-        );
+        Fluttertoast.showToast(msg: 'Failed to save card', gravity: ToastGravity.CENTER );
       }
     }
   }

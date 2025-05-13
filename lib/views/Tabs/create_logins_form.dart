@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:keyvalut/views/Widgets/custom_divider.dart';
 import 'package:keyvalut/views/textforms/email_input_field.dart';
 import 'package:keyvalut/views/textforms/password_text_field.dart';
 import 'package:keyvalut/views/textforms/phone_number_input_field.dart';
@@ -108,30 +107,30 @@ class _CreateLoginsFormState extends State<CreateLoginsForm> {
       body: ListView(
         padding: const EdgeInsets.all(8),
         children: [
-          const CustomDivider(),
+          const SizedBox(height: 10),
           TitleInputField(controller: titleController),
-          const CustomDivider(),
+          const SizedBox(height: 10),
           WebsiteInputField(controller: websiteController),
-          const CustomDivider(),
+          const SizedBox(height: 10),
           EmailInputField(controller: emailController),
-          const CustomDivider(),
+          const SizedBox(height: 10),
           PhoneNumberInput(
             labelText: 'Phone Number',
             initialPhone: widget.login?.phoneNumber,
             onPhoneChanged: (phone) => phoneController.text = phone ?? '',
           ),
-          const CustomDivider(),
+          const SizedBox(height: 10),
           UsernameInputField(controller: usernameController),
-          const CustomDivider(),
+          const SizedBox(height: 10),
           PasswordManager(controller: passwordController),
-          const CustomDivider(),
+          const SizedBox(height: 10),
           TotpSecretInputField(controller: totpSecretController),
-          const CustomDivider(),
+          const SizedBox(height: 10),
           BillingAddressInput(
             key: _billingAddressKey,
             initialAddress: widget.login?.billingAddress,
           ),
-          const CustomDivider(),
+          const SizedBox(height: 10),
           Row(
             children: [
               Flexible(
@@ -151,7 +150,7 @@ class _CreateLoginsFormState extends State<CreateLoginsForm> {
               ),
             ],
           ),
-          const CustomDivider(),
+          const SizedBox(height: 10),
           FutureBuilder<List<CreditCard>>(
             future: _creditCardsFuture,
             builder: (context, snapshot) {
@@ -195,9 +194,9 @@ class _CreateLoginsFormState extends State<CreateLoginsForm> {
               }
             },
           ),
-          const CustomDivider(),
+          const SizedBox(height: 10),
           NotificationDropdown(notificationSetting: _notificationSetting),
-          const CustomDivider(),
+          const SizedBox(height: 10),
           ElevatedButton(
             onPressed: () async {
               if (!_isValid) {

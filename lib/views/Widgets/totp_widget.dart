@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
-import 'package:keyvalut/services/totp_generator.dart';
+import '/services/totp_generator.dart';
 
-class TotpDisplay extends StatefulWidget {
+class TotpWidget extends StatefulWidget {
   final String? totpSecret;
 
-  const TotpDisplay({
-    Key? key,
+  const TotpWidget({
+    super.key,
     required this.totpSecret,
-  }) : super(key: key);
+  });
 
   @override
-  State<TotpDisplay> createState() => _TotpDisplayState();
+  State<TotpWidget> createState() => _TotpWidgetState();
 }
 
-class _TotpDisplayState extends State<TotpDisplay> {
+class _TotpWidgetState extends State<TotpWidget> {
   String _currentCode = '';
   int _remainingSeconds = 0;
   Timer? _timer;
@@ -60,36 +61,38 @@ class _TotpDisplayState extends State<TotpDisplay> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     if (widget.totpSecret == null || widget.totpSecret!.isEmpty) {
       return const SizedBox.shrink();
     }
 
     return Stack(
-      alignment: Alignment.centerRight,
+      alignment: Alignment.center,
       children: [
-        // Circular progress indicator
         SizedBox(
-          width: 120,
-          height: 120,
+          width: 80,
+          height: 80,
           child: CircularProgressIndicator(
-            strokeAlign: BorderSide.strokeAlignOutside,
             value: _remainingSeconds / _period,
-            backgroundColor: Colors.grey.withOpacity(0.2),
-            valueColor: AlwaysStoppedAnimation<Color>(
-              Colors.amber,
-            ),
+            backgroundColor: theme.colorScheme.onSurface.withOpacity(0.2),
+            valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
             strokeWidth: 3,
           ),
         ),
-        // TOTP Code with padding
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30.0),
+        TextButton(
+
+          onPressed: () {
+            Clipboard.setData(ClipboardData(text: _currentCode));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Center(child: Text('Copied!'))),
+            );
+          },
           child: Text(
             _currentCode,
-            style: const TextStyle(
-              fontSize: 18,
+            style: TextStyle(
+              fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: theme.colorScheme.onSurface,
             ),
           ),
         ),

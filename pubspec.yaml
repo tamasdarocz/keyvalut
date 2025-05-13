@@ -21,22 +21,14 @@ dependencies:
   provider: ^6.1.5
   url_launcher: ^6.3.1
   shared_preferences: ^2.3.3
-  otp: ^3.0.2
   cryptography: ^2.6.2
-  qr_flutter: ^4.1.0
   flutter_secure_storage: ^9.2.4
   collection: ^1.17.2
   path_provider: ^2.1.5
-  universal_html: ^2.2.4
   file_picker: ^8.0.2
-  device_info_plus: ^11.4.0
-  barcode: ^2.2.9
   mobile_scanner: ^6.0.10
   flutter_slidable: ^4.0.0
   fluttertoast: ^8.2.8
-  google_fonts: ^6.1.0
-  flutter_animate: ^4.5.0
-  freerasp: ^7.0.0
   pin_code_fields: ^8.0.1
   flutter_quill: ^10.7.0
   argon2: ^1.0.1

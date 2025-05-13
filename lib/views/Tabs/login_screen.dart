@@ -63,7 +63,6 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _state.isLoading = true);
       final databases = await fetchDatabaseNames();
       final lastUsedDatabase = await _getLastUsedDatabase();
-      // Debug log
 
       // Filter out 'default' if it has no credentials set
       final validDatabases = <String>[];
@@ -119,7 +118,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<String?> _getLastUsedDatabase() async {
     final prefs = await SharedPreferences.getInstance();
     final currentDatabase = prefs.getString('currentDatabase');
-    // Debug log
     return currentDatabase;
   }
 
@@ -130,7 +128,6 @@ class _LoginScreenState extends State<LoginScreen> {
         : databases.isNotEmpty
         ? databases.first
         : null;
-    // Debug log
     return selected;
   }
 
@@ -217,7 +214,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _saveCurrentDatabase(String databaseName) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('currentDatabase', databaseName);
-    // Debug log
   }
 
   Future<void> _unlockWithBiometrics() async {
