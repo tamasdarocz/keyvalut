@@ -8,14 +8,10 @@ class EmailInputField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
-      style: Theme.of(context).textTheme.displayMedium,
       keyboardType: TextInputType.emailAddress,
       decoration: InputDecoration(
         prefixIcon: Icon(Icons.email),
         label: Text('Email'),
-        border: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1),
-        ),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {

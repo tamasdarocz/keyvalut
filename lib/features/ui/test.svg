@@ -1,0 +1,35 @@
+<svg width="200" height="200" viewBox="0 0 200 200">
+
+
+
+
+    <g transform="translate(5 10)">
+        <path d="M 0 10 L 0 150 Q 0 165 10 165 L 10 165 180 165 Q 190 165 190 150 L 190 10 Q 190 0 180 0 L 10 0 Q0 0 0 10 "  stroke-width="2" stroke="blue" /></g>
+
+
+
+    <circle cx="100" cy="50" r="33" fill="blue"/>
+
+    <g transform="translate(80 76)">
+    <path d="M0 0 Q0 70 20 70 Q40 70 40 0" fill="blue"/>
+    </g>
+
+    <!-- "< >" Symbols -->
+    <g transform="translate(85 50)">
+        <path d="M-10 0 L0 -10 L10 0" stroke="#FFFFFF" stroke-width="2" fill="none" transform="rotate(-90)"/>
+    </g>
+
+
+    <text font-family="Arial" font-size="18" font-weight="bold" fill="#FFFFFF" text-anchor="middle" transform="translate(60 60)">
+        *****
+    </text>
+
+    <g transform="translate(105 50)">
+    <path d="M-10 -10 L0 -20 L10 -10" stroke="#FFFFFF" stroke-width="2" fill="none" transform="rotate(+90)"/>
+    </g>
+
+    <!-- Text with Bold Font and Slight Curve -->
+    <text font-family="Arial" font-size="26" font-weight="bold" fill="#FFFFFF" text-anchor="middle" transform="translate(40 165) ">
+        Keyvalut
+    </text>
+</svg>

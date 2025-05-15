@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:keyvalut/services/auth_service.dart';
-import 'package:keyvalut/theme/theme_provider.dart';
-import 'package:keyvalut/views/Tabs/login_screen.dart';
+import 'package:keyvalut/features/auth/services/auth_service.dart';
+import 'package:keyvalut/features/ui/theme/theme_provider.dart';
+import 'package:keyvalut/features/auth/screens/login_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'data/database_provider.dart';
-import 'services/utils.dart';
-import 'data/database_helper.dart';
-import 'services/lock_service.dart';
+import 'core/services/database_helper.dart';
+import 'core/services/database_provider.dart';
+import 'features/settings/services/utils.dart';
+import 'features/auth/services/lock_service.dart';
 
 /// Entry point for the KeyVault app. Initializes dependencies and runs the app.
 void main() async {

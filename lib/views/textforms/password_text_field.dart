@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:keyvalut/services/password_generator.dart'; // Ensure this path matches your project
+import 'package:keyvalut/features/credentials/services/password_generator.dart'; // Ensure this path matches your project
 
 class PasswordManager extends StatefulWidget {
   final TextEditingController controller;

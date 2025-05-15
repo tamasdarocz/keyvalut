@@ -13,9 +13,6 @@ class WebsiteInputField extends StatelessWidget {
         decoration: InputDecoration(
           prefixIcon: const Icon(Icons.http),
           hintText: 'google.com',
-          border: OutlineInputBorder(
-            borderSide: BorderSide(color:Theme.of(context).colorScheme.primary, width: 1),
-          ),
           label: const Text('Website'),
         ));
   }
