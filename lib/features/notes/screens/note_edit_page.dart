@@ -174,6 +174,16 @@ class _NoteEditPageState extends State<NoteEditPage> {
                                   decoration: TextDecoration.underline,
                                   decorationThickness: 2,
                                 ),
+                                code: DefaultTextBlockStyle(
+                                TextStyle(color: Colors.white),
+                                  HorizontalSpacing(4, 4),
+                                   VerticalSpacing(4, 4),
+                                  VerticalSpacing(0,0),
+                                BoxDecoration(
+                                    color: Colors.black45,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
                               ),
                               elementOptions: quill.QuillEditorElementOptions(),
                             ),
