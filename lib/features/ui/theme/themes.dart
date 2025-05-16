@@ -99,7 +99,7 @@ class ThemeBuilder {
         'primary': const Color(0xFF6b5b95),
         'secondary': const Color(0xFF88bdbc),
         'surface': const Color(0xFF2e4372),
-        'textColor': const Color(0xFFd8e2ff),
+        'textColor': Color(0xFFd8e2ff),
       },
       ThemeType.dark: {
         'brightness': Brightness.dark,

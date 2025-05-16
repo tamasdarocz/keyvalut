@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:keyvalut/core/model/database_model.dart';
 import 'package:keyvalut/features/notes/screens/note_edit_page.dart';
+
 
 class NoteViewPage extends StatefulWidget {
   final Note note;
@@ -26,7 +28,6 @@ class _NoteViewPageState extends State<NoteViewPage> {
     _focusNode = FocusNode(canRequestFocus: false);
 
     try {
-
       final deltaJson = jsonDecode(widget.note.content);
       _document = quill.Document.fromJson(deltaJson);
     } catch (e) {
@@ -50,13 +51,12 @@ class _NoteViewPageState extends State<NoteViewPage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.note.title),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: Icon(Icons.edit_note, size: 40, color: Theme.of(context).colorScheme.primary),
             onPressed: () {
               Navigator.pushReplacement(
                 context,
@@ -69,21 +69,34 @@ class _NoteViewPageState extends State<NoteViewPage> {
         ],
       ),
       body: Container(
-                width: MediaQuery.sizeOf(context).width,
-                height: MediaQuery.sizeOf(context).height,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                ),
+        width: MediaQuery.sizeOf(context).width,
+        height: MediaQuery.sizeOf(context).height,
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+        ),
+        child: quill.QuillEditor.basic(
+          controller: quillController,
+          configurations: quill.QuillEditorConfigurations(
+            padding: EdgeInsets.all(8),
+            scrollable: true,
+            showCursor: false,
+            /*customStyles: DefaultStyles(
+                inlineCode: InlineCodeStyle(backgroundColor: Colors.grey.shade900, style: TextStyle()),
+              strikeThrough: TextStyle(decorationColor: Theme.of(context).colorScheme.secondary, decoration: TextDecoration.lineThrough, decorationThickness: 2),
+              underline: TextStyle(decorationColor: Theme.of(context).colorScheme.secondary, decoration: TextDecoration.underline, decorationThickness: 2  )
+            ),
 
-                child: quill.QuillEditor.basic(
-                  controller: quillController,
-                  configurations: quill.QuillEditorConfigurations(
-                    padding: const EdgeInsets.all(8),
-                    scrollable: true, // Ensure content is scrollable
+             */
+            textSelectionThemeData:
+    TextSelectionThemeData(
+    cursorColor: Colors.red,
+    selectionHandleColor: Colors.green,
 
-                  ),
-                ),
-              ),
+          ),
+        ),
+      ),
+      )
     );
+
   }
 }

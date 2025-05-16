@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+// Added for Clipboard
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:keyvalut/features/notes/widgets/horizontal_quill_toolbar.dart';
 import 'package:keyvalut/features/notes/widgets/vertical_quill_toolbar.dart';
 import 'package:provider/provider.dart';
@@ -24,6 +26,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
   final _formKey = GlobalKey<FormState>();
   String? _initialTitle;
   String? _initialContent;
+// Track if text is selected
 
   @override
   void initState() {
@@ -82,9 +85,8 @@ class _NoteEditPageState extends State<NoteEditPage> {
 
   Future<bool> _onWillPop() async {
     if (!_hasChanges()) {
-      return true; // No changes, pop immediately
+      return true;
     }
-
     return await showDialog<bool>(
       context: context,
       builder: (context) => UnsavedChangesDialog(
@@ -112,6 +114,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
             ),
           ],
         ),
+
         body: Padding(
           padding: const EdgeInsets.all(8),
           child: Form(
@@ -139,7 +142,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       VerticalQuillToolbar(controller: _quillController),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 4),
                       Expanded(
                         child: Container(
                           decoration: const BoxDecoration(),
@@ -152,8 +155,27 @@ class _NoteEditPageState extends State<NoteEditPage> {
                               autoFocus: false,
                               expands: false,
                               disableClipboard: false,
+                              enableSelectionToolbar: true,
+                              enableInteractiveSelection: true,
                               textSelectionThemeData: TextSelectionTheme.of(context),
-                              padding: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              customStyles: DefaultStyles(
+                                inlineCode: InlineCodeStyle(
+                                  backgroundColor: Colors.black45,
+                                  style: const TextStyle(),
+                                ),
+                                strikeThrough: const TextStyle(
+                                  decorationColor: Colors.white,
+                                  decoration: TextDecoration.lineThrough,
+                                  decorationThickness: 2,
+                                ),
+                                underline: const TextStyle(
+                                  decorationColor: Colors.white,
+                                  decoration: TextDecoration.underline,
+                                  decorationThickness: 2,
+                                ),
+                              ),
+                              elementOptions: quill.QuillEditorElementOptions(),
                             ),
                           ),
                         ),
